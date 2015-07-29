@@ -3,6 +3,12 @@ Croma
 
 Elixir macro utilities.
 
+[![Build Status](https://travis-ci.org/skirino/croma.svg)](https://travis-ci.org/skirino/croma)
+[![Hex.pm](http://img.shields.io/hexpm/v/croma.svg)](https://hex.pm/packages/croma)
+[![Hex.pm](http://img.shields.io/hexpm/dt/croma.svg)](https://hex.pm/packages/croma)
+[![Github Issues](http://githubbadges.herokuapp.com/skirino/croma/issues.svg)](https://github.com/skirino/croma/issues)
+[![Pending Pull-Requests](http://githubbadges.herokuapp.com/skirino/croma/pulls.svg)](https://github.com/skirino/croma/pulls)
+
 ## `Croma.Defun`
 
 Type specification oriented function definition
@@ -41,6 +47,7 @@ is expanded to
       [f.(h) | dumbmap(t, f)]
     end
     ```
+- There's also `defunp` macro for private functions.
 - Known limitations:
     - Pattern matching against function parameters should use `(param1, param2) when guards -> block` style.
     - Overloaded typespecs are not supported.
