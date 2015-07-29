@@ -9,6 +9,12 @@ Elixir macro utilities.
 [![Github Issues](http://githubbadges.herokuapp.com/skirino/croma/issues.svg)](https://github.com/skirino/croma/issues)
 [![Pending Pull-Requests](http://githubbadges.herokuapp.com/skirino/croma/pulls.svg)](https://github.com/skirino/croma/pulls)
 
+## `Croma.Defpt`
+
+Unit-testable `defp` that is converted to
+- `defp` if `Mix.env == :test`,
+- `def` otherwise.
+
 ## `Croma.Defun`
 
 Type specification oriented function definition
@@ -47,7 +53,7 @@ is expanded to
       [f.(h) | dumbmap(t, f)]
     end
     ```
-- There's also `defunp` macro for private functions.
+- There are also `defunp` and `defunpt` macros for private functions.
 - Known limitations:
     - Pattern matching against function parameters should use `(param1, param2) when guards -> block` style.
     - Overloaded typespecs are not supported.

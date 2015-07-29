@@ -11,8 +11,14 @@ defmodule Croma.Defun do
   defmacro defunp({:when, _, [{:::, _, [fun, ret_type]}, type_params]}, [do: block]) do
     defun_impl(:defp, fun, ret_type, type_params, block)
   end
+  defmacro defunpt({:::, _, [fun, ret_type]}, [do: block]) do
+    defun_impl(:defpt, fun, ret_type, [], block)
+  end
+  defmacro defunpt({:when, _, [{:::, _, [fun, ret_type]}, type_params]}, [do: block]) do
+    defun_impl(:defpt, fun, ret_type, type_params, block)
+  end
 
-  defp defun_impl(def_or_defp, fun, ret_type, type_params, block) do
+  def defun_impl(def_or_defp, fun, ret_type, type_params, block) do
     spec = typespec(fun, ret_type, type_params)
     bodyless = bodyless_function(def_or_defp, fun)
     fundef = function_definition(def_or_defp, fun, block)
