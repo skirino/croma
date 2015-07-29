@@ -9,11 +9,18 @@ Elixir macro utilities.
 [![Github Issues](http://githubbadges.herokuapp.com/skirino/croma/issues.svg)](https://github.com/skirino/croma/issues)
 [![Pending Pull-Requests](http://githubbadges.herokuapp.com/skirino/croma/pulls.svg)](https://github.com/skirino/croma/pulls)
 
-## `Croma.Defpt`
+## Usage
 
-Unit-testable `defp` that is converted to
-- `defp` if `Mix.env == :test`,
-- `def` otherwise.
+- Add `:croma` as a mix dependency.
+- `$ mix deps.get`
+- Add `use Croma` to import all macros defined in this package.
+- Hack!
+
+## `Croma.Defpt.defpt`
+
+Unit-testable `defp` that is simply converted to
+- `def` if `Mix.env == :test`,
+- `defp` otherwise.
 
 ## `Croma.Defun`
 
