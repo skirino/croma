@@ -1,7 +1,7 @@
 Croma
 =====
 
-Elixir macro utilities
+Elixir macro utilities.
 
 ## `Croma.Defun`
 
@@ -25,7 +25,7 @@ is expanded to
 
     ```ex
     import Croma.Defun
-    defun dumbmap(as: [a], f: (a -> b)) :: [b] when a: term, b: `term do
+    defun dumbmap(as: [a], f: (a -> b)) :: [b] when a: term, b: term do
       ([]     , _) -> []
       ([h | t], f) -> [f.(h) | dumbmap(t, f)]
     end
