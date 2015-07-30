@@ -25,27 +25,14 @@ defmodule Croma.Defun do
     {:__block__, [], [spec, bodyless, fundef]}
   end
 
-  defp typespec({fname, env, args}, ret_type, []) do
-    {:@, env, [
-        {:spec, [], [
-            {:::, [], [
-                {fname, [], arg_types(args)},
-                ret_type,
-              ]}
-          ]}
-      ]}
-  end
   defp typespec({fname, env, args}, ret_type, type_params) do
+    func_with_return_type = {:::, [], [{fname, [], arg_types(args)}, ret_type]}
+    spec_expr = case type_params do
+      [] -> func_with_return_type
+      _  -> {:when, [], [func_with_return_type, type_params]}
+    end
     {:@, env, [
-        {:spec, [], [
-            {:when, [], [
-                {:::, [], [
-                    {fname, [], arg_types(args)},
-                    ret_type,
-                  ]},
-                type_params,
-              ]}
-          ]}
+        {:spec, [], [spec_expr]}
       ]}
   end
 
