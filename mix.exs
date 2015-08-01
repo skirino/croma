@@ -4,11 +4,11 @@ defmodule Croma.Mixfile do
   def project do
     [
       app:             :croma,
-      version:         "0.1.1",
+      version:         "0.1.2",
       elixir:          "~> 1.0",
       build_embedded:  Mix.env == :prod,
       start_permanent: Mix.env == :prod,
-      deps:            [],
+      deps:            deps,
       description:     description,
       package:         package,
     ]
@@ -16,6 +16,13 @@ defmodule Croma.Mixfile do
 
   def application do
     []
+  end
+
+  defp deps do
+    [
+      {:excheck, "~> 0.2", only: :test},
+      {:triq, github: "krestenkrab/triq", only: :test},
+    ]
   end
 
   defp description do
