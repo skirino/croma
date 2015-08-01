@@ -75,4 +75,12 @@ defmodule Croma.ResultTest do
     assert R.get({:ok   , 1   }, 0) == 1
     assert R.get({:error, :foo}, 0) == 0
   end
+
+  test "ok?/1 and error?/1" do
+    assert  R.ok?({:ok   , 1   })
+    assert !R.ok?({:error, :foo})
+
+    assert !R.error?({:ok   , 1   })
+    assert  R.error?({:error, :foo})
+  end
 end

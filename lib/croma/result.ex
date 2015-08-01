@@ -18,4 +18,13 @@ defmodule Croma.Result do
     ({:ok   , val}, _      ) -> val
     ({:error, _  }, default) -> default
   end
+
+  defun ok?(result: t(a)) :: boolean when a: any do
+    {:ok   , _} -> true
+    {:error, _} -> false
+  end
+
+  defun error?(result: t(a)) :: boolean when a: any do
+    !ok?(result)
+  end
 end
