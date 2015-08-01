@@ -67,4 +67,12 @@ defmodule Croma.ResultTest do
       end
     end
   end
+
+  test "get/1 and get/2" do
+    assert R.get({:ok   , 1   }) == 1
+    assert R.get({:error, :foo}) == nil
+
+    assert R.get({:ok   , 1   }, 0) == 1
+    assert R.get({:error, :foo}, 0) == 0
+  end
 end
