@@ -106,3 +106,8 @@ end)
 
 `Corma.Result.t(a)` is defined as `@type t(a) :: {:ok, a} | {:error, any}`.
 The module implements `Croma.Monad` interface.
+
+### `Croma.List`
+
+Implementation of `Croma.Monad` for lists.
+`Croma.List.t(a)` is just an alias to `[a]`.
