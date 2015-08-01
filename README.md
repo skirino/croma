@@ -16,13 +16,15 @@ Elixir macro utilities.
 - Add `use Croma` to import all macros defined in this package.
 - Hack!
 
-## `Croma.Defpt.defpt`
+## Defining functions
+
+### `Croma.Defpt.defpt`
 
 Unit-testable `defp` that is simply converted to
 - `def` if `Mix.env == :test`,
 - `defp` otherwise.
 
-## `Croma.Defun`
+### `Croma.Defun`
 
 Type specification oriented function definition
 - Example 1
@@ -64,3 +66,43 @@ is expanded to
 - Known limitations:
     - Pattern matching against function parameters should use `(param1, param2) when guards -> block` style.
     - Overloaded typespecs are not supported.
+
+## `Croma.Monad`
+
+An interface definition of the monad typeclass.
+Modules that `use Croma.Monad` must implement the following interface:
+- `@type t(a)` with a type parameter `a`.
+- `@spec pure(a: a) :: t(a) when a: any`
+- `@spec bind(t(a), (a -> t(b))) :: t(b) when a: any, b: any`
+
+By using the concrete implementations of the above interface, `Croma.Monad` provides the default implementations of the following functions:
+- As Functor:
+    - `@spec map(t(a), (a -> b)) :: t(b) when a: any, b: any`
+- As Applicative:
+    - `@spec ap(t(a), t((a -> b))) :: t(b) when a: any, b: any`
+    - `@spec sequence([t(a)]) :: t([a]) when a: any`
+
+Note that the order of parameters in `map`/`ap` is different from that of Haskell counterparts, in order to leverage Elixir's pipe operator `|>`.
+
+`Croma.Monad` also provides `bind`-less syntax similar to the Haskell's do-notation.
+For example,
+```ex
+MonadImpl.m do
+  x <- mx
+  y <- my
+  pure f(x, y)
+end
+```
+is converted to
+```ex
+MonadImpl.bind(mx, fn x ->
+  MonadImpl.bind(my, fn y ->
+    MonadImpl.pure f(x, y)
+  end)
+end)
+```
+
+### `Croma.Result`
+
+`Corma.Result.t(a)` is defined as `@type t(a) :: {:ok, a} | {:error, any}`.
+The module implements `Croma.Monad` interface.
