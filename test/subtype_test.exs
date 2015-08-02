@@ -89,4 +89,38 @@ defmodule Croma.SubtypeTest do
     assert A1.validate(nil ) == {:error, "validation error for #{A1}: nil"}
     assert A1.validate([]  ) == {:error, "validation error for #{A1}: []"}
   end
+
+  defmodule L1 do
+    use Croma.SubtypeOfList, elem_module: I1
+  end
+  defmodule L2 do
+    use Croma.SubtypeOfList, elem_module: I2, max_length: 3
+  end
+  defmodule L3 do
+    use Croma.SubtypeOfList, elem_module: I3, min_length: 2
+  end
+  defmodule L4 do
+    use Croma.SubtypeOfList, elem_module: I4, min_length: 1, max_length: 3
+  end
+
+  test "Croma.SubtypeOfList: validate/1" do
+    assert L1.validate([] ) == {:ok   , []}
+    assert L1.validate([1]) == {:ok   , [1]}
+    assert L1.validate([0]) == {:error, "validation error for #{I1}: 0"}
+
+    assert L2.validate([]          ) == {:ok   , []}
+    assert L2.validate([1, 2, 3]   ) == {:ok   , [1, 2, 3]}
+    assert L2.validate([1, 2, 11]  ) == {:error, "validation error for #{I2}: 11"}
+    assert L2.validate([1, 2, 3, 4]) == {:error, "validation error for #{L2}: [1, 2, 3, 4]"}
+
+    assert L3.validate([ 1]    ) == {:error, "validation error for #{I3}: 1"}
+    assert L3.validate([-1]    ) == {:error, "validation error for #{L3}: [-1]"}
+    assert L3.validate([-1, -2]) == {:ok   , [-1, -2]}
+
+    assert L4.validate([]          ) == {:error, "validation error for #{L4}: []"}
+    assert L4.validate([-5]        ) == {:ok   , [-5]}
+    assert L4.validate([-5, 0, 5]  ) == {:ok   , [-5, 0, 5]}
+    assert L4.validate([-5, 10]    ) == {:error, "validation error for #{I4}: 10"}
+    assert L4.validate([0, 0, 0, 0]) == {:error, "validation error for #{L4}: [0, 0, 0, 0]"}
+  end
 end

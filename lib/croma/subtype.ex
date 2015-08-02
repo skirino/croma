@@ -127,3 +127,39 @@ defmodule Croma.SubtypeOfAtom do
     end
   end
 end
+
+defmodule Croma.SubtypeOfList do
+  defmacro __using__(opts) do
+    mod = opts[:elem_module] || raise ":elem_module must be given"
+    quote do
+      @type t :: [unquote(mod).t]
+
+      defun validate(term: any) :: R.t(t) do
+        l when is_list(l) ->
+          require R
+          R.m do
+            elems <- Enum.map(l, &unquote(mod).validate/1) |> R.sequence
+            if valid_length?(length(elems)) do
+              {:ok, elems}
+            else
+              {:error, "validation error for #{__MODULE__}: #{inspect l}"}
+            end
+          end
+        x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+      end
+
+      @min unquote(opts[:min_length])
+      @max unquote(opts[:max_length])
+      cond do
+        is_nil(@min) && is_nil(@max) ->
+          defp valid_length?(_), do: true
+        is_nil(@min) ->
+          defp valid_length?(len), do: len <= @max
+        is_nil(@max) ->
+          defp valid_length?(len), do: @min <= len
+        true ->
+          defp valid_length?(len), do: @min <= len && len <= @max
+      end
+    end
+  end
+end
