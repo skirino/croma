@@ -75,3 +75,24 @@ defmodule Croma.SubtypeOfFloat do
     end
   end
 end
+
+defmodule Croma.SubtypeOfString do
+  defmacro __using__(opts) do
+    quote do
+      @pattern unquote(opts[:pattern])
+      if !Regex.regex?(@pattern), do: raise ":pattern must be a regex"
+
+      @type t :: String.t
+
+      defun validate(s: term) :: R.t(t) do
+        s when is_binary(s) ->
+          if Regex.match?(@pattern, s) do
+            {:ok, s}
+          else
+            {:error, "validation error for #{__MODULE__}: #{inspect s}"}
+          end
+        x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+      end
+    end
+  end
+end
