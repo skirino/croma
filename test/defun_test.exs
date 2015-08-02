@@ -71,7 +71,7 @@ defmodule Croma.DefunTest do
       f1(:foo)
     end
 
-    # getter of compile-time typespec information
+    # getter for compile-time typespec information
     spec = Module.get_attribute(__MODULE__, :spec) |> Macro.escape
     def typespecs, do: unquote(spec)
   end
