@@ -42,3 +42,36 @@ defmodule Croma.SubtypeOfInt do
     end
   end
 end
+
+defmodule Croma.SubtypeOfFloat do
+  defmacro __using__(opts) do
+    quote do
+      @min unquote(opts[:min])
+      @max unquote(opts[:max])
+
+      if !is_nil(@min) && !is_float(@min), do: raise ":min must be either nil or float"
+      if !is_nil(@max) && !is_float(@max), do: raise ":max must be either nil or float"
+      if is_nil(@min) && is_nil(@max)    , do: raise ":min and/or :max must be given"
+      if @min && @max && @max < @min     , do: raise ":min must be smaller than :max"
+
+      @type t :: float
+      cond do
+        is_nil(@min) ->
+          defun validate(term: any) :: R.t(t) do
+            f when is_float(f) and f <= @max -> {:ok, f}
+            x                                -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+          end
+        is_nil(@max) ->
+          defun validate(term: any) :: R.t(t) do
+            f when is_float(f) and @min <= f -> {:ok, f}
+            x                                -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+          end
+        true ->
+          defun validate(term: any) :: R.t(t) do
+            f when is_float(f) and @min <= f and f <= @max -> {:ok, f}
+            x                                              -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+          end
+      end
+    end
+  end
+end
