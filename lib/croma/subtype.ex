@@ -96,3 +96,34 @@ defmodule Croma.SubtypeOfString do
     end
   end
 end
+
+defmodule Croma.SubtypeOfAtom do
+  defp values_as_typespec([v  ]), do: v
+  defp values_as_typespec([h|t]), do: {:|, [], [h, values_as_typespec(t)]}
+
+  defmacro __using__(opts) do
+    value_atoms = opts[:values] || raise ":values must be present"
+    if Enum.empty?(value_atoms), do: raise ":values must be present"
+    value_strings      = Enum.map(value_atoms, &Atom.to_string/1)
+    values_as_typespec = values_as_typespec(value_atoms)
+    quote do
+      @type t :: unquote(values_as_typespec)
+
+      defun validate(term: any) :: R.t(t) do
+        a when is_atom(a) ->
+          if a in unquote(value_atoms) do
+            {:ok, a}
+          else
+            {:error, "validation error for #{__MODULE__}: #{inspect a}"}
+          end
+        s when is_binary(s) ->
+          if s in unquote(value_strings) do
+            {:ok, String.to_existing_atom(s)}
+          else
+            {:error, "validation error for #{__MODULE__}: #{inspect s}"}
+          end
+        x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+      end
+    end
+  end
+end

@@ -72,4 +72,21 @@ defmodule Croma.SubtypeTest do
     assert S1.validate(nil  ) == {:error, "validation error for #{S1}: nil"}
     assert S1.validate([]   ) == {:error, "validation error for #{S1}: []"}
   end
+
+  defmodule A1 do
+    use Croma.SubtypeOfAtom, values: [:a1, :a2, :a3]
+  end
+
+  test "Croma.SubtypeOfAtom: validate/1" do
+    assert A1.validate(:a1 ) == {:ok   , :a1}
+    assert A1.validate("a1") == {:ok   , :a1}
+    assert A1.validate(:a2 ) == {:ok   , :a2}
+    assert A1.validate("a2") == {:ok   , :a2}
+    assert A1.validate(:a3 ) == {:ok   , :a3}
+    assert A1.validate("a3") == {:ok   , :a3}
+    assert A1.validate(:a4 ) == {:error, "validation error for #{A1}: :a4"}
+    assert A1.validate("a4") == {:error, "validation error for #{A1}: \"a4\""}
+    assert A1.validate(nil ) == {:error, "validation error for #{A1}: nil"}
+    assert A1.validate([]  ) == {:error, "validation error for #{A1}: []"}
+  end
 end
