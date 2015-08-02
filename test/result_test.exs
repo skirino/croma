@@ -52,7 +52,7 @@ defmodule Croma.ResultTest do
       a <- r1
       e <- re
       b <- r2
-      pure a + b
+      pure a + e + b
     end
     assert r == re
   end
