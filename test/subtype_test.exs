@@ -75,7 +75,7 @@ defmodule Croma.SubtypeTest do
   end
 
   defmodule S1 do
-    use Croma.SubtypeOfString, pattern: ~r/^foo|bar$/
+    use Croma.SubtypeOfString, pattern: ~r/^foo|bar$/, default: "foo"
   end
 
   test "Croma.SubtypeOfString: validate/1" do
@@ -84,6 +84,10 @@ defmodule Croma.SubtypeTest do
     assert S1.validate("buz") == {:error, "validation error for #{S1}: \"buz\""}
     assert S1.validate(nil  ) == {:error, "validation error for #{S1}: nil"}
     assert S1.validate([]   ) == {:error, "validation error for #{S1}: []"}
+  end
+
+  test "Croma.SubtypeOfString: default/0" do
+    assert S1.default == "foo"
   end
 
   defmodule A1 do

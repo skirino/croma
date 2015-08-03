@@ -109,6 +109,12 @@ defmodule Croma.SubtypeOfString do
           end
         x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
       end
+
+      @default unquote(opts[:default])
+      if @default do
+        if !Regex.match?(@pattern, @default), do: raise ":default must be a valid string"
+        defun default() :: t, do: @default
+      end
     end
   end
 end
