@@ -188,6 +188,15 @@ defmodule Croma.SubtypeOfList do
         true ->
           defp valid_length?(len), do: @min <= len && len <= @max
       end
+
+      @default unquote(opts[:default])
+      if @default do
+        if Enum.any?(@default, fn e -> unquote(mod).validate(e) |> R.error? end), do: raise ":default must be a valid list"
+        len = length(@default)
+        if !is_nil(@min) && len < @min, do: raise ":default must be a valid list"
+        if !is_nil(@max) && @max < len, do: raise ":default must be a valid list"
+        defun default() :: t, do: @default
+      end
     end
   end
 end

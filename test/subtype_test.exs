@@ -112,10 +112,10 @@ defmodule Croma.SubtypeTest do
   end
 
   defmodule L1 do
-    use Croma.SubtypeOfList, elem_module: I1
+    use Croma.SubtypeOfList, elem_module: I1, default: []
   end
   defmodule L2 do
-    use Croma.SubtypeOfList, elem_module: I2, max_length: 3
+    use Croma.SubtypeOfList, elem_module: I2, max_length: 3, default: [0, 0, 0]
   end
   defmodule L3 do
     use Croma.SubtypeOfList, elem_module: I3, min_length: 2
@@ -143,5 +143,12 @@ defmodule Croma.SubtypeTest do
     assert L4.validate([-5, 0, 5]  ) == {:ok   , [-5, 0, 5]}
     assert L4.validate([-5, 10]    ) == {:error, "validation error for #{I4}: 10"}
     assert L4.validate([0, 0, 0, 0]) == {:error, "validation error for #{L4}: [0, 0, 0, 0]"}
+  end
+
+  test "Croma.SubtypeOfList: default/0" do
+    assert L1.default == []
+    assert L2.default == [0, 0, 0]
+    catch_error L3.default
+    catch_error L4.default
   end
 end
