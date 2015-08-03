@@ -65,8 +65,13 @@ defmodule Croma.Defun do
       clause_defs = Enum.map(defs, &to_clause_definition(def_or_defp, fname, &1))
       {:__block__, env, clause_defs}
     else
-      arg_names = (List.first(args) || []) |> Keyword.keys |> Enum.map(&Macro.var(&1, nil))
-      {def_or_defp, env, [{fname, env, arg_names}, [do: block]]}
+      # Ugly workaround for variable context issues with nested macro invocations: Overwrite context of every variables
+      arg_names = (List.first(args) || []) |> Keyword.keys |> Enum.map(&Macro.var(&1, Croma))
+      block_with_modified_context = Macro.prewalk(block, fn
+        {name, meta, context} when is_atom(context) -> {name, meta, Croma}
+        t -> t
+      end)
+      {def_or_defp, env, [{fname, env, arg_names}, [do: block_with_modified_context]]}
     end
   end
 
