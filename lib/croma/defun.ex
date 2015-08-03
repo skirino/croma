@@ -18,7 +18,9 @@ defmodule Croma.Defun do
     defun_impl(:defpt, fun, ret_type, type_params, block)
   end
 
-  def defun_impl(def_or_defp, fun, ret_type, type_params, block) do
+  def defun_impl(def_or_defp, {fname, env, args0}, ret_type, type_params, block) do
+    args = if is_atom(args0), do: [], else: args0 # handle function definition without parameter list: it looks like a variable
+    fun = {fname, env, args}
     spec = typespec(fun, ret_type, type_params)
     bodyless = bodyless_function(def_or_defp, fun)
     fundef = function_definition(def_or_defp, fun, block)
@@ -37,7 +39,7 @@ defmodule Croma.Defun do
   end
 
   defp arg_types(args) do
-    (List.first(args || []) || [])
+    (List.first(args) || [])
     |> Keyword.values
     |> Enum.map(fn
       {:\\, _, [type, _default]} -> type
@@ -46,7 +48,7 @@ defmodule Croma.Defun do
   end
 
   defp bodyless_function(def_or_defp, {fname, env, args}) do
-    arg_exprs = (List.first(args || []) || [])
+    arg_exprs = (List.first(args) || [])
     |> Enum.map(fn
       {name, {:\\, _, [_type, default]}} -> {:\\, [], [{name, [], Elixir}, default]}
       {name, _type}                      -> {name, [], Elixir}
@@ -63,7 +65,7 @@ defmodule Croma.Defun do
       clause_defs = Enum.map(defs, &to_clause_definition(def_or_defp, fname, &1))
       {:__block__, env, clause_defs}
     else
-      arg_names = (List.first(args || []) || []) |> Keyword.keys |> Enum.map(&({&1, [], nil}))
+      arg_names = (List.first(args) || []) |> Keyword.keys |> Enum.map(&Macro.var(&1, nil))
       {def_or_defp, env, [{fname, env, arg_names}, [do: block]]}
     end
   end

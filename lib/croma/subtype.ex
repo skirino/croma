@@ -45,7 +45,7 @@ defmodule Croma.SubtypeOfInt do
         if !is_integer(@default)           , do: raise ":default must be an integer"
         if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
         if !is_nil(@max) && @max < @default, do: raise ":default must be a valid value"
-        defun default() :: t, do: @default
+        defun default :: t, do: @default
       end
     end
   end
@@ -86,7 +86,7 @@ defmodule Croma.SubtypeOfFloat do
         if !is_float(@default)             , do: raise ":default must be a float"
         if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
         if !is_nil(@max) && @max < @default, do: raise ":default must be a valid value"
-        defun default() :: t, do: @default
+        defun default :: t, do: @default
       end
     end
   end
@@ -113,7 +113,7 @@ defmodule Croma.SubtypeOfString do
       @default unquote(opts[:default])
       if @default do
         if !Regex.match?(@pattern, @default), do: raise ":default must be a valid string"
-        defun default() :: t, do: @default
+        defun default :: t, do: @default
       end
     end
   end
@@ -150,7 +150,7 @@ defmodule Croma.SubtypeOfAtom do
       @default unquote(opts[:default])
       if @default do
         unless @default in unquote(value_atoms), do: raise ":default must be a valid atom"
-        defun default() :: t, do: @default
+        defun default :: t, do: @default
       end
     end
   end
@@ -195,7 +195,7 @@ defmodule Croma.SubtypeOfList do
         len = length(@default)
         if !is_nil(@min) && len < @min, do: raise ":default must be a valid list"
         if !is_nil(@max) && @max < len, do: raise ":default must be a valid list"
-        defun default() :: t, do: @default
+        defun default :: t, do: @default
       end
     end
   end
