@@ -2,16 +2,16 @@ defmodule Croma.SubtypeTest do
   use ExUnit.Case
 
   defmodule I1 do
-    use Croma.SubtypeOfInt, [min: 1]
+    use Croma.SubtypeOfInt, min: 1
   end
   defmodule I2 do
-    use Croma.SubtypeOfInt, [min: 0, max: 10]
+    use Croma.SubtypeOfInt, min: 0, max: 10
   end
   defmodule I3 do
-    use Croma.SubtypeOfInt, [max: -1]
+    use Croma.SubtypeOfInt, max: -1, default: -5
   end
   defmodule I4 do
-    use Croma.SubtypeOfInt, [min: -5, max: 5]
+    use Croma.SubtypeOfInt, min: -5, max: 5, default: 0
   end
 
   test "Croma.SubtypeOfInt: validate/1" do
@@ -33,6 +33,13 @@ defmodule Croma.SubtypeTest do
 
     assert I1.validate(nil) == {:error, "validation error for #{I1}: nil"}
     assert I1.validate([] ) == {:error, "validation error for #{I1}: []"}
+  end
+
+  test "Croma.SubtypeOfInt: default/0" do
+    catch_error I1.default
+    catch_error I2.default
+    assert I3.default == -5
+    assert I4.default ==  0
   end
 
   defmodule F1 do
