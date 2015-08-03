@@ -146,6 +146,12 @@ defmodule Croma.SubtypeOfAtom do
           end
         x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
       end
+
+      @default unquote(opts[:default])
+      if @default do
+        unless @default in unquote(value_atoms), do: raise ":default must be a valid atom"
+        defun default() :: t, do: @default
+      end
     end
   end
 end
