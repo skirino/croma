@@ -19,6 +19,11 @@ defmodule Croma.Result do
     ({:error, _  }, default) -> default
   end
 
+  defun get!(result: t(a)) :: a when a: any do
+    {:ok   , val} -> val
+    {:error, _  } -> raise "result is not :ok; element not present"
+  end
+
   defun ok?(result: t(a)) :: boolean when a: any do
     {:ok   , _} -> true
     {:error, _} -> false
