@@ -80,6 +80,14 @@ defmodule Croma.SubtypeOfFloat do
             x                                              -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
           end
       end
+
+      @default unquote(opts[:default])
+      if @default do
+        if !is_float(@default)             , do: raise ":default must be a float"
+        if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
+        if !is_nil(@max) && @max < @default, do: raise ":default must be a valid value"
+        defun default() :: t, do: @default
+      end
     end
   end
 end

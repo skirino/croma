@@ -43,13 +43,13 @@ defmodule Croma.SubtypeTest do
   end
 
   defmodule F1 do
-    use Croma.SubtypeOfFloat, [min: -5.0]
+    use Croma.SubtypeOfFloat, min: -5.0
   end
   defmodule F2 do
-    use Croma.SubtypeOfFloat, [max: 10.0]
+    use Croma.SubtypeOfFloat, max: 10.0, default: 1.0
   end
   defmodule F3 do
-    use Croma.SubtypeOfFloat, [min: 0.0, max: 1.5]
+    use Croma.SubtypeOfFloat, min: 0.0, max: 1.5, default: 0.5
   end
 
   test "Croma.SubtypeOfFloat: validate/1" do
@@ -66,6 +66,12 @@ defmodule Croma.SubtypeTest do
 
     assert F1.validate(nil) == {:error, "validation error for #{F1}: nil"}
     assert F1.validate([] ) == {:error, "validation error for #{F1}: []"}
+  end
+
+  test "Croma.SubtypeOfFloat: default/0" do
+    catch_error F1.default
+    assert F2.default == 1.0
+    assert F3.default == 0.5
   end
 
   defmodule S1 do
