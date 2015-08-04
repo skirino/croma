@@ -22,10 +22,11 @@ defmodule Croma.Mixfile do
 
   defp deps do
     [
-      {:earmark, "~> 0.1", only: :dev},
-      {:ex_doc, "~> 0.7", only: :dev},
       {:excheck, "~> 0.2", only: :test},
       {:triq, github: "krestenkrab/triq", only: :test},
+      {:earmark, "~> 0.1", only: :dev},
+      {:ex_doc, "~> 0.7", only: :dev},
+      {:inch_ex, only: :docs},
     ]
   end
 
@@ -40,7 +41,7 @@ defmodule Croma.Mixfile do
       files:        ["lib", "mix.exs", "README.md", "LICENSE"],
       contributors: ["Shunsuke Kirino"],
       licenses:     ["MIT"],
-      links:        %{"GitHub repository" => "https://github.com/skirino/croma"},
+      links:        %{"GitHub repository" => "https://github.com/skirino/croma", "Doc" => "http://hexdocs.pm/croma/"},
     ]
   end
 end

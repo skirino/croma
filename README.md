@@ -13,7 +13,7 @@ Elixir macro utilities.
 
 - Add `:croma` as a mix dependency.
 - `$ mix deps.get`
-- Add `use Croma` to import all macros defined in this package.
+- Add `use Croma` to import macros defined in this package.
 - Hack!
 
 ## Defining functions
