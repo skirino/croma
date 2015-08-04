@@ -83,4 +83,11 @@ defmodule Croma.ResultTest do
     assert !R.error?({:ok   , 1   })
     assert  R.error?({:error, :foo})
   end
+
+  test "try/1" do
+    f1 = fn -> 1 end
+    fe = fn -> raise "foo" end
+    assert R.try(f1) == {:ok   , 1}
+    assert R.try(fe) == {:error, %RuntimeError{message: "foo"}}
+  end
 end

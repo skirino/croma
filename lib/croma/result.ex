@@ -32,4 +32,12 @@ defmodule Croma.Result do
   defun error?(result: t(a)) :: boolean when a: any do
     !ok?(result)
   end
+
+  defun try(f: (-> a)) :: t(a) when a: any do
+    try do
+      {:ok, f.()}
+    rescue
+      e -> {:error, e}
+    end
+  end
 end
