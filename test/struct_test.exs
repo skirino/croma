@@ -59,4 +59,28 @@ defmodule Croma.StructTest do
     assert S1.validate(nil) == {:error, "validation error for #{S1}: nil"}
     assert S1.validate("" ) == {:error, "validation error for #{S1}: \"\""}
   end
+
+  test "Croma.Struct: update/2" do
+    s = S1.new(field1: 1, field2: 4)
+
+    assert S1.update(s,  [ field1:    2               ]) == {:ok, %S1{field1: 2, field2: 4}}
+    assert S1.update(s, %{"field1" => 2               }) == {:ok, %S1{field1: 2, field2: 4}}
+    assert S1.update(s,  [                field2:    5]) == {:ok, %S1{field1: 1, field2: 5}}
+    assert S1.update(s, %{               "field2" => 5}) == {:ok, %S1{field1: 1, field2: 5}}
+    assert S1.update(s,  [ field1:    2,  field2:    5]) == {:ok, %S1{field1: 2, field2: 5}}
+    assert S1.update(s, %{"field1" => 2, "field2" => 5}) == {:ok, %S1{field1: 2, field2: 5}}
+
+    assert S1.update(s,  [ field1:    -1,              ]) == {:error, "validation error for #{I1}: -1"}
+    assert S1.update(s, %{"field1" => -1,              }) == {:error, "validation error for #{I1}: -1"}
+    assert S1.update(s,  [                 field2:    2]) == {:error, "validation error for #{I2}: 2"}
+    assert S1.update(s, %{                "field2" => 2}) == {:error, "validation error for #{I2}: 2"}
+    assert S1.update(s,  [ field1:    -1,  field2:    2]) == {:error, "validation error for #{I1}: -1"}
+    assert S1.update(s, %{"field1" => -1, "field2" => 2}) == {:error, "validation error for #{I1}: -1"}
+
+    assert S1.update(s, [nonexisting: 0]) == {:ok, s}
+
+    # reject different struct
+    catch_error S1.update(%{}, %{})
+    catch_error S1.update(%Regex{}, %{})
+  end
 end
