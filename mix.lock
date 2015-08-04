@@ -1,2 +1,4 @@
-%{"excheck": {:hex, :excheck, "0.2.3"},
+%{"earmark": {:hex, :earmark, "0.1.17"},
+  "ex_doc": {:hex, :ex_doc, "0.7.3"},
+  "excheck": {:hex, :excheck, "0.2.3"},
   "triq": {:git, "git://github.com/krestenkrab/triq.git", "2fe1529bc1460e0a8cd356ef7a8fda9e43120445", []}}

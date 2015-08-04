@@ -11,6 +11,8 @@ defmodule Croma.Mixfile do
       deps:            deps,
       description:     description,
       package:         package,
+      source_url:      "https://github.com/skirino/croma",
+      homepage_url:    "https://github.com/skirino/croma",
     ]
   end
 
@@ -20,6 +22,8 @@ defmodule Croma.Mixfile do
 
   defp deps do
     [
+      {:earmark, "~> 0.1", only: :dev},
+      {:ex_doc, "~> 0.7", only: :dev},
       {:excheck, "~> 0.2", only: :test},
       {:triq, github: "krestenkrab/triq", only: :test},
     ]

@@ -1,16 +1,74 @@
 defmodule Croma.Defun do
+  @moduledoc """
+  Module that provides `Croma.Defun.defun/2` macro.
+  """
+
+  @doc """
+  Defines a function together with its typespec.
+  This provides a lighter-weight syntax for functions with type specifications and functions with multiple clauses.
+
+  ## Example
+  The following examples assume that `Croma.Defun` is imported
+  (you can import it by using `Croma`).
+
+      defun f(a: integer, b: String.t) :: String.t do
+        "\#{a} \#{b}"
+      end
+
+  The code above is expanded to the following function definition.
+
+      @spec f(integer, String.t) :: String.t
+      def f(a, b) do
+        "\#{a} \#{b}"
+      end
+
+  Function with multiple clauses and/or pattern matching on parameters can be defined
+  in the same way as `case do ... end`:
+
+      defun dumbmap(as: [a], f: (a -> b)) :: [b] when a: term, b: term do
+        ([]     , _) -> []
+        ([h | t], f) -> [f.(h) | dumbmap(t, f)]
+      end
+
+  is converted to
+
+      @spec dumbmap([a], (a -> b)) :: [b] when a: term, b: term
+      def dumbmap(as, f)
+      def dumbmap([], _) do
+        []
+      end
+      def dumbmap([h | t], f) do
+        [f.(h) | dumbmap(t, f)]
+      end
+
+  ## Known limitations
+  - Pattern matching against function parameters should use `(param1, param2) when guards -> block` style.
+  In other words, pattern matching in the form of `defun f({:ok, _})` is not supported.
+  - Overloaded typespecs are not supported.
+  """
   defmacro defun({:::, _, [fun, ret_type]}, [do: block]) do
     defun_impl(:def, fun, ret_type, [], block)
   end
   defmacro defun({:when, _, [{:::, _, [fun, ret_type]}, type_params]}, [do: block]) do
     defun_impl(:def, fun, ret_type, type_params, block)
   end
+
+  @doc """
+  Defines a private function together with its typespec.
+  See `defun/2` for usage of this macro.
+  """
   defmacro defunp({:::, _, [fun, ret_type]}, [do: block]) do
     defun_impl(:defp, fun, ret_type, [], block)
   end
   defmacro defunp({:when, _, [{:::, _, [fun, ret_type]}, type_params]}, [do: block]) do
     defun_impl(:defp, fun, ret_type, type_params, block)
   end
+
+  @doc """
+  Defines a unit-testable private function together with its typespec.
+  See `defun/2` for usage of this macro.
+  See also `Croma.Defpt.defpt/2`.
+  """
   defmacro defunpt({:::, _, [fun, ret_type]}, [do: block]) do
     defun_impl(:defpt, fun, ret_type, [], block)
   end
@@ -18,7 +76,7 @@ defmodule Croma.Defun do
     defun_impl(:defpt, fun, ret_type, type_params, block)
   end
 
-  def defun_impl(def_or_defp, {fname, env, args0}, ret_type, type_params, block) do
+  defp defun_impl(def_or_defp, {fname, env, args0}, ret_type, type_params, block) do
     args = if is_atom(args0), do: [], else: args0 # handle function definition without parameter list: it looks like a variable
     fun = {fname, env, args}
     spec = typespec(fun, ret_type, type_params)
