@@ -41,4 +41,22 @@ defmodule Croma.StructTest do
     assert S1.new(%{ field1:     2,  field2:    5}) == %S1{field1: 2, field2: 5}
     assert S1.new(%{"field1" =>  2, "field2" => 5}) == %S1{field1: 2, field2: 5}
   end
+
+  test "Croma.Struct: validate/1" do
+    assert S1.validate( [                             ]) == {:error, "validation error for #{I1}: nil"}
+    assert S1.validate(%{                             }) == {:error, "validation error for #{I1}: nil"}
+    assert S1.validate( [ field1:    2                ]) == {:error, "validation error for #{I2}: nil"}
+    assert S1.validate(%{"field1" => 2                }) == {:error, "validation error for #{I2}: nil"}
+    assert S1.validate( [                 field2:    5]) == {:error, "validation error for #{I1}: nil"}
+    assert S1.validate(%{                "field2" => 5}) == {:error, "validation error for #{I1}: nil"}
+    assert S1.validate( [ field1:    -1,  field2:    5]) == {:error, "validation error for #{I1}: -1"}
+    assert S1.validate(%{"field1" => -1, "field2" => 5}) == {:error, "validation error for #{I1}: -1"}
+    assert S1.validate( [ field1:     1,  field2:    2]) == {:error, "validation error for #{I2}: 2"}
+    assert S1.validate(%{"field1" =>  1, "field2" => 2}) == {:error, "validation error for #{I2}: 2"}
+    assert S1.validate( [ field1:     1,  field2:    5]) == {:ok   , %S1{field1: 1, field2: 5}}
+    assert S1.validate(%{"field1" =>  1, "field2" => 5}) == {:ok   , %S1{field1: 1, field2: 5}}
+
+    assert S1.validate(nil) == {:error, "validation error for #{S1}: nil"}
+    assert S1.validate("" ) == {:error, "validation error for #{S1}: \"\""}
+  end
 end

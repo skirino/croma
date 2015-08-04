@@ -48,6 +48,21 @@ defmodule Croma.Struct do
         |> R.get!
         |> (fn kvs -> struct(__MODULE__, kvs) end).()
       end
+
+      defun validate(dict: Dict.t) :: R.t(t) do
+        dict when is_list(dict) or is_map(dict) ->
+          Enum.map(@fields, fn {field, mod} ->
+            case Croma.Struct.dict_get2(dict, field) do
+              {:ok, v} -> v
+              :error   -> nil
+            end
+            |> mod.validate
+            |> R.map(&{field, &1})
+          end)
+          |> R.sequence
+          |> R.map(fn kvs -> struct(__MODULE__, kvs) end)
+        x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+      end
     end
   end
 end
