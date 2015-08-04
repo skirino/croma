@@ -2,6 +2,8 @@ Croma
 =====
 
 Elixir macro utilities.
+- [API Documentation](http://hexdocs.pm/croma/)
+- [Hex package information](https://hex.pm/packages/croma)
 
 [![Build Status](https://travis-ci.org/skirino/croma.svg)](https://travis-ci.org/skirino/croma)
 [![Hex.pm](http://img.shields.io/hexpm/v/croma.svg)](https://hex.pm/packages/croma)
@@ -110,3 +112,60 @@ This module implements `Croma.Monad` interface.
 
 - Implementation of `Croma.Monad` for lists.
 `Croma.List.t(a)` is just an alias to `[a]`.
+
+
+
+## Working with structs
+
+### `Croma.Struct`
+
+- Utility module to define structs with type specification and validation functions.
+
+    ```ex
+    iex> defmodule F do
+    ...>   @type t :: integer
+    ...>   def validate(i) when is_integer(i), do: {:ok, i}
+    ...>   def validate(_), do: {:error, :invalid_f}
+    ...>   def default, do: 0
+    ...> end
+
+    ...> defmodule S do
+    ...>   use Croma.Struct, f: F
+    ...> end
+
+    ...> S.validate([f: 5])
+    {:ok, %S{f: 5}}
+
+    ...> S.validate(%{f: "not_an_integer"})
+    {:error, :invalid_f}
+
+    ...> s = S.new([])
+    %S{f: 0}
+
+    ...> S.update(s, [f: 2])
+    {:ok, %S{f: 2}}
+
+    ...> S.update(s, %{"f" => "not_an_integer"})
+    {:error, :invalid_f}
+    ```
+
+- Some helper modules for "per-field module"s that are passed as options to `use Croma.Struct` (e.g. `F` in the above example) are available.
+See `Croma.SubtypeOf*` in [API Documentation](http://hexdocs.pm/croma/).
+
+### `Croma.StructCallSyntax`
+
+- A new syntax (which uses `~>` operator) for calls to functions that take structs as 1st argument.
+
+    ```ex
+    iex> import Croma.StructCallSyntax
+    ...> defmodule S do
+    ...>   defstruct [:a, :b]
+    ...>   def f(s, i) do
+    ...>     s.a + s.b + i
+    ...>   end
+    ...> end
+
+    ...> s = %S{a: 1, b: 2}
+    ...> s~>f(3)              # => S.f(s, 3)
+    6
+    ```
