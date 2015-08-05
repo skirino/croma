@@ -14,6 +14,7 @@ defmodule Croma do
     quote do
       import Croma.Defpt
       import Croma.Defun
+      require Croma.TypeGen
       require Croma.Result
       require Croma.List
     end
