@@ -1,4 +1,5 @@
 import Croma.Defun
+alias Croma.Result, as: R
 
 defmodule Croma.TypeGen do
   @moduledoc """
@@ -49,6 +50,31 @@ defmodule Croma.TypeGen do
         defun validate(value: term) :: R.t(t) do
           nil -> {:ok, nil}
           v   -> unquote(mod).validate(v)
+        end
+      end
+      Module.create(module_name, q, location)
+    end
+    module_name
+  end
+
+  @doc """
+  An ad-hoc version of `Croma.SubtypeOfList` (options are omitted).
+  Usage of `list_of/1` macro is the same as `nilable/1`.
+  """
+  defmacro list_of(mod) do
+    list_of_impl(Macro.expand(mod, __CALLER__), Macro.Env.location(__CALLER__))
+  end
+
+  defp list_of_impl(mod, location) do
+    module_name = Module.concat([Croma.TypeGen.ListOf, mod])
+    if !module_defined?(module_name) do
+      q = quote do
+        @type t :: [unquote(mod).t]
+
+        defun validate(list: term) :: R.t(t) do
+          l when is_list(l) ->
+            Enum.map(l, &unquote(mod).validate/1) |> R.sequence
+          x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
         end
       end
       Module.create(module_name, q, location)
