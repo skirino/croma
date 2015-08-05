@@ -236,6 +236,8 @@ defmodule Croma.SubtypeOfList do
 
   Options:
   - `:elem_module` - A module that defines the type of the element. The module must provide `@type t` and `@spec validate(term) :: Croma.Result.t(t)`.
+  - `:min_length` - Minimum length of valid values of this type (inclusive).
+  - `:max_length` - Maximum length of valid values of this type (inclusive).
   - `:default` - Default value for this type. Passing this option generates `default/0`.
 
   ## Examples
