@@ -1,6 +1,10 @@
 defmodule Croma.StructTest do
   use ExUnit.Case
 
+  defmodule EmptyStructShouldBeSuccessfullyCompiled do
+    use Croma.Struct, []
+  end
+
   defmodule I1 do
     use Croma.SubtypeOfInt, min: 0, max: 10, default: 0
   end
