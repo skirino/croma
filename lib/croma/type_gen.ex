@@ -58,7 +58,8 @@ defmodule Croma.TypeGen do
   end
 
   @doc """
-  An ad-hoc version of `Croma.SubtypeOfList` (options are omitted).
+  An ad-hoc version of `Croma.SubtypeOfList`.
+  Options for `Croma.SubtypeOfList` are not available in `list_of/1`.
   Usage of `list_of/1` macro is the same as `nilable/1`.
   """
   defmacro list_of(mod) do
