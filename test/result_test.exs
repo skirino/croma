@@ -76,6 +76,21 @@ defmodule Croma.ResultTest do
     assert R.get({:error, :foo}, 0) == 0
   end
 
+  test "or_else/2" do
+    o1 = {:ok, 1}
+    o2 = {:ok, 2}
+    e1 = {:error, :foo}
+    e2 = {:error, :bar}
+    fo = fn -> o2 end
+    fe = fn -> e2 end
+    assert R.or_else(o1, o2) == o1
+    assert R.or_else(o1, e2) == o1
+    assert R.or_else(e1, o2) == o2
+    assert R.or_else(e1, e2) == e2
+    assert R.or_else(e1, fo) == o2
+    assert R.or_else(e1, fe) == e2
+  end
+
   test "ok?/1 and error?/1" do
     assert  R.ok?({:ok   , 1   })
     assert !R.ok?({:error, :foo})

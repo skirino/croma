@@ -100,6 +100,20 @@ defmodule Croma.Result do
   end
 
   @doc """
+  Tries to take one `Croma.Result` in `:ok` state from the given two.
+  If the first `Croma.Result` is in `:ok` state it is returned.
+  Otherwise the second `Croma.Result` is returned.
+  Note that the second argument can be a function that returns a `Croma.Result`,
+  in order to avoid computation for the second result by short-circuiting.
+  """
+  defun or_else(result1: t(a), result2: t(a) | (-> t(a))) :: t(a) when a: any do
+    ({:ok   , _} = r1, _               )                     -> r1
+    ({:error, _}     , {:ok   , _} = r2)                     -> r2
+    ({:error, _}     , {:error, _} = r2)                     -> r2
+    ({:error, _}     , f               ) when is_function(f) -> f.()
+  end
+
+  @doc """
   Returns true if the given argument is in the form of `{:ok, _value}`.
   """
   defun ok?(result: t(a)) :: boolean when a: any do
