@@ -6,6 +6,7 @@ Elixir macro utilities.
 - [Hex package information](https://hex.pm/packages/croma)
 
 [![Build Status](https://travis-ci.org/skirino/croma.svg)](https://travis-ci.org/skirino/croma)
+[![Coverage Status](https://coveralls.io/repos/skirino/croma/badge.png?branch=master)](https://coveralls.io/r/skirino/croma?branch=master)
 [![Hex.pm](http://img.shields.io/hexpm/v/croma.svg)](https://hex.pm/packages/croma)
 [![Hex.pm](http://img.shields.io/hexpm/dt/croma.svg)](https://hex.pm/packages/croma)
 [![Inline docs](http://inch-ci.org/github/skirino/croma.svg)](http://inch-ci.org/github/skirino/croma)
