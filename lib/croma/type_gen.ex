@@ -42,19 +42,15 @@ defmodule Croma.TypeGen do
   end
 
   defp nilable_impl(mod, location) do
-    module_name = Module.concat([Croma.TypeGen.Nilable, mod])
-    if !module_defined?(module_name) do
-      q = quote do
-        @type t :: nil | unquote(mod).t
+    q = quote do
+      @type t :: nil | unquote(mod).t
 
-        defun validate(value: term) :: R.t(t) do
-          nil -> {:ok, nil}
-          v   -> unquote(mod).validate(v)
-        end
+      defun validate(value: term) :: R.t(t) do
+        nil -> {:ok, nil}
+        v   -> unquote(mod).validate(v)
       end
-      Module.create(module_name, q, location)
     end
-    module_name
+    ensure_module_defined(Croma.TypeGen.Nilable, mod, q, location)
   end
 
   @doc """
@@ -67,27 +63,26 @@ defmodule Croma.TypeGen do
   end
 
   defp list_of_impl(mod, location) do
-    module_name = Module.concat([Croma.TypeGen.ListOf, mod])
-    if !module_defined?(module_name) do
-      q = quote do
-        @type t :: [unquote(mod).t]
+    q = quote do
+      @type t :: [unquote(mod).t]
 
-        defun validate(list: term) :: R.t(t) do
-          l when is_list(l) ->
-            Enum.map(l, &unquote(mod).validate/1) |> R.sequence
-          x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
-        end
+      defun validate(list: term) :: R.t(t) do
+        l when is_list(l) ->
+          Enum.map(l, &unquote(mod).validate/1) |> R.sequence
+        x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
       end
-      Module.create(module_name, q, location)
     end
-    module_name
+    ensure_module_defined(Croma.TypeGen.ListOf, mod, q, location)
   end
 
-  defp module_defined?(mod) do
+  defp ensure_module_defined(prefix, mod, quoted_expr, location) do
     try do
-      !!mod.module_info
+      Module.safe_concat(prefix, mod)
     rescue
-      _ -> false
+      _ in ArgumentError ->
+        name = Module.concat(prefix, mod)
+        Module.create(name, quoted_expr, location)
+        name
     end
   end
 end
