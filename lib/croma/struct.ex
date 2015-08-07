@@ -95,10 +95,11 @@ defmodule Croma.Struct do
   defmacro __using__(fields) do
     %Macro.Env{module: module} = __CALLER__
 
-    quote context: Croma do
-      @fields unquote(fields)
+    quote context: Croma, bind_quoted: [module: module, fields: fields] do
+      @fields fields
       defstruct Croma.Struct.field_default_pairs(@fields)
-      @type t :: %unquote(module){unquote_splicing(Croma.Struct.field_type_pairs(fields))}
+      field_type_pairs = Croma.Struct.field_type_pairs(@fields)
+      @type t :: %unquote(module){unquote_splicing(field_type_pairs)}
 
       @doc """
       Returns a new instance of #{__MODULE__} by using the given `dict` and the default value of each field.
