@@ -151,7 +151,9 @@ This module implements `Croma.Monad` interface.
     ```
 
 - Some helper modules for "per-field module"s that are passed as options to `use Croma.Struct` (e.g. `F` in the above example) are available.
-See `Croma.SubtypeOf*` in [API Documentation](http://hexdocs.pm/croma/).
+    - `Croma.SubtypeOf*`
+    - `Croma.TypeGen`
+    - `Croma.Boolean`
 
 ### `Croma.StructCallSyntax`
 
