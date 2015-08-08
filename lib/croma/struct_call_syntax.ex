@@ -1,6 +1,6 @@
 defmodule Croma.StructCallSyntax do
   @moduledoc """
-  This module provides a new syntax with `~>` operator for calls to functions that take structs as 1st argument.
+  This module provides a new syntax with `~>` operator for calls to functions that take structs as 1st arguments.
 
   To enable the syntax `import` this module:
 
@@ -10,14 +10,14 @@ defmodule Croma.StructCallSyntax do
   It is necessary to explicitly `import` this module.
 
   ## Examples
-      iex> import Croma.StructCallSyntax
-      ...> defmodule S do
+      iex> defmodule S do
       ...>   defstruct [:a, :b]
       ...>   def f(s, i) do
       ...>     s.a + s.b + i
       ...>   end
       ...> end
 
+      ...> import Croma.StructCallSyntax
       ...> s = %S{a: 1, b: 2}
       ...> s~>f(3)              # => S.f(s, 3)
       6
