@@ -157,17 +157,17 @@ This module implements `Croma.Monad` interface.
 
 ### `Croma.StructCallSyntax`
 
-- A new syntax (which uses `~>` operator) for calls to functions that take structs as 1st argument.
+- A new syntax (which uses `~>` operator) for calls to functions that take structs as 1st arguments.
 
     ```ex
-    iex> import Croma.StructCallSyntax
-    ...> defmodule S do
+    iex> defmodule S do
     ...>   defstruct [:a, :b]
     ...>   def f(s, i) do
     ...>     s.a + s.b + i
     ...>   end
     ...> end
 
+    ...> import Croma.StructCallSyntax
     ...> s = %S{a: 1, b: 2}
     ...> s~>f(3)              # => S.f(s, 3)
     6
