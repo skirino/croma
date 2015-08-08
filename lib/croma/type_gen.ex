@@ -76,13 +76,13 @@ defmodule Croma.TypeGen do
   end
 
   defp ensure_module_defined(prefix, mod, quoted_expr, location) do
-    try do
-      Module.safe_concat(prefix, mod)
-    rescue
-      _ in ArgumentError ->
-        name = Module.concat(prefix, mod)
-        Module.create(name, quoted_expr, location)
-        name
+    name = Module.concat(prefix, mod)
+    # Use processes' registered names to remember whether already defined or not
+    # (Using `module_info/0` leads to try-rescue, which results in strange compilation error)
+    case Agent.start(fn -> nil end, [name: name]) do
+      {:ok   , _pid            } -> Module.create(name, quoted_expr, location)
+      {:error, _already_defined} -> nil
     end
+    name
   end
 end
