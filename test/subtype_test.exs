@@ -15,24 +15,24 @@ defmodule Croma.SubtypeTest do
   end
 
   test "Croma.SubtypeOfInt: validate/1" do
-    assert I1.validate(0) == {:error, "validation error for #{I1}: 0"}
+    assert I1.validate(0) == {:error, {:invalid_value, [I1]}}
     assert I1.validate(1) == {:ok   , 1}
 
-    assert I2.validate(-1) == {:error, "validation error for #{I2}: -1"}
+    assert I2.validate(-1) == {:error, {:invalid_value, [I2]}}
     assert I2.validate( 0) == {:ok   ,  0}
     assert I2.validate(10) == {:ok   , 10}
-    assert I2.validate(11) == {:error, "validation error for #{I2}: 11"}
+    assert I2.validate(11) == {:error, {:invalid_value, [I2]}}
 
     assert I3.validate(-1) == {:ok   , -1}
-    assert I3.validate( 0) == {:error, "validation error for #{I3}: 0"}
+    assert I3.validate( 0) == {:error, {:invalid_value, [I3]}}
 
-    assert I4.validate(-6) == {:error, "validation error for #{I4}: -6"}
+    assert I4.validate(-6) == {:error, {:invalid_value, [I4]}}
     assert I4.validate(-5) == {:ok   , -5}
     assert I4.validate( 5) == {:ok   ,  5}
-    assert I4.validate( 6) == {:error, "validation error for #{I4}: 6"}
+    assert I4.validate( 6) == {:error, {:invalid_value, [I4]}}
 
-    assert I1.validate(nil) == {:error, "validation error for #{I1}: nil"}
-    assert I1.validate([] ) == {:error, "validation error for #{I1}: []"}
+    assert I1.validate(nil) == {:error, {:invalid_value, [I1]}}
+    assert I1.validate([] ) == {:error, {:invalid_value, [I1]}}
   end
 
   test "Croma.SubtypeOfInt: default/0" do
@@ -127,21 +127,21 @@ defmodule Croma.SubtypeTest do
   test "Croma.SubtypeOfList: validate/1" do
     assert L1.validate([] ) == {:ok   , []}
     assert L1.validate([1]) == {:ok   , [1]}
-    assert L1.validate([0]) == {:error, "validation error for #{I1}: 0"}
+    assert L1.validate([0]) == {:error, {:invalid_value, [I1]}}
 
     assert L2.validate([]          ) == {:ok   , []}
     assert L2.validate([1, 2, 3]   ) == {:ok   , [1, 2, 3]}
-    assert L2.validate([1, 2, 11]  ) == {:error, "validation error for #{I2}: 11"}
+    assert L2.validate([1, 2, 11]  ) == {:error, {:invalid_value, [I2]}}
     assert L2.validate([1, 2, 3, 4]) == {:error, "validation error for #{L2}: [1, 2, 3, 4]"}
 
-    assert L3.validate([ 1]    ) == {:error, "validation error for #{I3}: 1"}
+    assert L3.validate([ 1]    ) == {:error, {:invalid_value, [I3]}}
     assert L3.validate([-1]    ) == {:error, "validation error for #{L3}: [-1]"}
     assert L3.validate([-1, -2]) == {:ok   , [-1, -2]}
 
     assert L4.validate([]          ) == {:error, "validation error for #{L4}: []"}
     assert L4.validate([-5]        ) == {:ok   , [-5]}
     assert L4.validate([-5, 0, 5]  ) == {:ok   , [-5, 0, 5]}
-    assert L4.validate([-5, 10]    ) == {:error, "validation error for #{I4}: 10"}
+    assert L4.validate([-5, 10]    ) == {:error, {:invalid_value, [I4]}}
     assert L4.validate([0, 0, 0, 0]) == {:error, "validation error for #{L4}: [0, 0, 0, 0]"}
   end
 

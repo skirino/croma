@@ -38,7 +38,7 @@ defmodule Croma.SubtypeOfInt do
           end
           defun validate(term: any) :: R.t(t) do
             i when is_integer(i) and i <= @max -> {:ok, i}
-            x                                  -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+            _                                  -> {:error, {:invalid_value, [__MODULE__]}}
           end
         is_nil(@max) ->
           cond do
@@ -48,13 +48,13 @@ defmodule Croma.SubtypeOfInt do
           end
           defun validate(term: any) :: R.t(t) do
             i when is_integer(i) and @min <= i -> {:ok, i}
-            x                                  -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+            _                                  -> {:error, {:invalid_value, [__MODULE__]}}
           end
         true ->
           @type t :: unquote(opts[:min]) .. unquote(opts[:max])
           defun validate(term: any) :: R.t(t) do
             i when is_integer(i) and @min <= i and i <= @max -> {:ok, i}
-            x                                                -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+            _                                                -> {:error, {:invalid_value, [__MODULE__]}}
           end
       end
 
