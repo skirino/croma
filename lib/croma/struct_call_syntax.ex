@@ -36,10 +36,9 @@ defmodule Croma.StructCallSyntax do
   """
 
   @doc """
-  A macro that provides a syntax that resembles function invocations in typical OOP languages.
+  A macro that provides a syntax that resembles method invocations in typical OOP languages.
 
-  The module that defines both the "receiver" struct (i.e. left hand side of `~>`) is extracted at run-time.
-  The extracted module must define the target function.
+  The module that defines the target function is extracted from the "receiver" struct (i.e. left hand side of `~>`) at run-time.
   The "receiver" is then passed as the 1st argument to the function.
   """
   defmacro struct ~> {f, _, atom} when is_atom(atom) do # without parameter list

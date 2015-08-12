@@ -111,7 +111,7 @@ defmodule Croma.Monad do
     def do_expr(module, [expr]) do
       case expr do
         {:pure, n, args} -> {{:., n, [module, :pure]}, n, args}
-        _                  -> expr
+        _                -> expr
       end
     end
     def do_expr(module, [expr | rest]) do
