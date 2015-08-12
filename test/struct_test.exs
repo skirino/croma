@@ -71,12 +71,12 @@ defmodule Croma.StructTest do
     assert S1.update(s,  [ field1:    2,  field2:    true]) == {:ok, %S1{field1: 2, field2: true }}
     assert S1.update(s, %{"field1" => 2, "field2" => true}) == {:ok, %S1{field1: 2, field2: true }}
 
-    assert S1.update(s,  [ field1:    -1,                ]) == {:error, {:invalid_value, [I1]}}
-    assert S1.update(s, %{"field1" => -1,                }) == {:error, {:invalid_value, [I1]}}
-    assert S1.update(s,  [                 field2:    0  ]) == {:error, {:invalid_value, [Croma.Boolean]}}
-    assert S1.update(s, %{                "field2" => nil}) == {:error, {:invalid_value, [Croma.Boolean]}}
-    assert S1.update(s,  [ field1:    -1,  field2:    0  ]) == {:error, {:invalid_value, [I1]}}
-    assert S1.update(s, %{"field1" => -1, "field2" => nil}) == {:error, {:invalid_value, [I1]}}
+    assert S1.update(s,  [ field1:    -1,                ]) == {:error, {:invalid_value, [S1, I1]}}
+    assert S1.update(s, %{"field1" => -1,                }) == {:error, {:invalid_value, [S1, I1]}}
+    assert S1.update(s,  [                 field2:    0  ]) == {:error, {:invalid_value, [S1, Croma.Boolean]}}
+    assert S1.update(s, %{                "field2" => nil}) == {:error, {:invalid_value, [S1, Croma.Boolean]}}
+    assert S1.update(s,  [ field1:    -1,  field2:    0  ]) == {:error, {:invalid_value, [S1, I1]}}
+    assert S1.update(s, %{"field1" => -1, "field2" => nil}) == {:error, {:invalid_value, [S1, I1]}}
 
     assert S1.update(s, [nonexisting: 0]) == {:ok, s}
 

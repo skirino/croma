@@ -147,15 +147,17 @@ defmodule Croma.Struct do
       """
       defun update(s: t, dict: Dict.t) :: R.t(t) do
         (%{__struct__: __MODULE__} = s, dict) when is_list(dict) or is_map(dict) ->
-          Enum.map(@fields, fn {field, mod} ->
+          kv_results = Enum.map(@fields, fn {field, mod} ->
             case Croma.Struct.dict_get2(dict, field) do
               {:ok, v} -> mod.validate(v) |> R.map(&{field, &1})
               :error   -> nil
             end
           end)
           |> Enum.reject(&is_nil/1)
-          |> R.sequence
-          |> R.map(fn kvs -> struct(s, kvs) end)
+          case R.sequence(kv_results) do
+            {:ok   , kvs   } -> {:ok, struct(s, kvs)}
+            {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+          end
       end
     end
   end

@@ -35,7 +35,7 @@ defmodule Croma.TypeTest do
     assert S.validate(%{i: 10, l: []})         == S.update(s, [i: 10])
     assert S.validate(%{i: 0 , l: [0, 1, 2]})  == S.update(s, [l: [0, 1, 2]])
     assert S.validate(%{"i" => -1, "l" => []}) == {:error, {:invalid_value, [S, nilable(I), I]}}
-    assert S.update(s, %{i: -1})               == {:error, {:invalid_value, [nilable(I), I]}}
-    assert S.update(s, %{l: [-1]})             == {:error, {:invalid_value, [I]}}
+    assert S.update(s, %{i: -1})               == {:error, {:invalid_value, [S, nilable(I), I]}}
+    assert S.update(s, %{l: [-1]})             == {:error, {:invalid_value, [S, I]}}
   end
 end
