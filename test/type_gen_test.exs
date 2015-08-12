@@ -23,7 +23,7 @@ defmodule Croma.TypeTest do
     use Croma.Struct, i: nilable(I), l: list_of(I)
   end
 
-  test "struct definition with Croma.TypeGen.nilable" do
+  test "struct definition with Croma.TypeGen.nilable and Croma.TypeGen.list_of" do
     s = S.new([i: 0, l: []])
     assert s == %S{i: 0, l: []}
 
