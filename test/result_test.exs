@@ -2,6 +2,7 @@ defmodule Croma.ResultTest do
   use ExUnit.Case
   use ExCheck
   alias Croma.Result, as: R
+  require R
 
   def int2result(i) do
     if rem(i, 2) == 0, do: {:ok, i}, else: {:error, i}
@@ -76,21 +77,6 @@ defmodule Croma.ResultTest do
     assert R.get({:error, :foo}, 0) == 0
   end
 
-  test "or_else/2" do
-    o1 = {:ok, 1}
-    o2 = {:ok, 2}
-    e1 = {:error, :foo}
-    e2 = {:error, :bar}
-    fo = fn -> o2 end
-    fe = fn -> e2 end
-    assert R.or_else(o1, o2) == o1
-    assert R.or_else(o1, e2) == o1
-    assert R.or_else(e1, o2) == o2
-    assert R.or_else(e1, e2) == e2
-    assert R.or_else(e1, fo) == o2
-    assert R.or_else(e1, fe) == e2
-  end
-
   test "ok?/1 and error?/1" do
     assert  R.ok?({:ok   , 1   })
     assert !R.ok?({:error, :foo})
@@ -104,5 +90,27 @@ defmodule Croma.ResultTest do
     fe = fn -> raise "foo" end
     assert R.try(f1) == {:ok   , 1}
     assert R.try(fe) == {:error, %RuntimeError{message: "foo"}}
+  end
+
+  test "or_else/2" do
+    o1 = {:ok, 1}
+    o2 = {:ok, 2}
+    e1 = {:error, :foo}
+    e2 = {:error, :bar}
+    assert R.or_else(o1, o2) == o1
+    assert R.or_else(o1, e2) == o1
+    assert R.or_else(e1, o2) == o2
+    assert R.or_else(e1, e2) == e2
+
+    fo = fn -> send(self, :fo_called); o2 end
+    fe = fn -> send(self, :fe_called); e2 end
+    assert R.or_else(o1, fo.()) == o1
+    refute_receive(_)
+    assert R.or_else(o1, fe.()) == o1
+    refute_receive(_)
+    assert R.or_else(e1, fo.()) == o2
+    assert_receive(_)
+    assert R.or_else(e1, fe.()) == e2
+    assert_receive(_)
   end
 end
