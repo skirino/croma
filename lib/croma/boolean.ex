@@ -10,6 +10,6 @@ defmodule Croma.Boolean do
 
   defun validate(value: term) :: Croma.Result.t(t) do
     b when is_boolean(b) -> {:ok, b}
-    x                    -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+    _                    -> {:error, {:invalid_value, [__MODULE__]}}
   end
 end
