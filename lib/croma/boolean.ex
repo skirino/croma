@@ -1,5 +1,4 @@
 import Croma.Defun
-alias Croma.Result, as: R
 
 defmodule Croma.Boolean do
   @moduledoc """
@@ -9,7 +8,7 @@ defmodule Croma.Boolean do
 
   @type t :: boolean
 
-  defun validate(value: term) :: R.t(t) do
+  defun validate(value: term) :: Croma.Result.t(t) do
     b when is_boolean(b) -> {:ok, b}
     x                    -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
   end
