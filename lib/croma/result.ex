@@ -129,7 +129,7 @@ defmodule Croma.Result do
     try do
       {:ok, f.()}
     rescue
-      e -> {:error, e}
+      e -> {:error, {e, [:try]}}
     end
   end
 

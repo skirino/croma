@@ -89,7 +89,7 @@ defmodule Croma.ResultTest do
     f1 = fn -> 1 end
     fe = fn -> raise "foo" end
     assert R.try(f1) == {:ok   , 1}
-    assert R.try(fe) == {:error, %RuntimeError{message: "foo"}}
+    assert R.try(fe) == {:error, {%RuntimeError{message: "foo"}, [:try]}}
   end
 
   test "or_else/2" do
