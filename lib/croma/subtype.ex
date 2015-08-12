@@ -206,15 +206,15 @@ defmodule Croma.SubtypeOfAtom do
           if a in unquote(value_atoms) do
             {:ok, a}
           else
-            {:error, "validation error for #{__MODULE__}: #{inspect a}"}
+            {:error, {:invalid_value, [__MODULE__]}}
           end
         s when is_binary(s) ->
           if s in unquote(value_strings) do
             {:ok, String.to_existing_atom(s)}
           else
-            {:error, "validation error for #{__MODULE__}: #{inspect s}"}
+            {:error, {:invalid_value, [__MODULE__]}}
           end
-        x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+        _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
       @default unquote(opts[:default])
