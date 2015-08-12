@@ -16,7 +16,7 @@ defmodule Croma.TypeTest do
     assert list_of(I).validate([])         == {:ok, []}
     assert list_of(I).validate([0, 1, 2])  == {:ok, [0, 1, 2]}
     assert list_of(I).validate([0, -1, 2]) == {:error, "validation error for #{I}: -1"}
-    assert list_of(I).validate(nil)        == {:error, "validation error for #{list_of(I)}: nil"}
+    assert list_of(I).validate(nil)        == {:error, {:invalid_value, [list_of(I)]}}
   end
 
   defmodule S do

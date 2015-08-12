@@ -69,7 +69,7 @@ defmodule Croma.TypeGen do
       defun validate(list: term) :: R.t(t) do
         l when is_list(l) ->
           Enum.map(l, &unquote(mod).validate/1) |> R.sequence
-        x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+        _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
     end
     ensure_module_defined(Croma.TypeGen.ListOf, mod, q, location)
