@@ -121,7 +121,7 @@ defmodule Croma.Struct do
 
       @doc """
       Checks that the given `dict` is valid or not by using each field's `validate/1` function.
-      Returns `{:ok, valid_struct}` or `{:error, error_message_string}`.
+      Returns `{:ok, valid_struct}` or `{:error, reason}`.
       """
       defun validate(dict: Dict.t) :: R.t(t) do
         dict when is_list(dict) or is_map(dict) ->
@@ -143,7 +143,7 @@ defmodule Croma.Struct do
       @doc """
       Updates an existing instance of #{__MODULE__} with the given `dict`.
       The values in the `dict` are validated by each field's `validate/1` function.
-      Returns `{:ok, valid_struct}` or `{:error, error_message_string}`.
+      Returns `{:ok, valid_struct}` or `{:error, reason}`.
       """
       defun update(s: t, dict: Dict.t) :: R.t(t) do
         (%{__struct__: __MODULE__} = s, dict) when is_list(dict) or is_map(dict) ->
