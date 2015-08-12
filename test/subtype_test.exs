@@ -81,9 +81,9 @@ defmodule Croma.SubtypeTest do
   test "Croma.SubtypeOfString: validate/1" do
     assert S1.validate("foo") == {:ok   , "foo"}
     assert S1.validate("bar") == {:ok   , "bar"}
-    assert S1.validate("buz") == {:error, "validation error for #{S1}: \"buz\""}
-    assert S1.validate(nil  ) == {:error, "validation error for #{S1}: nil"}
-    assert S1.validate([]   ) == {:error, "validation error for #{S1}: []"}
+    assert S1.validate("buz") == {:error, {:invalid_value, [S1]}}
+    assert S1.validate(nil  ) == {:error, {:invalid_value, [S1]}}
+    assert S1.validate([]   ) == {:error, {:invalid_value, [S1]}}
   end
 
   test "Croma.SubtypeOfString: default/0" do

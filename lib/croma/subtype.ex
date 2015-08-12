@@ -158,9 +158,9 @@ defmodule Croma.SubtypeOfString do
           if Regex.match?(@pattern, s) do
             {:ok, s}
           else
-            {:error, "validation error for #{__MODULE__}: #{inspect s}"}
+            {:error, {:invalid_value, [__MODULE__]}}
           end
-        x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+        _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
       @default unquote(opts[:default])
