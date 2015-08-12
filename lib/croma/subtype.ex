@@ -103,17 +103,17 @@ defmodule Croma.SubtypeOfFloat do
         is_nil(@min) ->
           defun validate(term: any) :: R.t(t) do
             f when is_float(f) and f <= @max -> {:ok, f}
-            x                                -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+            _                                -> {:error, {:invalid_value, [__MODULE__]}}
           end
         is_nil(@max) ->
           defun validate(term: any) :: R.t(t) do
             f when is_float(f) and @min <= f -> {:ok, f}
-            x                                -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+            _                                -> {:error, {:invalid_value, [__MODULE__]}}
           end
         true ->
           defun validate(term: any) :: R.t(t) do
             f when is_float(f) and @min <= f and f <= @max -> {:ok, f}
-            x                                              -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+            _                                              -> {:error, {:invalid_value, [__MODULE__]}}
           end
       end
 
