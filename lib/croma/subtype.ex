@@ -253,16 +253,11 @@ defmodule Croma.SubtypeOfList do
 
       defun validate(term: any) :: R.t(t) do
         l when is_list(l) ->
-          require R
-          R.m do
-            elems <- Enum.map(l, &unquote(mod).validate/1) |> R.sequence
-            if valid_length?(length(elems)) do
-              {:ok, elems}
-            else
-              {:error, "validation error for #{__MODULE__}: #{inspect l}"}
-            end
+          case Enum.map(l, &unquote(mod).validate/1) |> R.sequence do
+            {:ok   , elems } = r -> if valid_length?(length(elems)), do: r, else: {:error, {:invalid_value, [__MODULE__]}}
+            {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
           end
-        x -> {:error, "validation error for #{__MODULE__}: #{inspect x}"}
+        _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
       @min unquote(opts[:min_length])
