@@ -33,6 +33,7 @@ defmodule Croma.StructCallSyntax do
       - Confusions due to new syntax
 
   It is recommended that you think carefully about the above pros/cons for using this module.
+  If all you want is dynamic dispatching based on the receiver's type you can use protocol instead.
   """
 
   @doc """
