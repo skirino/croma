@@ -47,7 +47,10 @@ defmodule Croma.TypeGen do
 
       defun validate(value: term) :: R.t(t) do
         nil -> {:ok, nil}
-        v   -> unquote(mod).validate(v)
+        v   -> case unquote(mod).validate(v) do
+          {:ok   , _     } = r -> r
+          {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+        end
       end
     end
     ensure_module_defined(Croma.TypeGen.Nilable, mod, q, location)

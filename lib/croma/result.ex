@@ -148,4 +148,13 @@ defmodule Croma.Result do
       end
     end
   end
+
+  defmodule ErrorReason do
+    @moduledoc false
+
+    defun add_context(reason: term, context: atom) :: {term, [atom]} do
+      ({reason, contexts}, context) -> {reason, [context | contexts]}
+      (term              , context) -> {term  , [context           ]}
+    end
+  end
 end

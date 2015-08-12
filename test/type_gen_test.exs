@@ -9,7 +9,7 @@ defmodule Croma.TypeTest do
   test "Croma.TypeGen.nilable" do
     assert nilable(I).validate(nil) == {:ok, nil}
     assert nilable(I).validate( 0 ) == {:ok, 0}
-    assert nilable(I).validate(-1 ) == {:error, "validation error for #{I}: -1"}
+    assert nilable(I).validate(-1 ) == {:error, {"validation error for #{I}: -1", [nilable(I)]}}
   end
 
   test "Croma.TypeGen.list_of" do
@@ -34,8 +34,8 @@ defmodule Croma.TypeTest do
 
     assert S.validate(%{i: 10, l: []})         == S.update(s, [i: 10])
     assert S.validate(%{i: 0 , l: [0, 1, 2]})  == S.update(s, [l: [0, 1, 2]])
-    assert S.validate(%{"i" => -1, "l" => []}) == {:error, "validation error for #{I}: -1"}
-    assert S.update(s, %{i: -1})               == {:error, "validation error for #{I}: -1"}
+    assert S.validate(%{"i" => -1, "l" => []}) == {:error, {"validation error for #{I}: -1", [nilable(I)]}}
+    assert S.update(s, %{i: -1})               == {:error, {"validation error for #{I}: -1", [nilable(I)]}}
     assert S.update(s, %{l: [-1]})             == {:error, "validation error for #{I}: -1"}
   end
 end
