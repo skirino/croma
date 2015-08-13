@@ -53,7 +53,9 @@ defmodule Croma.TypeGen do
         end
       end
     end
-    ensure_module_defined(Croma.TypeGen.Nilable, mod, q, location)
+    name = Module.concat(Croma.TypeGen.Nilable, mod)
+    ensure_module_defined(name, q, location)
+    name
   end
 
   @doc """
@@ -75,17 +77,17 @@ defmodule Croma.TypeGen do
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
     end
-    ensure_module_defined(Croma.TypeGen.ListOf, mod, q, location)
+    name = Module.concat(Croma.TypeGen.ListOf, mod)
+    ensure_module_defined(name, q, location)
+    name
   end
 
-  defp ensure_module_defined(prefix, mod, quoted_expr, location) do
-    name = Module.concat(prefix, mod)
+  defp ensure_module_defined(name, quoted_expr, location) do
     # Use processes' registered names to remember whether already defined or not
     # (Using `module_info/0` leads to try-rescue, which results in strange compilation error)
     case Agent.start(fn -> nil end, [name: name]) do
       {:ok   , _pid            } -> Module.create(name, quoted_expr, location)
       {:error, _already_defined} -> nil
     end
-    name
   end
 end

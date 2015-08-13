@@ -190,8 +190,8 @@ defmodule Croma.SubtypeOfAtom do
       end
   """
 
-  defp values_as_typespec([v  ]), do: v
-  defp values_as_typespec([h|t]), do: {:|, [], [h, values_as_typespec(t)]}
+  defp values_as_typespec([v    ]), do: v
+  defp values_as_typespec([h | t]), do: {:|, [], [h, values_as_typespec(t)]}
 
   defmacro __using__(opts) do
     value_atoms = opts[:values] || raise ":values must be present"
