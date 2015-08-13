@@ -82,6 +82,41 @@ defmodule Croma.TypeGen do
     name
   end
 
+  @doc """
+  Creates a new module that represents a sum type of the given types.
+
+  The argument must be a list of modules each of which defines `@type t` and `@spec validate(term) :: Croma.Result.t(t)`.
+  """
+  defmacro union(modules) do
+    ms = Enum.map(modules, fn m -> Macro.expand(m, __CALLER__) end)
+    if Enum.empty?(ms), do: raise "Empty union is not allowed"
+    union_impl(ms, Macro.Env.location(__CALLER__))
+  end
+
+  defp union_impl(modules, location) do
+    types = Enum.map(modules, fn m -> quote do: unquote(m).t end) |> as_types
+    q = quote do
+      @modules unquote(modules)
+      @type t :: unquote(types)
+
+      defun validate(value: term) :: R.t(t) do
+        error_result = {:error, {:invalid_value, [__MODULE__]}}
+        Enum.find_value(@modules, error_result, fn mod ->
+          case mod.validate(value) do
+            {:ok   , _} = r -> r
+            {:error, _}     -> nil
+          end
+        end)
+      end
+    end
+    name = Module.concat([Croma.TypeGen.Union | modules])
+    ensure_module_defined(name, q, location)
+    name
+  end
+
+  defp as_types([v    ]), do: v
+  defp as_types([h | t]), do: {:|, [], [h, as_types(t)]}
+
   defp ensure_module_defined(name, quoted_expr, location) do
     # Use processes' registered names to remember whether already defined or not
     # (Using `module_info/0` leads to try-rescue, which results in strange compilation error)

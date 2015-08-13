@@ -19,6 +19,19 @@ defmodule Croma.TypeTest do
     assert list_of(I).validate(nil)        == {:error, {:invalid_value, [list_of(I)]}}
   end
 
+  test "Croma.TypeGen.union" do
+    assert union([I]).validate(0  ) == {:ok, 0}
+    assert union([I]).validate(nil) == {:error, {:invalid_value, [union([I])]}}
+    assert union([I]).validate(-1 ) == {:error, {:invalid_value, [union([I])]}}
+
+    assert union([nilable(I), list_of(I)]).validate(nil ) == {:ok, nil}
+    assert union([nilable(I), list_of(I)]).validate(0   ) == {:ok, 0}
+    assert union([nilable(I), list_of(I)]).validate([]  ) == {:ok, []}
+    assert union([nilable(I), list_of(I)]).validate(-1  ) == {:error, {:invalid_value, [union([nilable(I), list_of(I)])]}}
+    assert union([nilable(I), list_of(I)]).validate(%{} ) == {:error, {:invalid_value, [union([nilable(I), list_of(I)])]}}
+    assert union([nilable(I), list_of(I)]).validate([-1]) == {:error, {:invalid_value, [union([nilable(I), list_of(I)])]}}
+  end
+
   defmodule S do
     use Croma.Struct, i: nilable(I), l: list_of(I)
   end
