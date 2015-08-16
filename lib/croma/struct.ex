@@ -63,18 +63,6 @@ defmodule Croma.Struct do
   alias Croma.Result, as: R
 
   @doc false
-  def field_default_pairs(fields) do
-    Enum.map(fields, fn {key, mod} ->
-      default = try do
-        mod.default
-      rescue
-        _ -> nil
-      end
-      {key, default}
-    end)
-  end
-
-  @doc false
   def field_type_pairs(fields) do
     Enum.map(fields, fn {key, mod} ->
       {key, quote do: unquote(mod).t}
@@ -83,13 +71,9 @@ defmodule Croma.Struct do
 
   @doc false
   def dict_get2(dict, key) do
-    kv = Enum.find(dict, :error, fn {k, _} ->
-      k == key || k == Atom.to_string(key)
+    Enum.find_value(dict, :error, fn {k, v} ->
+      if k == key || k == Atom.to_string(key), do: {:ok, v}
     end)
-    case kv do
-      {_, v} -> {:ok, v}
-      :error -> :error
-    end
   end
 
   defmacro __using__(fields) do
@@ -97,7 +81,7 @@ defmodule Croma.Struct do
 
     quote context: Croma, bind_quoted: [module: module, fields: fields] do
       @fields fields
-      defstruct Croma.Struct.field_default_pairs(@fields)
+      defstruct Keyword.keys(@fields)
       field_type_pairs = Croma.Struct.field_type_pairs(@fields)
       @type t :: %unquote(module){unquote_splicing(field_type_pairs)}
 
