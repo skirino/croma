@@ -70,10 +70,16 @@ defmodule Croma.Struct do
   end
 
   @doc false
-  def dict_get2(dict, key) do
+  def dict_fetch2(dict, key) when is_list(dict) do
     Enum.find_value(dict, :error, fn {k, v} ->
       if k == key || k == Atom.to_string(key), do: {:ok, v}
     end)
+  end
+  def dict_fetch2(dict, key) when is_map(dict) do
+    case Map.fetch(dict, key) do
+      {:ok, _} = r -> r
+      :error       -> Map.fetch(dict, Atom.to_string(key))
+    end
   end
 
   defmacro __using__(fields) do
@@ -92,7 +98,7 @@ defmodule Croma.Struct do
       """
       defun new(dict: Dict.t) :: t do
         Enum.map(@fields, fn {field, mod} ->
-          case Croma.Struct.dict_get2(dict, field) do
+          case Croma.Struct.dict_fetch2(dict, field) do
             {:ok, v} -> mod.validate(v)
             :error   -> {:ok, mod.default}
           end
@@ -110,7 +116,7 @@ defmodule Croma.Struct do
       defun validate(dict: Dict.t) :: R.t(t) do
         dict when is_list(dict) or is_map(dict) ->
           kv_results = Enum.map(@fields, fn {field, mod} ->
-            case Croma.Struct.dict_get2(dict, field) do
+            case Croma.Struct.dict_fetch2(dict, field) do
               {:ok, v} -> v
               :error   -> nil
             end
@@ -132,7 +138,7 @@ defmodule Croma.Struct do
       defun update(s: t, dict: Dict.t) :: R.t(t) do
         (%{__struct__: __MODULE__} = s, dict) when is_list(dict) or is_map(dict) ->
           kv_results = Enum.map(@fields, fn {field, mod} ->
-            case Croma.Struct.dict_get2(dict, field) do
+            case Croma.Struct.dict_fetch2(dict, field) do
               {:ok, v} -> mod.validate(v) |> R.map(&{field, &1})
               :error   -> nil
             end
