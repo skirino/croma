@@ -145,6 +145,14 @@ defmodule Croma.Struct do
       end
 
       @doc """
+      A variant of `validate/1` which returns `t` or raise if validation fails.
+      In other words, `validate/1` followed by `Croma.Result.get!/1`.
+      """
+      defun validate!(dict: Dict.t) :: t do
+        validate(dict) |> R.get!
+      end
+
+      @doc """
       Updates an existing instance of #{__MODULE__} with the given `dict`.
       The values in the `dict` are validated by each field's `validate/1` function.
       Returns `{:ok, valid_struct}` or `{:error, reason}`.

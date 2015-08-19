@@ -61,6 +61,9 @@ defmodule Croma.StructTest do
     # struct itself should be valid
     s = S1.new!(field2: false)
     assert S1.validate(s) == {:ok, s}
+
+    assert S1.validate!([field1: 1, field2: true]) == %S1{field1: 1, field2: true}
+    catch_error S1.validate!([])
   end
 
   test "Croma.Struct: update/2" do
