@@ -109,10 +109,10 @@ is converted to
 - `Corma.Result.t(a)` is defined as `@type t(a) :: {:ok, a} | {:error, any}`.
 This module implements `Croma.Monad` interface.
 
-### `Croma.List`
+### `Croma.ListMonad`
 
 - Implementation of `Croma.Monad` for lists.
-`Croma.List.t(a)` is just an alias to `[a]`.
+`Croma.ListMonad.t(a)` is just an alias to `[a]`.
 
 
 
@@ -123,37 +123,37 @@ This module implements `Croma.Monad` interface.
 - Utility module to define structs with type specification and validation functions.
 
     ```ex
-    iex> defmodule F do
+    iex> defmodule I do
     ...>   @type t :: integer
     ...>   def validate(i) when is_integer(i), do: {:ok, i}
-    ...>   def validate(_), do: {:error, :invalid_f}
+    ...>   def validate(_), do: {:error, {:invalid_value, [__MODULE__]}}
     ...>   def default, do: 0
     ...> end
 
     ...> defmodule S do
-    ...>   use Croma.Struct, f: F
+    ...>   use Croma.Struct, i: I
     ...> end
 
-    ...> S.validate([f: 5])
-    {:ok, %S{f: 5}}
+    ...> S.validate([i: 5])
+    ...> {:ok, %S{i: 5}}
 
-    ...> S.validate(%{f: "not_an_integer"})
-    {:error, :invalid_f}
+    ...> S.validate(%{i: "not_an_integer"})
+    ...> {:error, {:invalid_value, [S, I]}}
 
-    ...> s = S.new([])
-    %S{f: 0}
+    ...> {:ok, s} = S.new([])
+    ...> {:ok, %S{i: 0}}
 
-    ...> S.update(s, [f: 2])
-    {:ok, %S{f: 2}}
+    ...> S.update(s, [i: 2])
+    ...> {:ok, %S{i: 2}}
 
-    ...> S.update(s, %{"f" => "not_an_integer"})
-    {:error, :invalid_f}
+    ...> S.update(s, %{"i" => "not_an_integer"})
+    ...> {:error, {:invalid_value, [S, I]}}
     ```
 
-- Some helper modules for "per-field module"s that are passed as options to `use Croma.Struct` (e.g. `F` in the above example) are available.
-    - `Croma.SubtypeOf*`
-    - `Croma.TypeGen`
-    - `Croma.Boolean`
+- Some helper modules for "per-field module"s that are passed as options to `use Croma.Struct` (e.g. `I` in the above example) are available.
+    - Wrappers of built-in types such as `Croma.String`, `Croma.Integer`, etc.
+    - Utility modules such as `Croma.SubtypeOfString` to define "subtypes" of existing types.
+    - Ad-hoc module generators defined in `Croma.TypeGen`.
 
 ### `Croma.StructCallSyntax`
 

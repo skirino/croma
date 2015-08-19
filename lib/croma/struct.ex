@@ -11,11 +11,9 @@ defmodule Croma.Struct do
 
   Some helpers for defining such per-field modules are available.
 
-  - `Croma.SubtypeOfInt`
-  - `Croma.SubtypeOfFloat`
-  - `Croma.SubtypeOfString`
-  - `Croma.SubtypeOfAtom`
-  - `Croma.SubtypeOfList`
+  - Wrappers of built-in types such as `Croma.String`, `Croma.Integer`, etc.
+  - Utility modules such as `Croma.SubtypeOfString` to define "subtypes" of existing types.
+  - Ad-hoc module generators defined in `Croma.TypeGen`.
 
   To define a struct, `use` this module with a keyword list:
 
@@ -27,36 +25,39 @@ defmodule Croma.Struct do
 
   This module also generates the following functions.
 
-  - `@spec new(Dict.t) :: t`
+  - `@spec new(Dict.t) :: Croma.Result.t(t)`
+  - `@spec new!(Dict.t) :: t`
   - `@spec validate(term) :: Croma.Result.t(t)`
+  - `@spec validate!(term) :: t`
   - `@spec update(t, Dict.t) :: Croma.Result.t(t)`
+  - `@spec update!(t, Dict.t) :: t`
 
   ## Examples
-      iex> defmodule F do
+      iex> defmodule I do
       ...>   @type t :: integer
       ...>   def validate(i) when is_integer(i), do: {:ok, i}
-      ...>   def validate(_), do: {:error, :invalid_f}
+      ...>   def validate(_), do: {:error, {:invalid_value, [__MODULE__]}}
       ...>   def default, do: 0
       ...> end
 
       ...> defmodule S do
-      ...>   use Croma.Struct, f: F
+      ...>   use Croma.Struct, i: I
       ...> end
 
-      ...> S.validate([f: 5])
-      {:ok, %S{f: 5}}
+      ...> S.validate([i: 5])
+      ...> {:ok, %S{i: 5}}
 
-      ...> S.validate(%{f: "not_an_integer"})
-      {:error, :invalid_f}
+      ...> S.validate(%{i: "not_an_integer"})
+      ...> {:error, {:invalid_value, [S, I]}}
 
-      ...> s = S.new([])
-      %S{f: 0}
+      ...> {:ok, s} = S.new([])
+      ...> {:ok, %S{i: 0}}
 
-      ...> S.update(s, [f: 2])
-      {:ok, %S{f: 2}}
+      ...> S.update(s, [i: 2])
+      ...> {:ok, %S{i: 2}}
 
-      ...> S.update(s, %{"f" => "not_an_integer"})
-      {:error, :invalid_f}
+      ...> S.update(s, %{"i" => "not_an_integer"})
+      ...> {:error, {:invalid_value, [S, I]}}
   """
 
   import Croma.Defun
