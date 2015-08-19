@@ -68,6 +68,8 @@ defmodule Croma.StructTest do
 
   test "Croma.Struct: update/2" do
     s = S1.new!(field1: 1, field2: false)
+    assert S1.update(s,  []) == {:ok, s}
+    assert S1.update(s, %{}) == {:ok, s}
 
     assert S1.update(s,  [ field1:    2                  ]) == {:ok, %S1{field1: 2, field2: false}}
     assert S1.update(s, %{"field1" => 2                  }) == {:ok, %S1{field1: 2, field2: false}}
@@ -88,5 +90,8 @@ defmodule Croma.StructTest do
     # reject different type of struct
     catch_error S1.update(%{}, %{})
     catch_error S1.update(%Regex{}, %{})
+
+    assert S1.update!(s, []) == s
+    catch_error S1.update!(s, [field1: "hello"])
   end
 end

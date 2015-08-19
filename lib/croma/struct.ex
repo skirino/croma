@@ -171,6 +171,14 @@ defmodule Croma.Struct do
             {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
           end
       end
+
+      @doc """
+      A variant of `update/2` which returns `t` or raise if validation fails.
+      In other words, `update/2` followed by `Croma.Result.get!/1`.
+      """
+      defun update!(s: t, dict: Dict.t) :: t do
+        update(s, dict) |> R.get!
+      end
     end
   end
 end
