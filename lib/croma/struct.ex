@@ -92,21 +92,35 @@ defmodule Croma.Struct do
       @type t :: %unquote(module){unquote_splicing(field_type_pairs)}
 
       @doc """
-      Returns a new instance of #{__MODULE__} by using the given `dict` and the default value of each field.
+      Creates a new instance of #{__MODULE__} by using the given `dict` and the default value of each field.
+      Returns `{:ok, valid_struct}` or `{:error, reason}`.
       The values in the `dict` are validated by each field's `validate/1` function.
-      Raises if invalid value is found.
       """
-      defun new(dict: Dict.t) :: t do
-        Enum.map(@fields, fn {field, mod} ->
+      defun new(dict: Dict.t) :: R.t(t) do
+        rs = Enum.map(@fields, fn {field, mod} ->
           case Croma.Struct.dict_fetch2(dict, field) do
             {:ok, v} -> mod.validate(v)
-            :error   -> {:ok, mod.default}
+            :error   ->
+              try do
+                {:ok, mod.default}
+              rescue
+                _ -> {:error, {:value_missing, [mod]}}
+              end
           end
           |> R.map(&{field, &1})
         end)
-        |> R.sequence
-        |> R.get!
-        |> (fn kvs -> struct(__MODULE__, kvs) end).()
+        case R.sequence(rs) do
+          {:ok   , kvs   } -> {:ok, struct(__MODULE__, kvs)}
+          {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+        end
+      end
+
+      @doc """
+      A variant of `new/1` which returns `t` or raise if validation fails.
+      In other words, `new/1` followed by `Croma.Result.get!/1`.
+      """
+      defun new!(dict: Dict.t) :: t do
+        new(dict) |> R.get!
       end
 
       @doc """

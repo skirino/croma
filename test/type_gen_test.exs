@@ -37,13 +37,13 @@ defmodule Croma.TypeTest do
   end
 
   test "struct definition with Croma.TypeGen.nilable and Croma.TypeGen.list_of" do
-    s = S.new([i: 0, l: []])
+    s = S.new!([i: 0, l: []])
     assert s == %S{i: 0, l: []}
 
-    catch_error S.new(%{"i" => -1            })
-    catch_error S.new(%{           "l" => [] })
-    catch_error S.new(%{"i" => -1, "l" => [] })
-    catch_error S.new(%{"i" =>  1, "l" => nil})
+    assert S.new(%{"i" => -1            }) == {:error, {:invalid_value, [S, nilable(I), I]}}
+    assert S.new(%{           "l" => [] }) == {:error, {:value_missing, [S, nilable(I)]}}
+    assert S.new(%{"i" => -1, "l" => [] }) == {:error, {:invalid_value, [S, nilable(I), I]}}
+    assert S.new(%{"i" =>  1, "l" => nil}) == {:error, {:invalid_value, [S, list_of(I)]}}
 
     assert S.validate(%{i: 10, l: []})         == S.update(s, [i: 10])
     assert S.validate(%{i: 0 , l: [0, 1, 2]})  == S.update(s, [l: [0, 1, 2]])
