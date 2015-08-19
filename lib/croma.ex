@@ -16,7 +16,7 @@ defmodule Croma do
       import Croma.Defun
       require Croma.TypeGen
       require Croma.Result
-      require Croma.List
+      require Croma.ListMonad
     end
   end
 end

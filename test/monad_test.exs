@@ -1,8 +1,8 @@
 defmodule Croma.MonadTest do
   use ExUnit.Case
   use ExCheck
-  alias Croma.Result, as: R
-  alias Croma.List  , as: L
+  alias Croma.Result   , as: R
+  alias Croma.ListMonad, as: L
 
   def id(a), do: a
 

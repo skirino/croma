@@ -1,11 +1,11 @@
-defmodule Croma.List do
+defmodule Croma.ListMonad do
   @moduledoc """
   Implementation of `Croma.Monad` interface for built-in lists.
 
   This empowers the following Haskell-ish syntax for loops using lists:
 
       iex> use Croma
-      ...> Croma.List.m do
+      ...> Croma.ListMonad.m do
       ...>   i <- [1, 2, 3]
       ...>   j <- [10, 20]
       ...>   pure i + j

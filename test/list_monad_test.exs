@@ -1,17 +1,17 @@
-defmodule Croma.ListTest do
+defmodule Croma.ListMonadTest do
   use ExUnit.Case
 
   test "Haskell-like do-notation" do
-    require Croma.List
+    require Croma.ListMonad
 
-    l = Croma.List.m do
+    l = Croma.ListMonad.m do
       x <- [1, 2, 3]
       y <- [10, 20]
       pure x + y
     end
     assert l == [11, 21, 12, 22, 13, 23]
 
-    l = Croma.List.m do
+    l = Croma.ListMonad.m do
       x <- [1, 2, 3]
       y <- []
       pure x + y
