@@ -45,19 +45,19 @@ defmodule Croma.Struct do
       ...> end
 
       ...> S.validate([i: 5])
-      ...> {:ok, %S{i: 5}}
+      {:ok, %S{i: 5}}
 
       ...> S.validate(%{i: "not_an_integer"})
-      ...> {:error, {:invalid_value, [S, I]}}
+      {:error, {:invalid_value, [S, I]}}
 
       ...> {:ok, s} = S.new([])
-      ...> {:ok, %S{i: 0}}
+      {:ok, %S{i: 0}}
 
       ...> S.update(s, [i: 2])
-      ...> {:ok, %S{i: 2}}
+      {:ok, %S{i: 2}}
 
       ...> S.update(s, %{"i" => "not_an_integer"})
-      ...> {:error, {:invalid_value, [S, I]}}
+      {:error, {:invalid_value, [S, I]}}
   """
 
   import Croma.Defun
