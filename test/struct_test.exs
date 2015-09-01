@@ -2,7 +2,7 @@ defmodule Croma.StructTest do
   use ExUnit.Case
 
   defmodule EmptyStructShouldBeSuccessfullyCompiled do
-    use Croma.Struct, []
+    use Croma.Struct, fields: []
   end
 
   defmodule I1 do
@@ -10,7 +10,7 @@ defmodule Croma.StructTest do
   end
 
   defmodule S1 do
-    use Croma.Struct, field1: I1, field2: Croma.Boolean
+    use Croma.Struct, fields: [field1: I1, field2: Croma.Boolean]
 
     # getter for compile-time typespec information
     type = Module.get_attribute(__MODULE__, :type) |> Macro.escape

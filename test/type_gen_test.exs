@@ -33,7 +33,7 @@ defmodule Croma.TypeTest do
   end
 
   defmodule S do
-    use Croma.Struct, i: nilable(I), l: list_of(I)
+    use Croma.Struct, fields: [i: nilable(I), l: list_of(I)]
   end
 
   test "struct definition with Croma.TypeGen.nilable and Croma.TypeGen.list_of" do

@@ -31,7 +31,7 @@ defmodule Croma.TypeGen do
   This is useful in defining a struct with nilable fields using `Croma.Struct`.
 
       ...> defmodule S do
-      ...>   use Croma.Struct, not_nilable_int: I, nilable_int: Croma.TypeGen.nilable(I)
+      ...>   use Croma.Struct, fields: [not_nilable_int: I, nilable_int: Croma.TypeGen.nilable(I)]
       ...> end
 
       ...> S.new([not_nilable_int: 0, nilable_int: nil])

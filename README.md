@@ -131,7 +131,7 @@ This module implements `Croma.Monad` interface.
     ...> end
 
     ...> defmodule S do
-    ...>   use Croma.Struct, i: I
+    ...>   use Croma.Struct, fields: [i: I]
     ...> end
 
     ...> S.validate([i: 5])

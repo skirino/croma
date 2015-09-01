@@ -18,7 +18,7 @@ defmodule Croma.Struct do
   To define a struct, `use` this module with a keyword list:
 
       defmodule S do
-        use Croma.Struct, field1_name: Field1Module, field2_name: Field2Module
+        use Croma.Struct, fields: [field1_name: Field1Module, field2_name: Field2Module]
       end
 
   Then the above code is converted to `defstruct` along with `@type t`.
@@ -41,7 +41,7 @@ defmodule Croma.Struct do
       ...> end
 
       ...> defmodule S do
-      ...>   use Croma.Struct, i: I
+      ...>   use Croma.Struct, fields: [i: I]
       ...> end
 
       ...> S.validate([i: 5])
@@ -83,10 +83,10 @@ defmodule Croma.Struct do
     end
   end
 
-  defmacro __using__(fields) do
+  defmacro __using__(opts) do
     %Macro.Env{module: module} = __CALLER__
 
-    quote context: Croma, bind_quoted: [module: module, fields: fields] do
+    quote context: Croma, bind_quoted: [module: module, fields: opts[:fields]] do
       @fields fields
       defstruct Keyword.keys(@fields)
       field_type_pairs = Croma.Struct.field_type_pairs(@fields)
