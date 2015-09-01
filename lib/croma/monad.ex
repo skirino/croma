@@ -54,7 +54,7 @@ defmodule Croma.Monad do
       @spec sequence([t(a)]) :: t([a]) when a: any
       def sequence([]), do: pure []
       def sequence([h | t]) do
-        # Note that current implementation is not tail-recursive
+        # Note that the default implementation is not tail-recursive
         bind(h, fn(a) ->
           bind(sequence(t), fn(as) ->
             pure [a | as]

@@ -51,6 +51,20 @@ defmodule Croma.Result do
   def bind({:ok, val}          , f), do: f.(val)
   def bind({:error, _} = result, _), do: result
 
+  # Override default implementation to make it tail-recursive
+  def sequence(l) do
+    sequence_impl(l, [])
+  end
+
+  defunp sequence_impl(l: [t(a)], acc: [a]) :: t([a]) when a: any do
+    ([]     , acc) -> {:ok, Enum.reverse(acc)}
+    ([h | t], acc) ->
+      case h do
+        {:ok   , v}     -> sequence_impl(t, [v | acc])
+        {:error, _} = e -> e
+      end
+  end
+
   @doc """
   Returns the value associated with `:ok` in the given `Croma.Result`.
   Returns `nil` if the argument is in the form of `{:error, _}`.
