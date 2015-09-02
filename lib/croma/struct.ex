@@ -58,6 +58,18 @@ defmodule Croma.Struct do
 
       ...> S.update(s, %{"i" => "not_an_integer"})
       {:error, {:invalid_value, [S, I]}}
+
+  ## Naming convention of field names (case of identifiers)
+
+  When working with structured data (e.g. JSON) from systems with different naming conventions,
+  it's convenient to adjust the names to your favorite convention in this layer.
+  You can specify the acceptable naming schemes of data structures to be validated
+  by `:accept_case` option of `use Croma.Struct`.
+
+  - `nil` (default): Accepts only the given field names as they are.
+  - `:lower_camel`: Accepts both the given field names and their lower camel cased variants.
+  - `:upper_camel`: Accepts both the given field names and their upper camel cased variants.
+  - `:snake`: Accepts both the given field names and their snake cased variants.
   """
 
   import Croma.Defun
@@ -71,26 +83,63 @@ defmodule Croma.Struct do
   end
 
   @doc false
-  def dict_fetch2(dict, key) when is_list(dict) do
+  def dict_fetch2(dict, keys) do
+    case keys do
+      [key]        -> dict_fetch2_impl(dict, key)
+      [key1, key2] ->
+        case dict_fetch2_impl(dict, key1) do
+          {:ok, _} = r -> r
+          :error       -> dict_fetch2_impl(dict, key2)
+        end
+    end
+  end
+  defp dict_fetch2_impl(dict, key) when is_list(dict) do
     Enum.find_value(dict, :error, fn {k, v} ->
       if k == key || k == Atom.to_string(key), do: {:ok, v}
     end)
   end
-  def dict_fetch2(dict, key) when is_map(dict) do
+  defp dict_fetch2_impl(dict, key) when is_map(dict) do
     case Map.fetch(dict, key) do
       {:ok, _} = r -> r
       :error       -> Map.fetch(dict, Atom.to_string(key))
     end
   end
 
-  defmacro __using__(opts) do
-    %Macro.Env{module: module} = __CALLER__
+  @doc false
+  def fields_with_accept_case(fields, accept_case) do
+    f = case accept_case do
+      nil          -> fn a -> a end
+      :snake       -> &Mix.Utils.underscore/1
+      :lower_camel -> &lower_camelize/1
+      :upper_camel -> &Mix.Utils.camelize/1
+      _            -> raise ":accept_case option must be :lower_camel, :upper_camel or :snake"
+    end
+    fields2 = Enum.map(fields, fn {key, mod} ->
+      key2 = Atom.to_string(key) |> f.() |> String.to_atom
+      {key, Enum.uniq([key, key2]), mod}
+    end)
+    accepted_keys = Enum.flat_map(fields2, fn {_, keys, _} -> keys end)
+    if length(accepted_keys) != length(Enum.uniq(accepted_keys)) do
+      raise "field names are not unique"
+    end
+    fields2
+  end
 
-    quote context: Croma, bind_quoted: [module: module, fields: opts[:fields]] do
-      @fields fields
-      defstruct Keyword.keys(@fields)
-      field_type_pairs = Croma.Struct.field_type_pairs(@fields)
-      @type t :: %unquote(module){unquote_splicing(field_type_pairs)}
+  defp lower_camelize(s) do
+    if byte_size(s) == 0 do
+      ""
+    else
+      c = Mix.Utils.camelize(s)
+      String.downcase(String.first(c)) <> String.slice(c, 1..-1)
+    end
+  end
+
+  defmacro __using__(opts) do
+    quote context: Croma, bind_quoted: [fields: opts[:fields], accept_case: opts[:accept_case]] do
+      defstruct Keyword.keys(fields)
+      @type t :: %unquote(__MODULE__){unquote_splicing(Croma.Struct.field_type_pairs(fields))}
+
+      @croma_struct_fields Croma.Struct.fields_with_accept_case(fields, accept_case)
 
       @doc """
       Creates a new instance of #{__MODULE__} by using the given `dict` and the default value of each field.
@@ -98,8 +147,8 @@ defmodule Croma.Struct do
       The values in the `dict` are validated by each field's `validate/1` function.
       """
       defun new(dict: Dict.t) :: R.t(t) do
-        rs = Enum.map(@fields, fn {field, mod} ->
-          case Croma.Struct.dict_fetch2(dict, field) do
+        rs = Enum.map(@croma_struct_fields, fn {field, fields_to_fetch, mod} ->
+          case Croma.Struct.dict_fetch2(dict, fields_to_fetch) do
             {:ok, v} -> mod.validate(v)
             :error   ->
               try do
@@ -130,8 +179,8 @@ defmodule Croma.Struct do
       """
       defun validate(dict: Dict.t) :: R.t(t) do
         dict when is_list(dict) or is_map(dict) ->
-          kv_results = Enum.map(@fields, fn {field, mod} ->
-            case Croma.Struct.dict_fetch2(dict, field) do
+          kv_results = Enum.map(@croma_struct_fields, fn {field, fields_to_fetch, mod} ->
+            case Croma.Struct.dict_fetch2(dict, fields_to_fetch) do
               {:ok, v} -> v
               :error   -> nil
             end
@@ -160,8 +209,8 @@ defmodule Croma.Struct do
       """
       defun update(s: t, dict: Dict.t) :: R.t(t) do
         (%{__struct__: __MODULE__} = s, dict) when is_list(dict) or is_map(dict) ->
-          kv_results = Enum.map(@fields, fn {field, mod} ->
-            case Croma.Struct.dict_fetch2(dict, field) do
+          kv_results = Enum.map(@croma_struct_fields, fn {field, fields_to_fetch, mod} ->
+            case Croma.Struct.dict_fetch2(dict, fields_to_fetch) do
               {:ok, v} -> mod.validate(v) |> R.map(&{field, &1})
               :error   -> nil
             end

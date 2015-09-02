@@ -94,4 +94,34 @@ defmodule Croma.StructTest do
     assert S1.update!(s, []) == s
     catch_error S1.update!(s, [field1: "hello"])
   end
+
+  defmodule S2 do
+    use Croma.Struct, fields: [int_field: I1, bool_field: Croma.Boolean], accept_case: :lower_camel
+  end
+
+  test "Croma.Struct with lower camel case" do
+    assert S2.new(bool_field: true) == {:ok, %S2{int_field: 0, bool_field: true}}
+    assert S2.new(boolField:  true) == {:ok, %S2{int_field: 0, bool_field: true}}
+    assert S2.new(BoolField:  true) == {:error, {:value_missing, [S2, Croma.Boolean]}}
+  end
+
+  defmodule S3 do
+    use Croma.Struct, fields: [int_field: I1, bool_field: Croma.Boolean], accept_case: :upper_camel
+  end
+
+  test "Croma.Struct with upper camel case" do
+    assert S3.new(%{bool_field: true}) == {:ok, %S3{int_field: 0, bool_field: true}}
+    assert S3.new(%{BoolField:  true}) == {:ok, %S3{int_field: 0, bool_field: true}}
+    assert S3.new(%{boolField:  true}) == {:error, {:value_missing, [S3, Croma.Boolean]}}
+  end
+
+  defmodule S4 do
+    use Croma.Struct, fields: [intField: I1, boolField: Croma.Boolean], accept_case: :snake
+  end
+
+  test "Croma.Struct with snake case" do
+    assert S4.new(%{"bool_field" => true}) == {:ok, %S4{intField: 0, boolField: true}}
+    assert S4.new(%{"boolField"  => true}) == {:ok, %S4{intField: 0, boolField: true}}
+    assert S4.new(%{"BoolField"  => true}) == {:error, {:value_missing, [S4, Croma.Boolean]}}
+  end
 end
