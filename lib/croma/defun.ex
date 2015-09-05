@@ -158,19 +158,9 @@ defmodule Croma.Defun do
       clause_defs = Enum.map(defs, &to_clause_definition(def_or_defp, fname, &1))
       {:__block__, env, clause_defs}
     else
-      # Ugly workaround for variable context issues with nested macro invocations: Overwrite context of every variables
-      arg_names = Enum.map(args, &Macro.var(&1.name, Croma))
-      block_with_modified_context = Macro.prewalk(block, fn
-        {name, meta, context} when is_atom(context) -> {name, meta, Croma}
-        t -> t
-      end)
-      guard_exprs = Enum.map(args, &Arg.guard_expr(&1, caller)) |> Enum.reject(&is_nil/1)
-      if Enum.empty?(guard_exprs) do
-        {def_or_defp, env, [{fname, env, arg_names}, [do: block_with_modified_context]]}
-      else
-        combined_guard_expr = Enum.reduce(guard_exprs, fn(expr, acc) -> {:and, env, [acc, expr]} end)
-        {def_or_defp, env, [{:when, env, [{fname, env, arg_names}, combined_guard_expr]}, [do: block_with_modified_context]]}
-      end
+      call_expr = call_expr_with_guard(fname, env, args, caller)
+      body = body_with_validation(block)
+      {def_or_defp, env, [call_expr, [do: body]]}
     end
   end
 
@@ -182,10 +172,27 @@ defmodule Croma.Defun do
       [{:when, _, when_args}] ->
         fargs = Enum.take(when_args, length(when_args) - 1)
         guards = List.last(when_args)
-        when_expr = {:when, [], [{fname, [], fargs}, guards]}
-        {def_or_defp, env, [when_expr, [do: block]]}
+        {def_or_defp, env, [{:when, [], [{fname, [], fargs}, guards]}, [do: block]]}
       _ ->
         {def_or_defp, env, [{fname, env, args}, [do: block]]}
     end
+  end
+
+  defp call_expr_with_guard(fname, env, args, caller) do
+    arg_names = Enum.map(args, &Macro.var(&1.name, Croma)) # Workaround for variable context issue: Set context as Croma
+    guard_exprs = Enum.map(args, &Arg.guard_expr(&1, caller)) |> Enum.reject(&is_nil/1)
+    if Enum.empty?(guard_exprs) do
+      {fname, env, arg_names}
+    else
+      combined_guard_expr = Enum.reduce(guard_exprs, fn(expr, acc) -> {:and, env, [acc, expr]} end)
+    {:when, env, [{fname, env, arg_names}, combined_guard_expr]}
+    end
+  end
+
+  defp body_with_validation(block) do
+    Macro.prewalk(block, fn
+      {name, meta, context} when is_atom(context) -> {name, meta, Croma} # Workaround for variable context issue: Set context as Croma
+      t -> t
+    end)
   end
 end
