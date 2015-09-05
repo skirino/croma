@@ -1,7 +1,9 @@
 defmodule Croma.Guard do
-  @doc """
-
+  @moduledoc """
+  Module to work with guard generation (ses `Croma.Defun.defun/2`).
+  This module is intended for internal use.
   """
+
   def make(type_expr, v, caller) do
     case type_expr do
       {:integer        , _, _} -> quote do: is_integer(unquote(v))
