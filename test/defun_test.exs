@@ -1,9 +1,9 @@
+use Croma
+
 defmodule Croma.DefunTest do
   use ExUnit.Case
 
   defmodule M do
-    use Croma
-
     # with do-block as an ordinary keyword list
     defun a1 :: String.t, do: "a1"
     defun a2() :: String.t, do: "a2"
@@ -128,5 +128,54 @@ defmodule Croma.DefunTest do
     assert "e1(integer, String.t()) :: String.t()"                     in typespec_codes
     assert "f1(atom) :: String.t()"                                    in typespec_codes
     assert "f2() :: String.t()"                                        in typespec_codes
+  end
+
+  defmodule M2 do
+    defun i1(i: g[integer]) :: integer, do: i
+    defun i2(i: g[pos_integer]) :: pos_integer, do: i
+
+    defun s1(s: g[String.t]) :: String.t, do: s
+    alias String, as: S1
+    defun s2(s: g[S1.t]) :: S1.t, do: s
+    defun s3(s: g[Croma.String.t]) :: Croma.String.t, do: s
+    alias Croma.String, as: S2
+    defun s4(s: g[S2.t]) :: S2.t, do: s
+
+    defun l1(l: g[[]]) :: [], do: l
+    defun l2(l: g[[atom]]) :: [atom], do: l
+    defun l3(l: g[list]) :: list, do: l
+    defun l4(l: g[list(atom)]) :: list(atom), do: l
+
+    defun f(d: g[Dict.t], p: g[pos_integer], n: g[number] \\ 0.5) :: :ok, do: :ok
+  end
+
+  test "should define function with guard" do
+    assert      M2.i1(0) == 0
+    catch_error M2.i1(nil)
+    catch_error M2.i2(0)
+    assert      M2.i2(1) == 1
+
+    assert      M2.s1("a") == "a"
+    catch_error M2.s1(:a)
+    assert      M2.s2("a") == "a"
+    catch_error M2.s2(:a)
+    assert      M2.s3("a") == "a"
+    catch_error M2.s3(:a)
+    assert      M2.s4("a") == "a"
+    catch_error M2.s4(:a)
+
+    assert      M2.l1([]) == []
+    assert      M2.l2([]) == []
+    assert      M2.l3([]) == []
+    assert      M2.l4([]) == []
+    catch_error M2.l1(nil)
+    catch_error M2.l2(nil)
+    catch_error M2.l3(nil)
+    catch_error M2.l4(nil)
+
+    assert      M2.f([] , 1, 0.5) == :ok
+    assert      M2.f(%{}, 2, 0  ) == :ok
+    catch_error M2.f("" , 1, 0.5)
+    catch_error M2.f([] , 0)
   end
 end
