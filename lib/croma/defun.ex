@@ -97,23 +97,41 @@ defmodule Croma.Defun do
 
   defmodule Arg do
     @moduledoc false
-    defstruct [:name, :type, :default, :guard?]
+    defstruct [:name, :type, :default, :guard?, :validate?]
 
     def new({name, type_expr1}) do
-      {type_expr2, default} = extract_default(type_expr1)
-      {type_expr3, guard? } = extract_guard(type_expr2)
-      %Arg{name: name, type: type_expr3, default: default, guard?: guard?}
+      {type_expr2, default}           = extract_default(type_expr1)
+      {type_expr3, guard?, validate?} = extract_guard_and_validate(type_expr2)
+      %Arg{name: name, type: type_expr3, default: default, guard?: guard?, validate?: validate?}
     end
 
     defp extract_default({:\\, _, [inner_expr, default]}), do: {inner_expr, default}
     defp extract_default(type_expr                      ), do: {type_expr , nil    }
 
-    defp extract_guard({{:., _, [Access, :get]}, _, [{:g, _, _}, inner_expr]}), do: {inner_expr, true }
-    defp extract_guard(type_expr                                             ), do: {type_expr , false}
+    defp extract_guard_and_validate({{:., _, [Access, :get]}, _, [{:g, _, _}, inner_expr]}), do: {inner_expr, true , false}
+    defp extract_guard_and_validate({{:., _, [Access, :get]}, _, [{:v, _, _}, inner_expr]}), do: {inner_expr, false, true }
+    defp extract_guard_and_validate(type_expr                                             ), do: {type_expr , false, false}
 
     def guard_expr(%Arg{guard?: false}, _), do: nil
     def guard_expr(%Arg{guard?: true, name: name, type: type}, caller) do
-      Croma.Guard.make(type, Macro.var(name, Croma), caller)
+      v = Macro.var(name, Croma) # Workaround for variable context issue: Set context as Croma
+      Croma.Guard.make(type, v, caller)
+    end
+
+    def validation_expr(%Arg{validate?: false}), do: nil
+    def validation_expr(%Arg{validate?: true, name: name, type: type}) do
+      case type do
+        {{:., meta, [mod_alias, :t]}, _, _} ->
+          v = Macro.var(name, Croma) # Workaround for variable context issue: Set context as Croma
+          rhs = quote bind_quoted: [name: name, v: v, mod: mod_alias] do
+            case mod.validate(v) do
+              {:ok   , value } -> value
+              {:error, reason} -> raise "validation error for #{name}: #{inspect reason}"
+            end
+          end
+          {:=, meta, [v, rhs]}
+        _ -> raise "cannot generate validation code for the given type: #{Macro.to_string type}"
+      end
     end
   end
 
@@ -153,13 +171,14 @@ defmodule Croma.Defun do
       {:__block__, _, multiple_defs} -> multiple_defs
       single_def                     -> List.wrap(single_def)
     end
-    if Enum.all?(defs, &pattern_match_expr?/1) do
-      if Enum.any?(args, &(&1.guard?)), do: raise "guard generation cannot be used with clause syntax"
+    if !Enum.empty?(defs) and Enum.all?(defs, &pattern_match_expr?/1) do
+      if Enum.any?(args, &(&1.guard?   )), do: raise "guard generation cannot be used with clause syntax"
+      if Enum.any?(args, &(&1.validate?)), do: raise "argument validation cannot be used with clause syntax"
       clause_defs = Enum.map(defs, &to_clause_definition(def_or_defp, fname, &1))
       {:__block__, env, clause_defs}
     else
       call_expr = call_expr_with_guard(fname, env, args, caller)
-      body = body_with_validation(block)
+      body = body_with_validation(args, block)
       {def_or_defp, env, [call_expr, [do: body]]}
     end
   end
@@ -189,10 +208,21 @@ defmodule Croma.Defun do
     end
   end
 
-  defp body_with_validation(block) do
-    Macro.prewalk(block, fn
+  defp body_with_validation(args, block1) do
+    block2 = Macro.prewalk(block1, fn
       {name, meta, context} when is_atom(context) -> {name, meta, Croma} # Workaround for variable context issue: Set context as Croma
       t -> t
     end)
+    exprs = case block2 do
+      {:__block__, _, exprs} -> exprs
+      nil                    -> []
+      expr                   -> [expr]
+    end
+    validation_exprs = Enum.map(args, &Arg.validation_expr/1) |> Enum.reject(&is_nil/1)
+    case validation_exprs ++ exprs do
+      []     -> nil
+      [expr] -> expr
+      exprs  -> {:__block__, [], exprs}
+    end
   end
 end

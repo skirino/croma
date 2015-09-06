@@ -178,4 +178,41 @@ defmodule Croma.DefunTest do
     catch_error M2.f("" , 1, 0.5)
     catch_error M2.f([] , 0)
   end
+
+  defmodule M3 do
+    defmodule S do
+      use Croma.SubtypeOfString, pattern: ~r/^foo|bar$/
+    end
+    defun f1(s: v[S.t]) :: S.t, do: s
+
+    defmodule A do
+      use Croma.SubtypeOfAtom, values: [:foo, :bar]
+    end
+    defun f2(a: v[A.t]) :: A.t do
+      a
+    end
+
+    defun f3(sg: g[String.t], sv: v[S.t], ag: g[atom], av: v[A.t]) :: String.t do
+      "#{sg} #{sv} #{ag} #{av}"
+    end
+  end
+
+  test "should define function with argument validation" do
+    assert      M3.f1("foo" ) == "foo"
+    assert      M3.f1("bar" ) == "bar"
+    catch_error M3.f1("baz")
+
+    assert      M3.f2(:foo ) == :foo
+    assert      M3.f2("foo") == :foo
+    assert      M3.f2(:bar ) == :bar
+    assert      M3.f2("bar") == :bar
+    catch_error M3.f2(:baz )
+    catch_error M3.f2("baz")
+
+    assert      M3.f3("foo", "bar", :foo , :bar) == "foo bar foo bar"
+    catch_error M3.f3(:foo , "bar", :foo , :bar)
+    catch_error M3.f3("foo", "baz", :foo , :bar)
+    catch_error M3.f3("foo", "bar", "foo", :bar)
+    catch_error M3.f3("foo", "bar", :foo , :baz)
+  end
 end
