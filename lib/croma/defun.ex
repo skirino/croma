@@ -59,11 +59,37 @@ defmodule Croma.Defun do
 
   For supported types of guard-generation please refer to the source code of `Croma.Guard.make/3`.
 
+  ## Validating arguments based on their types
+  You can instrument check of preconditions on arguments by specifying argument's type as `v[type]`.
+  For instance,
+
+      defmodule MyString do
+        use Croma.SubtypeOfString, pattern: ~r/^foo|bar$/
+      end
+
+      defun f(s: v[MyString.t]) :: atom do
+        String.to_atom(s)
+      end
+
+  becomes the following function definition that calls `validate/1` at the top of its body:
+
+      @spec f(MyString.t) :: atom
+      def f(s)
+      def f(s) do
+        s = case MyString.validate(s) do
+          {:ok   , value } -> value
+          {:error, reason} -> raise "..."
+        end
+        String.to_atom(s)
+      end
+
+  The generated code assumes that `validate/1` function is defined in the same module as the specified type.
+
   ## Known limitations
   - Pattern matching against function parameters should use `(param1, param2) when guards -> block` style.
   In other words, pattern matching in the form of `defun f({:ok, _})` is not supported.
   - Overloaded typespecs are not supported.
-  - Guard generations are not allowed to be used with clauses.
+  - Guard generation and validation are not allowed to be used with clauses.
   """
   defmacro defun({:::, _, [fun, ret_type]}, [do: block]) do
     defun_impl(:def, fun, ret_type, [], block, __CALLER__)
