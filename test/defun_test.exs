@@ -195,6 +195,14 @@ defmodule Croma.DefunTest do
     defun f3(sg: g[String.t], sv: v[S.t], ag: g[atom], av: v[A.t]) :: String.t do
       "#{sg} #{sv} #{ag} #{av}"
     end
+
+    @type t :: integer
+    def validate(v) do
+      if rem(v, 2) == 0, do: {:ok, v}, else: {:error, :odd}
+    end
+    defun f4(i: v[t]) :: t do
+      i
+    end
   end
 
   test "should define function with argument validation" do
@@ -214,5 +222,8 @@ defmodule Croma.DefunTest do
     catch_error M3.f3("foo", "baz", :foo , :bar)
     catch_error M3.f3("foo", "bar", "foo", :bar)
     catch_error M3.f3("foo", "bar", :foo , :baz)
+
+    assert      M3.f4(0) == 0
+    catch_error M3.f4(1)
   end
 end

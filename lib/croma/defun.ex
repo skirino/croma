@@ -120,9 +120,17 @@ defmodule Croma.Defun do
 
     def validation_expr(%Arg{validate?: false}), do: nil
     def validation_expr(%Arg{validate?: true, name: name, type: type}) do
+      v = Macro.var(name, Croma) # Workaround for variable context issue: Set context as Croma
       case type do
+        {:t, meta, _} ->
+          rhs = quote bind_quoted: [name: name, v: v] do
+            case validate(v) do
+              {:ok   , value } -> value
+              {:error, reason} -> raise "validation error for #{name}: #{inspect reason}"
+            end
+          end
+          {:=, meta, [v, rhs]}
         {{:., meta, [mod_alias, :t]}, _, _} ->
-          v = Macro.var(name, Croma) # Workaround for variable context issue: Set context as Croma
           rhs = quote bind_quoted: [name: name, v: v, mod: mod_alias] do
             case mod.validate(v) do
               {:ok   , value } -> value
