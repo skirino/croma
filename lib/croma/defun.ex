@@ -131,8 +131,8 @@ defmodule Croma.Defun do
       %Arg{name: name, type: type_expr3, default: default, guard?: guard?, validate?: validate?}
     end
 
-    defp extract_default({:\\, _, [inner_expr, default]}), do: {inner_expr, default}
-    defp extract_default(type_expr                      ), do: {type_expr , nil    }
+    defp extract_default({:\\, _, [inner_expr, default]}), do: {inner_expr, {:some, default}}
+    defp extract_default(type_expr                      ), do: {type_expr , :none           }
 
     defp extract_guard_and_validate({{:., _, [Access, :get]}, _, [{:g, _, _}, inner_expr]}), do: {inner_expr, true , false}
     defp extract_guard_and_validate({{:., _, [Access, :get]}, _, [{:v, _, _}, inner_expr]}), do: {inner_expr, false, true }
@@ -194,8 +194,8 @@ defmodule Croma.Defun do
 
   defp bodyless_function(def_or_defp, fname, env, args) do
     arg_exprs = Enum.map(args, fn
-      %Arg{name: name, default: nil    } -> {name, [], Elixir}
-      %Arg{name: name, default: default} -> {:\\, [], [{name, [], Elixir}, default]}
+      %Arg{name: name, default: :none           } -> {name, [], Elixir}
+      %Arg{name: name, default: {:some, default}} -> {:\\, [], [{name, [], Elixir}, default]}
     end)
     {def_or_defp, env, [{fname, env, arg_exprs}]}
   end

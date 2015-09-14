@@ -57,7 +57,7 @@ defmodule Croma.DefunTest do
     end
 
     # function with default argument
-    defun e1(i: integer, s: String.t \\ "foo") :: String.t do
+    defun e1(i: integer, s: String.t \\ nil) :: String.t do
       "#{i} #{s}"
     end
 
@@ -96,7 +96,7 @@ defmodule Croma.DefunTest do
     assert M.d4(10)             == 10
     assert M.d5(0, [], "")      == [0]
     assert M.d6([1], &is_nil/1) == [false]
-    assert M.e1(1)              == "1 foo"
+    assert M.e1(1)              == "1 "
     assert M.e1(2, "bar")       == "2 bar"
     assert M.f2                 == "foo"
 
