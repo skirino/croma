@@ -140,13 +140,13 @@ defmodule Croma.Defun do
 
     def guard_expr(%Arg{guard?: false}, _), do: nil
     def guard_expr(%Arg{guard?: true, name: name, type: type}, caller) do
-      v = Macro.var(name, Croma) # Workaround for variable context issue: Set context as Croma
+      v = Macro.var(name, nil)
       Croma.Guard.make(type, v, caller)
     end
 
     def validation_expr(%Arg{validate?: false}), do: nil
     def validation_expr(%Arg{validate?: true, name: name, type: type}) do
-      v = Macro.var(name, Croma) # Workaround for variable context issue: Set context as Croma
+      v = Macro.var(name, nil)
       case type do
         {:t, meta, _} ->
           rhs = quote bind_quoted: [name: name, v: v] do
@@ -194,8 +194,8 @@ defmodule Croma.Defun do
 
   defp bodyless_function(def_or_defp, fname, env, args) do
     arg_exprs = Enum.map(args, fn
-      %Arg{name: name, default: :none           } -> {name, [], Elixir}
-      %Arg{name: name, default: {:some, default}} -> {:\\, [], [{name, [], Elixir}, default]}
+      %Arg{name: name, default: :none           } -> Macro.var(name, nil)
+      %Arg{name: name, default: {:some, default}} -> {:\\, [], [Macro.var(name, nil), default]}
     end)
     {def_or_defp, env, [{fname, env, arg_exprs}]}
   end
@@ -232,7 +232,7 @@ defmodule Croma.Defun do
   end
 
   defp call_expr_with_guard(fname, env, args, caller) do
-    arg_names = Enum.map(args, &Macro.var(&1.name, Croma)) # Workaround for variable context issue: Set context as Croma
+    arg_names = Enum.map(args, &Macro.var(&1.name, nil))
     guard_exprs = Enum.map(args, &Arg.guard_expr(&1, caller)) |> Enum.reject(&is_nil/1)
     if Enum.empty?(guard_exprs) do
       {fname, env, arg_names}
@@ -244,7 +244,9 @@ defmodule Croma.Defun do
 
   defp body_with_validation(args, block1) do
     block2 = Macro.prewalk(block1, fn
-      {name, meta, context} when is_atom(context) -> {name, meta, Croma} # Workaround for variable context issue: Set context as Croma
+      {name, meta, context} when is_atom(context) ->
+        # Reset "hygienic counter" in metadata (I don't understand the details of hygiene variables but this works...)
+        {name, Keyword.delete(meta, :counter), nil}
       t -> t
     end)
     exprs = case block2 do

@@ -135,7 +135,7 @@ defmodule Croma.Struct do
   end
 
   defmacro __using__(opts) do
-    quote context: Croma, bind_quoted: [fields: opts[:fields], accept_case: opts[:accept_case]] do
+    quote bind_quoted: [fields: opts[:fields], accept_case: opts[:accept_case]] do
       defstruct Keyword.keys(fields)
       @type t :: %unquote(__MODULE__){unquote_splicing(Croma.Struct.field_type_pairs(fields))}
 
