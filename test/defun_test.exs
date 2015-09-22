@@ -71,39 +71,51 @@ defmodule Croma.DefunTest do
       f1(:foo)
     end
 
+    # functions without explicit parameter type
+    defun g1(%{a: a} = m, [b], {:ok, {"s"} = t}) :: integer do
+      a + Map.size(m) + b + tuple_size(t)
+    end
+    defun g2(%Regex{} = r, s :: g[String.t]) :: boolean do
+      s =~ r
+    end
+
     # getter for compile-time typespec information
     spec = Module.get_attribute(__MODULE__, :spec) |> Macro.escape
     def typespecs, do: unquote(spec)
   end
 
   test "should define function" do
-    assert M.a1                 == "a1"
-    assert M.a2                 == "a2"
-    assert M.a3(0)              == "a3"
-    assert M.b1                 == "b1"
-    assert M.b2                 == "b2"
-    assert M.b3("foo")          == "b3"
-    assert M.b4                 == "b4"
-    assert M.c1("foo")          == "foo"
-    assert M.c2(1, "foo")       == "1 foo"
-    assert M.c2(2, "foo")       == "2 foo"
-    assert M.c2(3, "foo")       == "3 foo"
-    assert M.c2(4, "foo")       == "4 foo"
-    assert M.c3({:ok, 0})       == {:ok, 0}
-    assert M.d1([])             == %{}
-    assert M.d2([])             == %{}
-    assert M.d3(10)             == 10
-    assert M.d4(10)             == 10
-    assert M.d5(0, [], "")      == [0]
-    assert M.d6([1], &is_nil/1) == [false]
-    assert M.e1(1)              == "1 "
-    assert M.e1(2, "bar")       == "2 bar"
-    assert M.f2                 == "foo"
+    assert M.a1                             == "a1"
+    assert M.a2                             == "a2"
+    assert M.a3(0)                          == "a3"
+    assert M.b1                             == "b1"
+    assert M.b2                             == "b2"
+    assert M.b3("foo")                      == "b3"
+    assert M.b4                             == "b4"
+    assert M.c1("foo")                      == "foo"
+    assert M.c2(1, "foo")                   == "1 foo"
+    assert M.c2(2, "foo")                   == "2 foo"
+    assert M.c2(3, "foo")                   == "3 foo"
+    assert M.c2(4, "foo")                   == "4 foo"
+    assert M.c3({:ok, 0})                   == {:ok, 0}
+    assert M.d1([])                         == %{}
+    assert M.d2([])                         == %{}
+    assert M.d3(10)                         == 10
+    assert M.d4(10)                         == 10
+    assert M.d5(0, [], "")                  == [0]
+    assert M.d6([1], &is_nil/1)             == [false]
+    assert M.e1(1)                          == "1 "
+    assert M.e1(2, "bar")                   == "2 bar"
+    assert M.f2                             == "foo"
+    assert M.g1(%{a: 1}, [2], {:ok, {"s"}}) == 5
+    assert M.g2(~r/^a$/, "a")               == true
 
     catch_error M.c2(0, "foo")
     catch_error M.c2(4, :not_a_string)
     catch_error M.c2(4, "longer_than_5_bytes")
     catch_error M.c3({:error, :reason})
+    catch_error M.g2("not_a_re", "a")
+    catch_error M.g2(~r/^a$/, :not_a_string)
   end
 
   test "should add typespec" do
@@ -128,6 +140,8 @@ defmodule Croma.DefunTest do
     assert "e1(integer, String.t()) :: String.t()"                     in typespec_codes
     assert "f1(atom) :: String.t()"                                    in typespec_codes
     assert "f2() :: String.t()"                                        in typespec_codes
+    assert "g1(%{}, [], {:ok, {String.t()}}) :: integer"               in typespec_codes
+    assert "g2(Regex.t(), String.t()) :: boolean"                      in typespec_codes
   end
 
   defmodule M2 do

@@ -140,8 +140,21 @@ defmodule Croma.Defun do
     defp extract_guard_and_validate({{:., _, [Access, :get]}, _, [{:v, _, _}, inner_expr]}), do: {inner_expr, false, true }
     defp extract_guard_and_validate(type_expr                                             ), do: {type_expr , false, false}
 
-    defp infer_type(_arg_expr) do
-      nil # TODO
+    defp infer_type(arg_expr) do
+      case arg_expr do
+        {:=, _, [{_, _, c}, inner]} when is_atom(c) -> infer_type(inner)
+        {:=, _, [inner, {_, _, c}]} when is_atom(c) -> infer_type(inner)
+        {_name, _, c}               when is_atom(c) -> quote do: any
+        {:{}, _, elements}                          -> quote do: {unquote_splicing(Enum.map(elements, &infer_type/1))}
+        {elem1, elem2}                              -> quote do: {unquote(infer_type(elem1)), unquote(infer_type(elem2))}
+        l when is_list(l)                           -> quote do: []
+        {:%{}, _, _}                                -> quote do: %{}
+        {:%, _, [module_alias, _]}                  -> quote do: unquote(module_alias).t
+        expr when is_atom(expr)                     -> expr
+        expr when is_integer(expr)                  -> quote do: integer
+        expr when is_float(expr)                    -> quote do: float
+        expr when is_binary(expr)                   -> quote do: String.t
+      end
     end
 
     def as_var(%Arg{arg_expr: arg_expr}) do
@@ -252,24 +265,18 @@ defmodule Croma.Defun do
   end
 
   defp call_expr_with_guard(fname, env, args, caller) do
-    arg_names = Enum.map(args, &Arg.as_var!/1)
+    arg_exprs = Enum.map(args, &(&1.arg_expr)) |> reset_hygienic_counter
     guard_exprs = Enum.map(args, &Arg.guard_expr(&1, caller)) |> Enum.reject(&is_nil/1)
     if Enum.empty?(guard_exprs) do
-      {fname, env, arg_names}
+      {fname, env, arg_exprs}
     else
       combined_guard_expr = Enum.reduce(guard_exprs, fn(expr, acc) -> {:and, env, [acc, expr]} end)
-    {:when, env, [{fname, env, arg_names}, combined_guard_expr]}
+      {:when, env, [{fname, env, arg_exprs}, combined_guard_expr]}
     end
   end
 
-  defp body_with_validation(args, block1) do
-    block2 = Macro.prewalk(block1, fn
-      {name, meta, context} when is_atom(context) ->
-        # Reset "hygienic counter" in metadata (I don't understand the details of hygiene variables but this works...)
-        {name, Keyword.delete(meta, :counter), nil}
-      t -> t
-    end)
-    exprs = case block2 do
+  defp body_with_validation(args, block) do
+    exprs = case reset_hygienic_counter(block) do
       {:__block__, _, exprs} -> exprs
       nil                    -> []
       expr                   -> [expr]
@@ -280,5 +287,12 @@ defmodule Croma.Defun do
       [expr] -> expr
       exprs  -> {:__block__, [], exprs}
     end
+  end
+
+  defp reset_hygienic_counter(ast) do
+    Macro.prewalk(ast, fn
+      {name, meta, context} when is_atom(context) -> {name, Keyword.delete(meta, :counter), nil}
+      t -> t
+    end)
   end
 end
