@@ -35,7 +35,7 @@ Elixir macro utilities.
 
         ```ex
         import Croma.Defun
-        defun f(a: integer, b: String.t) :: String.t do
+        defun f(a :: integer, b :: String.t) :: String.t do
           "#{a} #{b}"
         end
         ```
@@ -50,7 +50,7 @@ Elixir macro utilities.
 
         ```ex
         import Croma.Defun
-        defun dumbmap(as: [a], f: (a -> b)) :: [b] when a: term, b: term do
+        defun dumbmap(as :: [a], f :: (a -> b)) :: [b] when a: term, b: term do
           ([]     , _) -> []
           ([h | t], f) -> [f.(h) | dumbmap(t, f)]
         end

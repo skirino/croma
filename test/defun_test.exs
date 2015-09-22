@@ -7,7 +7,7 @@ defmodule Croma.DefunTest do
     # with do-block as an ordinary keyword list
     defun a1 :: String.t, do: "a1"
     defun a2() :: String.t, do: "a2"
-    defun a3(_i: integer) :: String.t, do: "a3"
+    defun a3(_i :: integer) :: String.t, do: "a3"
 
     # with do-block
     defun b1 :: String.t do
@@ -16,7 +16,7 @@ defmodule Croma.DefunTest do
     defun b2() :: String.t do
       "b2"
     end
-    defun b3(_s: String.t) :: String.t do
+    defun b3(_s :: String.t) :: String.t do
       "b3"
     end
     defun b4 :: String.t do
@@ -24,10 +24,10 @@ defmodule Croma.DefunTest do
     end
 
     # function clauses
-    defun c1(s: String.t) :: String.t do
+    defun c1(s :: String.t) :: String.t do
       s -> s
     end
-    defun c2(x: integer, y: String.t) :: String.t do
+    defun c2(x :: integer, y :: String.t) :: String.t do
       1, s   -> "1 #{s}"
       (2, s) -> "2 #{s}"
       (3, s) ->
@@ -35,36 +35,36 @@ defmodule Croma.DefunTest do
         "3 #{msg}"
       (4, s) when is_binary(s) and byte_size(s) <= 5 -> "4 #{s}"
     end
-    defun c3(x: tuple) :: tuple do
+    defun c3(x :: tuple) :: tuple do
       ({:ok, _} = t) -> t
     end
 
     # function with type parameter
-    defun d1(_l: [atom]) :: %{atom => String.t} do
+    defun d1(_l :: [atom]) :: %{atom => String.t} do
       %{}
     end
-    defun d2(_l: [atom]) :: %{atom => String.t}, do: %{}
-    defun d3(a: a) :: a when a: term do
+    defun d2(_l :: [atom]) :: %{atom => String.t}, do: %{}
+    defun d3(a :: a) :: a when a: term do
       a
     end
-    defun d4(a: a) :: a when [a: term], do: a
-    defun d5(a: a, _bs: [b], _s: String.t) :: list(a) when a: number, b: term do
+    defun d4(a :: a) :: a when [a: term], do: a
+    defun d5(a :: a, _bs :: [b], _s :: String.t) :: list(a) when a: number, b: term do
       [a]
     end
-    defun d6(l: [a], f: (a -> b)) :: [b] when a: number, b: boolean do
+    defun d6(l :: [a], f :: (a -> b)) :: [b] when a: number, b: boolean do
       ([], _) -> []
       ([h | t], f) when is_function(f) -> [f.(h) | d6(t, f)]
     end
 
     # function with default argument
-    defun e1(i: integer, s: String.t \\ nil) :: String.t do
+    defun e1(i :: integer, s :: String.t \\ nil) :: String.t do
       "#{i} #{s}"
     end
 
     # private function
     # (Note that unused private functions will be removed at compile time
     #  and will cause compile error due to "spec for undefined function")
-    defunp f1(x: atom) :: String.t do
+    defunp f1(x :: atom) :: String.t do
       Atom.to_string(x)
     end
     defunpt f2 :: String.t do
@@ -131,22 +131,22 @@ defmodule Croma.DefunTest do
   end
 
   defmodule M2 do
-    defun i1(i: g[integer]) :: integer, do: i
-    defun i2(i: g[pos_integer]) :: pos_integer, do: i
+    defun i1(i :: g[integer]) :: integer, do: i
+    defun i2(i :: g[pos_integer]) :: pos_integer, do: i
 
-    defun s1(s: g[String.t]) :: String.t, do: s
+    defun s1(s :: g[String.t]) :: String.t, do: s
     alias String, as: S1
-    defun s2(s: g[S1.t]) :: S1.t, do: s
-    defun s3(s: g[Croma.String.t]) :: Croma.String.t, do: s
+    defun s2(s :: g[S1.t]) :: S1.t, do: s
+    defun s3(s :: g[Croma.String.t]) :: Croma.String.t, do: s
     alias Croma.String, as: S2
-    defun s4(s: g[S2.t]) :: S2.t, do: s
+    defun s4(s :: g[S2.t]) :: S2.t, do: s
 
-    defun l1(l: g[[]]) :: [], do: l
-    defun l2(l: g[[atom]]) :: [atom], do: l
-    defun l3(l: g[list]) :: list, do: l
-    defun l4(l: g[list(atom)]) :: list(atom), do: l
+    defun l1(l :: g[[]]) :: [], do: l
+    defun l2(l :: g[[atom]]) :: [atom], do: l
+    defun l3(l :: g[list]) :: list, do: l
+    defun l4(l :: g[list(atom)]) :: list(atom), do: l
 
-    defun f(d: g[Dict.t], p: g[pos_integer], n: g[number] \\ 0.5) :: :ok, do: :ok
+    defun f(d :: g[Dict.t], p :: g[pos_integer], n :: g[number] \\ 0.5) :: :ok, do: :ok
   end
 
   test "should define function with guard" do
@@ -183,16 +183,16 @@ defmodule Croma.DefunTest do
     defmodule S do
       use Croma.SubtypeOfString, pattern: ~r/^foo|bar$/
     end
-    defun f1(s: v[S.t]) :: S.t, do: s
+    defun f1(s :: v[S.t]) :: S.t, do: s
 
     defmodule A do
       use Croma.SubtypeOfAtom, values: [:foo, :bar]
     end
-    defun f2(a: v[A.t]) :: A.t do
+    defun f2(a :: v[A.t]) :: A.t do
       a
     end
 
-    defun f3(sg: g[String.t], sv: v[S.t], ag: g[atom], av: v[A.t]) :: String.t do
+    defun f3(sg :: g[String.t], sv :: v[S.t], ag :: g[atom], av :: v[A.t]) :: String.t do
       "#{sg} #{sv} #{ag} #{av}"
     end
 
@@ -200,7 +200,7 @@ defmodule Croma.DefunTest do
     def validate(v) do
       if rem(v, 2) == 0, do: {:ok, v}, else: {:error, :odd}
     end
-    defun f4(i: v[t]) :: t do
+    defun f4(i :: v[t]) :: t do
       i
     end
   end

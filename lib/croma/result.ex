@@ -56,7 +56,7 @@ defmodule Croma.Result do
     sequence_impl(l, [])
   end
 
-  defunp sequence_impl(l: [t(a)], acc: [a]) :: t([a]) when a: any do
+  defunp sequence_impl(l :: [t(a)], acc :: [a]) :: t([a]) when a: any do
     ([]     , acc) -> {:ok, Enum.reverse(acc)}
     ([h | t], acc) ->
       case h do
@@ -76,7 +76,7 @@ defmodule Croma.Result do
       iex> Croma.Result.get({:error, :foo})
       nil
   """
-  defun get(result: t(a)) :: nil | a when a: any do
+  defun get(result :: t(a)) :: nil | a when a: any do
     {:ok   , val} -> val
     {:error, _  } -> nil
   end
@@ -92,7 +92,7 @@ defmodule Croma.Result do
       iex> Croma.Result.get({:error, :foo}, 0)
       0
   """
-  defun get(result: t(a), default: a) :: a when a: any do
+  defun get(result :: t(a), default :: a) :: a when a: any do
     ({:ok   , val}, _      ) -> val
     ({:error, _  }, default) -> default
   end
@@ -108,7 +108,7 @@ defmodule Croma.Result do
       iex> Croma.Result.get!({:error, :foo})
       ** (ArgumentError) result is not :ok; element not present
   """
-  defun get!(result: t(a)) :: a when a: any do
+  defun get!(result :: t(a)) :: a when a: any do
     {:ok   , val} -> val
     {:error, _  } -> raise ArgumentError, message: "result is not :ok; element not present"
   end
@@ -116,7 +116,7 @@ defmodule Croma.Result do
   @doc """
   Returns true if the given argument is in the form of `{:ok, _value}`.
   """
-  defun ok?(result: t(a)) :: boolean when a: any do
+  defun ok?(result :: t(a)) :: boolean when a: any do
     {:ok   , _} -> true
     {:error, _} -> false
   end
@@ -124,7 +124,7 @@ defmodule Croma.Result do
   @doc """
   Returns true if the given argument is in the form of `{:error, _}`.
   """
-  defun error?(result: t(a)) :: boolean when a: any do
+  defun error?(result :: t(a)) :: boolean when a: any do
     !ok?(result)
   end
 
@@ -139,7 +139,7 @@ defmodule Croma.Result do
       iex> Croma.Result.try(fn -> raise "foo" end)
       {:error, %RuntimeError{message: "foo"}}
   """
-  defun try(f: (-> a)) :: t(a) when a: any do
+  defun try(f :: (-> a)) :: t(a) when a: any do
     try do
       {:ok, f.()}
     rescue
@@ -166,7 +166,7 @@ defmodule Croma.Result do
   defmodule ErrorReason do
     @moduledoc false
 
-    defun add_context(reason: term, context: atom) :: {term, [atom]} do
+    defun add_context(reason :: term, context :: atom) :: {term, [atom]} do
       ({reason, contexts}, context) -> {reason, [context | contexts]}
       (term              , context) -> {term  , [context           ]}
     end

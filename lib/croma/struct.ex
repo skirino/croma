@@ -146,7 +146,7 @@ defmodule Croma.Struct do
       Returns `{:ok, valid_struct}` or `{:error, reason}`.
       The values in the `dict` are validated by each field's `validate/1` function.
       """
-      defun new(dict: Dict.t) :: R.t(t) do
+      defun new(dict :: Dict.t) :: R.t(t) do
         rs = Enum.map(@croma_struct_fields, fn {field, fields_to_fetch, mod} ->
           case Croma.Struct.dict_fetch2(dict, fields_to_fetch) do
             {:ok, v} -> mod.validate(v)
@@ -169,7 +169,7 @@ defmodule Croma.Struct do
       A variant of `new/1` which returns `t` or raise if validation fails.
       In other words, `new/1` followed by `Croma.Result.get!/1`.
       """
-      defun new!(dict: Dict.t) :: t do
+      defun new!(dict :: Dict.t) :: t do
         new(dict) |> R.get!
       end
 
@@ -177,7 +177,7 @@ defmodule Croma.Struct do
       Checks that the given `dict` is valid or not by using each field's `validate/1` function.
       Returns `{:ok, valid_struct}` or `{:error, reason}`.
       """
-      defun validate(dict: Dict.t) :: R.t(t) do
+      defun validate(dict :: Dict.t) :: R.t(t) do
         dict when is_list(dict) or is_map(dict) ->
           kv_results = Enum.map(@croma_struct_fields, fn {field, fields_to_fetch, mod} ->
             case Croma.Struct.dict_fetch2(dict, fields_to_fetch) do
@@ -198,7 +198,7 @@ defmodule Croma.Struct do
       A variant of `validate/1` which returns `t` or raise if validation fails.
       In other words, `validate/1` followed by `Croma.Result.get!/1`.
       """
-      defun validate!(dict: Dict.t) :: t do
+      defun validate!(dict :: Dict.t) :: t do
         validate(dict) |> R.get!
       end
 
@@ -207,7 +207,7 @@ defmodule Croma.Struct do
       The values in the `dict` are validated by each field's `validate/1` function.
       Returns `{:ok, valid_struct}` or `{:error, reason}`.
       """
-      defun update(s: t, dict: Dict.t) :: R.t(t) do
+      defun update(s :: t, dict :: Dict.t) :: R.t(t) do
         (%{__struct__: __MODULE__} = s, dict) when is_list(dict) or is_map(dict) ->
           kv_results = Enum.map(@croma_struct_fields, fn {field, fields_to_fetch, mod} ->
             case Croma.Struct.dict_fetch2(dict, fields_to_fetch) do
@@ -226,7 +226,7 @@ defmodule Croma.Struct do
       A variant of `update/2` which returns `t` or raise if validation fails.
       In other words, `update/2` followed by `Croma.Result.get!/1`.
       """
-      defun update!(s: t, dict: Dict.t) :: t do
+      defun update!(s :: t, dict :: Dict.t) :: t do
         update(s, dict) |> R.get!
       end
     end

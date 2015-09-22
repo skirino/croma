@@ -36,7 +36,7 @@ defmodule Croma.SubtypeOfInt do
             @max <= -1 -> @type t :: neg_integer
             true       -> @type t :: integer
           end
-          defun validate(term: any) :: R.t(t) do
+          defun validate(term :: any) :: R.t(t) do
             i when is_integer(i) and i <= @max -> {:ok, i}
             _                                  -> {:error, {:invalid_value, [__MODULE__]}}
           end
@@ -46,13 +46,13 @@ defmodule Croma.SubtypeOfInt do
             0 == @min -> @type t :: non_neg_integer
             true      -> @type t :: integer
           end
-          defun validate(term: any) :: R.t(t) do
+          defun validate(term :: any) :: R.t(t) do
             i when is_integer(i) and @min <= i -> {:ok, i}
             _                                  -> {:error, {:invalid_value, [__MODULE__]}}
           end
         true ->
           @type t :: unquote(opts[:min]) .. unquote(opts[:max])
-          defun validate(term: any) :: R.t(t) do
+          defun validate(term :: any) :: R.t(t) do
             i when is_integer(i) and @min <= i and i <= @max -> {:ok, i}
             _                                                -> {:error, {:invalid_value, [__MODULE__]}}
           end
@@ -101,17 +101,17 @@ defmodule Croma.SubtypeOfFloat do
       @type t :: float
       cond do
         is_nil(@min) ->
-          defun validate(term: any) :: R.t(t) do
+          defun validate(term :: any) :: R.t(t) do
             f when is_float(f) and f <= @max -> {:ok, f}
             _                                -> {:error, {:invalid_value, [__MODULE__]}}
           end
         is_nil(@max) ->
-          defun validate(term: any) :: R.t(t) do
+          defun validate(term :: any) :: R.t(t) do
             f when is_float(f) and @min <= f -> {:ok, f}
             _                                -> {:error, {:invalid_value, [__MODULE__]}}
           end
         true ->
-          defun validate(term: any) :: R.t(t) do
+          defun validate(term :: any) :: R.t(t) do
             f when is_float(f) and @min <= f and f <= @max -> {:ok, f}
             _                                              -> {:error, {:invalid_value, [__MODULE__]}}
           end
@@ -153,7 +153,7 @@ defmodule Croma.SubtypeOfString do
 
       @type t :: String.t
 
-      defun validate(s: term) :: R.t(t) do
+      defun validate(s :: term) :: R.t(t) do
         s when is_binary(s) ->
           if Regex.match?(@pattern, s) do
             {:ok, s}
@@ -201,7 +201,7 @@ defmodule Croma.SubtypeOfAtom do
     quote do
       @type t :: unquote(values_as_typespec)
 
-      defun validate(term: any) :: R.t(t) do
+      defun validate(term :: any) :: R.t(t) do
         a when is_atom(a) ->
           if a in unquote(value_atoms) do
             {:ok, a}
@@ -251,7 +251,7 @@ defmodule Croma.SubtypeOfList do
     quote do
       @type t :: [unquote(mod).t]
 
-      defun validate(term: any) :: R.t(t) do
+      defun validate(term :: any) :: R.t(t) do
         l when is_list(l) ->
           case Enum.map(l, &unquote(mod).validate/1) |> R.sequence do
             {:ok   , elems } = r -> if valid_length?(length(elems)), do: r, else: {:error, {:invalid_value, [__MODULE__]}}

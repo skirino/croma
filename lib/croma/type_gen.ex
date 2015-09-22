@@ -45,7 +45,7 @@ defmodule Croma.TypeGen do
     q = quote do
       @type t :: nil | unquote(mod).t
 
-      defun validate(value: term) :: R.t(t) do
+      defun validate(value :: term) :: R.t(t) do
         nil -> {:ok, nil}
         v   -> case unquote(mod).validate(v) do
           {:ok   , _     } = r -> r
@@ -71,7 +71,7 @@ defmodule Croma.TypeGen do
     q = quote do
       @type t :: [unquote(mod).t]
 
-      defun validate(list: term) :: R.t(t) do
+      defun validate(list :: term) :: R.t(t) do
         l when is_list(l) ->
           Enum.map(l, &unquote(mod).validate/1) |> R.sequence
         _ -> {:error, {:invalid_value, [__MODULE__]}}
@@ -99,7 +99,7 @@ defmodule Croma.TypeGen do
       @modules unquote(modules)
       @type t :: unquote(types)
 
-      defun validate(value: term) :: R.t(t) do
+      defun validate(value :: term) :: R.t(t) do
         error_result = {:error, {:invalid_value, [__MODULE__]}}
         Enum.find_value(@modules, error_result, fn mod ->
           case mod.validate(value) do

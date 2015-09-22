@@ -27,7 +27,7 @@ import Croma.Defun
     @doc """
     Simply checks the argument's type using `#{pred}/1` and returns a `Croma.Result`.
     """
-    defun validate(value: term) :: Croma.Result.t(t) do
+    defun validate(value :: term) :: Croma.Result.t(t) do
       b when unquote(pred)(b) -> {:ok, b}
       _                       -> {:error, {:invalid_value, [__MODULE__]}}
     end
