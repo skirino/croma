@@ -43,6 +43,8 @@ defmodule Croma.TypeGen do
 
   defp nilable_impl(mod, location) do
     q = quote do
+      @moduledoc false
+
       @type t :: nil | unquote(mod).t
 
       defun validate(value :: term) :: R.t(t) do
@@ -69,6 +71,8 @@ defmodule Croma.TypeGen do
 
   defp list_of_impl(mod, location) do
     q = quote do
+      @moduledoc false
+
       @type t :: [unquote(mod).t]
 
       defun validate(list :: term) :: R.t(t) do
@@ -96,6 +100,8 @@ defmodule Croma.TypeGen do
   defp union_impl(modules, location) do
     types = Enum.map(modules, fn m -> quote do: unquote(m).t end) |> as_types
     q = quote do
+      @moduledoc false
+
       @modules unquote(modules)
       @type t :: unquote(types)
 
