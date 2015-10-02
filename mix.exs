@@ -4,7 +4,7 @@ defmodule Croma.Mixfile do
   def project do
     [
       app:             :croma,
-      version:         "0.3.0",
+      version:         "0.3.1",
       elixir:          "~> 1.0",
       build_embedded:  Mix.env == :prod,
       start_permanent: Mix.env == :prod,
@@ -41,10 +41,10 @@ defmodule Croma.Mixfile do
 
   defp package do
     [
-      files:        ["lib", "mix.exs", "README.md", "LICENSE"],
-      contributors: ["Shunsuke Kirino"],
-      licenses:     ["MIT"],
-      links:        %{"GitHub repository" => "https://github.com/skirino/croma", "Doc" => "http://hexdocs.pm/croma/"},
+      files:       ["lib", "mix.exs", "README.md", "LICENSE"],
+      maintainers: ["Shunsuke Kirino"],
+      licenses:    ["MIT"],
+      links:       %{"GitHub repository" => "https://github.com/skirino/croma", "Doc" => "http://hexdocs.pm/croma/"},
     ]
   end
 end
