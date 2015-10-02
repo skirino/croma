@@ -151,4 +151,50 @@ defmodule Croma.SubtypeTest do
     catch_error L3.default
     catch_error L4.default
   end
+
+  defmodule M1 do
+    use Croma.SubtypeOfMap, key_module: A1, value_module: I1, default: %{}
+  end
+  defmodule M2 do
+    use Croma.SubtypeOfMap, key_module: A1, value_module: I2, min_size: 1, default: %{a1: 0}
+  end
+  defmodule M3 do
+    use Croma.SubtypeOfMap, key_module: A1, value_module: I3, max_size: 2
+  end
+  defmodule M4 do
+    use Croma.SubtypeOfMap, key_module: A1, value_module: I4, min_size: 1, max_size: 2
+  end
+
+  test "Croma.SubtypeOfMap: validate/1" do
+    assert M1.validate(%{})                    == {:ok, %{}}
+    assert M1.validate(%{"a1" => 1})           == {:ok, %{a1: 1}}
+    assert M1.validate(%{a1: 1, a2: 2, a3: 3}) == {:ok, %{a1: 1, a2: 2, a3: 3}}
+    assert M1.validate(%{a: 1})                == {:error, {:invalid_value, [M1, A1]}}
+    assert M1.validate(%{a1: 0})               == {:error, {:invalid_value, [M1, I1]}}
+
+    assert M2.validate(%{})                    == {:error, {:invalid_value, [M2]}}
+    assert M2.validate(%{"a1" => 1})           == {:ok, %{a1: 1}}
+    assert M2.validate(%{a1: 1, a2: 2, a3: 3}) == {:ok, %{a1: 1, a2: 2, a3: 3}}
+    assert M2.validate(%{a: 1})                == {:error, {:invalid_value, [M2, A1]}}
+    assert M2.validate(%{a1: -1})              == {:error, {:invalid_value, [M2, I2]}}
+
+    assert M3.validate(%{})                    == {:ok, %{}}
+    assert M3.validate(%{"a1" => -1})          == {:ok, %{a1: -1}}
+    assert M3.validate(%{a1: 1, a2: 2, a3: 3}) == {:error, {:invalid_value, [M3]}}
+    assert M3.validate(%{a: 1})                == {:error, {:invalid_value, [M3, A1]}}
+    assert M3.validate(%{a1: "not_int"})       == {:error, {:invalid_value, [M3, I3]}}
+
+    assert M4.validate(%{})                    == {:error, {:invalid_value, [M4]}}
+    assert M4.validate(%{"a1" => -1})          == {:ok, %{a1: -1}}
+    assert M4.validate(%{a1: 1, a2: 2, a3: 3}) == {:error, {:invalid_value, [M4]}}
+    assert M4.validate(%{a: 1})                == {:error, {:invalid_value, [M4, A1]}}
+    assert M4.validate(%{a1: "not_int"})       == {:error, {:invalid_value, [M4, I4]}}
+  end
+
+  test "Croma.SubtypeOfMap: default/0" do
+    assert M1.default == %{}
+    assert M2.default == %{a1: 0}
+    catch_error M3.default
+    catch_error M4.default
+  end
 end
