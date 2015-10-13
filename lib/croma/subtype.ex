@@ -21,10 +21,9 @@ defmodule Croma.SubtypeOfInt do
   """
 
   defmacro __using__(opts) do
-    quote do
-      @min unquote(opts[:min])
-      @max unquote(opts[:max])
-
+    quote bind_quoted: [min: opts[:min], max: opts[:max], default: opts[:default]] do
+      @min min
+      @max max
       if !is_nil(@min) && !is_integer(@min), do: raise ":min must be either nil or integer"
       if !is_nil(@max) && !is_integer(@max), do: raise ":max must be either nil or integer"
       if is_nil(@min) && is_nil(@max)      , do: raise ":min and/or :max must be given"
@@ -51,14 +50,14 @@ defmodule Croma.SubtypeOfInt do
             _                                  -> {:error, {:invalid_value, [__MODULE__]}}
           end
         true ->
-          @type t :: unquote(opts[:min]) .. unquote(opts[:max])
+          @type t :: unquote(min) .. unquote(max)
           defun validate(term :: any) :: R.t(t) do
             i when is_integer(i) and @min <= i and i <= @max -> {:ok, i}
             _                                                -> {:error, {:invalid_value, [__MODULE__]}}
           end
       end
 
-      @default unquote(opts[:default])
+      @default default
       if @default do
         if !is_integer(@default)           , do: raise ":default must be an integer"
         if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
@@ -89,10 +88,9 @@ defmodule Croma.SubtypeOfFloat do
   """
 
   defmacro __using__(opts) do
-    quote do
-      @min unquote(opts[:min])
-      @max unquote(opts[:max])
-
+    quote bind_quoted: [min: opts[:min], max: opts[:max], default: opts[:default]] do
+      @min min
+      @max max
       if !is_nil(@min) && !is_float(@min), do: raise ":min must be either nil or float"
       if !is_nil(@max) && !is_float(@max), do: raise ":max must be either nil or float"
       if is_nil(@min) && is_nil(@max)    , do: raise ":min and/or :max must be given"
@@ -117,7 +115,7 @@ defmodule Croma.SubtypeOfFloat do
           end
       end
 
-      @default unquote(opts[:default])
+      @default default
       if @default do
         if !is_float(@default)             , do: raise ":default must be a float"
         if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
@@ -147,8 +145,8 @@ defmodule Croma.SubtypeOfString do
   """
 
   defmacro __using__(opts) do
-    quote do
-      @pattern unquote(opts[:pattern])
+    quote bind_quoted: [pattern: opts[:pattern], default: opts[:default]] do
+      @pattern pattern
       if !Regex.regex?(@pattern), do: raise ":pattern must be a regex"
 
       @type t :: String.t
@@ -163,7 +161,7 @@ defmodule Croma.SubtypeOfString do
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
-      @default unquote(opts[:default])
+      @default default
       if @default do
         if !Regex.match?(@pattern, @default), do: raise ":default must be a valid string"
         defun default :: t, do: @default
@@ -190,26 +188,27 @@ defmodule Croma.SubtypeOfAtom do
       end
   """
 
-  defp values_as_typespec([v    ]), do: v
-  defp values_as_typespec([h | t]), do: {:|, [], [h, values_as_typespec(t)]}
+  @doc false
+  def values_as_typespec([v    ]), do: v
+  def values_as_typespec([h | t]), do: {:|, [], [h, values_as_typespec(t)]}
 
   defmacro __using__(opts) do
-    value_atoms = opts[:values] || raise ":values must be present"
-    if Enum.empty?(value_atoms), do: raise ":values must be present"
-    value_strings      = Enum.map(value_atoms, &Atom.to_string/1)
-    values_as_typespec = values_as_typespec(value_atoms)
-    quote do
-      @type t :: unquote(values_as_typespec)
+    quote bind_quoted: [values: opts[:values], default: opts[:default]] do
+      @values values
+      if is_nil(@values) or Enum.empty?(@values), do: raise ":values must be present"
+      @value_strings Enum.map(@values, &Atom.to_string/1)
+
+      @type t :: unquote(Croma.SubtypeOfAtom.values_as_typespec(@values))
 
       defun validate(term :: any) :: R.t(t) do
         a when is_atom(a) ->
-          if a in unquote(value_atoms) do
+          if a in @values do
             {:ok, a}
           else
             {:error, {:invalid_value, [__MODULE__]}}
           end
         s when is_binary(s) ->
-          if s in unquote(value_strings) do
+          if s in @value_strings do
             {:ok, String.to_existing_atom(s)}
           else
             {:error, {:invalid_value, [__MODULE__]}}
@@ -217,9 +216,9 @@ defmodule Croma.SubtypeOfAtom do
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
-      @default unquote(opts[:default])
+      @default default
       if @default do
-        unless @default in unquote(value_atoms), do: raise ":default must be a valid atom"
+        if !Enum.member?(@values, @default), do: raise ":default must be a valid atom"
         defun default :: t, do: @default
       end
     end
@@ -247,21 +246,21 @@ defmodule Croma.SubtypeOfList do
   """
 
   defmacro __using__(opts) do
-    mod = opts[:elem_module] || raise ":elem_module must be given"
-    quote do
-      @type t :: [unquote(mod).t]
+    quote bind_quoted: [mod: opts[:elem_module], min: opts[:min_length], max: opts[:max_length], default: opts[:default]] do
+      @mod mod
+      @type t :: [@mod.t]
 
       defun validate(term :: any) :: R.t(t) do
         l when is_list(l) ->
-          case Enum.map(l, &unquote(mod).validate/1) |> R.sequence do
+          case Enum.map(l, &@mod.validate/1) |> R.sequence do
             {:ok   , elems } = r -> if valid_length?(length(elems)), do: r, else: {:error, {:invalid_value, [__MODULE__]}}
             {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
           end
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
-      @min unquote(opts[:min_length])
-      @max unquote(opts[:max_length])
+      @min min
+      @max max
       cond do
         is_nil(@min) && is_nil(@max) ->
           defp valid_length?(_), do: true
@@ -273,9 +272,9 @@ defmodule Croma.SubtypeOfList do
           defp valid_length?(len), do: @min <= len && len <= @max
       end
 
-      @default unquote(opts[:default])
+      @default default
       if @default do
-        if Enum.any?(@default, fn e -> unquote(mod).validate(e) |> R.error? end), do: raise ":default must be a valid list"
+        if Enum.any?(@default, fn e -> @mod.validate(e) |> R.error? end), do: raise ":default must be a valid list"
         len = length(@default)
         if !is_nil(@min) && len < @min, do: raise ":default is shorter than the given :min_length #{@min}"
         if !is_nil(@max) && @max < len, do: raise ":default is longer than the given :max_length #{@max}"
@@ -307,11 +306,11 @@ defmodule Croma.SubtypeOfMap do
   """
 
   defmacro __using__(opts) do
-    key_module   = opts[:key_module  ] || raise ":key_module must be given"
-    value_module = opts[:value_module] || raise ":value_module must be given"
-    quote do
-      @key_module   unquote(key_module  )
-      @value_module unquote(value_module)
+    quote bind_quoted: [key_module: opts[:key_module], value_module: opts[:value_module], min_size: opts[:min_size], max_size: opts[:max_size], default: opts[:default]] do
+      @key_module   key_module
+      @value_module value_module
+      if is_nil(@key_module  ), do: raise ":key_module must be given"
+      if is_nil(@value_module), do: raise ":value_module must be given"
 
       @type t :: %{@key_module.t => @value_module.t}
 
@@ -335,8 +334,8 @@ defmodule Croma.SubtypeOfMap do
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
-      @min unquote(opts[:min_size])
-      @max unquote(opts[:max_size])
+      @min min_size
+      @max max_size
       cond do
         is_nil(@min) && is_nil(@max) ->
           defp valid_size?(_), do: true
@@ -348,7 +347,7 @@ defmodule Croma.SubtypeOfMap do
           defp valid_size?(size), do: @min <= size && size <= @max
       end
 
-      @default unquote(opts[:default])
+      @default default
       if @default do
         if !is_map(@default), do: raise ":default must be a map"
         size = map_size(@default)
