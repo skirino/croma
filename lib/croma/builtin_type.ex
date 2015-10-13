@@ -43,3 +43,19 @@ Croma.BuiltinType.type_infos |> Enum.each fn {mod, builtin_type, pred} ->
     end
   end
 end
+
+defmodule Croma.Any do
+  @moduledoc """
+  Module that represents any Elixir term.
+  """
+
+  @type t :: any
+
+  @doc """
+  Wraps the argument into `{:ok, value}`.
+  Intended to be used with other parts of croma to express variables with `any` type.
+  """
+  defun validate(value :: term) :: {:ok, t} do
+    {:ok, value}
+  end
+end
