@@ -179,8 +179,8 @@ defmodule Croma.Defun do
         _ -> nil
       end
     end
-    def as_var!(arg) do
-      as_var(arg) || raise "parameter `#{Macro.to_string(arg.arg_expr)}` is not a var"
+    def as_var!(%Arg{arg_expr: arg_expr} = arg) do
+      as_var(arg) || raise "parameter `#{Macro.to_string(arg_expr)}` is not a var"
     end
 
     def guard_expr(%Arg{guard?: false}, _), do: nil
@@ -237,9 +237,9 @@ defmodule Croma.Defun do
   end
 
   defp bodyless_function(def_or_defp, fname, env, args) do
-    arg_exprs = Enum.with_index(args) |> Enum.map(fn {arg, index} ->
+    arg_exprs = Enum.with_index(args) |> Enum.map(fn {%Arg{default: default} = arg, index} ->
       var = Arg.as_var(arg) || Macro.var(:"a#{index}", nil)
-      case arg.default do
+      case default do
         :none            -> var
         {:some, default} -> {:\\, [], [var, default]}
       end
