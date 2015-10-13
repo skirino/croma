@@ -250,26 +250,40 @@ defmodule Croma.SubtypeOfList do
       @mod mod
       @type t :: [@mod.t]
 
-      defun validate(term :: any) :: R.t(t) do
-        l when is_list(l) ->
-          case Enum.map(l, &@mod.validate/1) |> R.sequence do
-            {:ok   , elems } = r -> if valid_length?(length(elems)), do: r, else: {:error, {:invalid_value, [__MODULE__]}}
-            {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
-          end
-        _ -> {:error, {:invalid_value, [__MODULE__]}}
-      end
-
       @min min
       @max max
       cond do
         is_nil(@min) && is_nil(@max) ->
-          defp valid_length?(_), do: true
+          defmacrop valid_length?(_), do: true
         is_nil(@min) ->
-          defp valid_length?(len), do: len <= @max
+          defmacrop valid_length?(len) do
+            quote do: unquote(len) <= @max
+          end
         is_nil(@max) ->
-          defp valid_length?(len), do: @min <= len
+          defmacrop valid_length?(len) do
+            quote do: @min <= unquote(len)
+          end
         true ->
-          defp valid_length?(len), do: @min <= len && len <= @max
+          defmacrop valid_length?(len) do
+            quote do: @min <= unquote(len) && unquote(len) <= @max
+          end
+      end
+
+      defun validate(term :: any) :: R.t(t) do
+        l when is_list(l) ->
+          valid_length? = valid_length?(length(l))
+          result = Enum.map(l, &@mod.validate/1) |> R.sequence
+          case result do
+            {:ok, _} when valid_length? -> result
+            _ ->
+              # suppress warning on unmatched case clause when both @min and @max are nil (`valid_length?` is always true)
+              # by separating case expressions
+              case result do
+                {:ok   , _}      -> {:error, {:invalid_value, [__MODULE__]}}
+                {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+              end
+          end
+        _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
       @default default
@@ -314,37 +328,39 @@ defmodule Croma.SubtypeOfMap do
 
       @type t :: %{@key_module.t => @value_module.t}
 
-      defun validate(term :: term) :: R.t(t) do
-        m when is_map(m) ->
-          if valid_size?(map_size(m)) do
-            results = Enum.map(m, fn {k0, v0} ->
-              @key_module.validate(k0) |> R.bind(fn k ->
-                @value_module.validate(v0) |> R.map(fn v ->
-                  {k, v}
-                end)
-              end)
-            end)
-            case R.sequence(results) do
-              {:ok   , kvs   } -> {:ok, Enum.into(kvs, %{})}
-              {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
-            end
-          else
-            {:error, {:invalid_value, [__MODULE__]}}
-          end
-        _ -> {:error, {:invalid_value, [__MODULE__]}}
-      end
-
       @min min_size
       @max max_size
       cond do
         is_nil(@min) && is_nil(@max) ->
-          defp valid_size?(_), do: true
+          defmacrop valid_size?(_), do: true
         is_nil(@min) ->
-          defp valid_size?(size), do: size <= @max
+          defmacrop valid_size?(size) do
+            quote do: unquote(size) <= @max
+          end
         is_nil(@max) ->
-          defp valid_size?(size), do: @min <= size
+          defmacrop valid_size?(size) do
+            quote do: @min <= unquote(size)
+          end
         true ->
-          defp valid_size?(size), do: @min <= size && size <= @max
+          defmacrop valid_size?(size) do
+            quote do: @min <= unquote(size) and unquote(size) <= @max
+          end
+      end
+
+      defun validate(term :: term) :: R.t(t) do
+        m when is_map(m) and valid_size?(map_size(m)) ->
+          results = Enum.map(m, fn {k0, v0} ->
+            @key_module.validate(k0) |> R.bind(fn k ->
+              @value_module.validate(v0) |> R.map(fn v ->
+                {k, v}
+              end)
+            end)
+          end)
+          case R.sequence(results) do
+            {:ok   , kvs   } -> {:ok, Enum.into(kvs, %{})}
+            {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+          end
+        _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
       @default default
