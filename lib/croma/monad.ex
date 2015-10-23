@@ -12,8 +12,8 @@ defmodule Croma.Monad do
   See `Croma.Result` for the generated functions/macros.
   """
 
-  # Here I don't use `Behaviour` and `defcallback`
-  # since it seems that Elixir's behaviour and typespecs don't provide a way to refer to a type
+  # Here I don't use Erlang behaviour
+  # since it seems that behaviour and typespecs don't provide a way to refer to a type
   # that will be defined in the module that use this module.
   defmacro __using__(_) do
     quote do
