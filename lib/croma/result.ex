@@ -106,11 +106,11 @@ defmodule Croma.Result do
       1
 
       iex> Croma.Result.get!({:error, :foo})
-      ** (ArgumentError) result is not :ok; element not present
+      ** (ArgumentError) element not present: {:error, :foo}
   """
   defun get!(result :: t(a)) :: a when a: any do
-    {:ok   , val} -> val
-    {:error, _  } -> raise ArgumentError, message: "result is not :ok; element not present"
+    {:ok   , val}     -> val
+    {:error, _  } = e -> raise ArgumentError, message: "element not present: #{inspect e}"
   end
 
   @doc """
