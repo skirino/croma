@@ -32,7 +32,7 @@ defmodule Croma.Guard do
       {:{}             , _, _} -> quote do: is_tuple(unquote(v))
       {_, _                  } -> quote do: is_tuple(unquote(v)) # tuple with two elements
       {{:., _, [alias_, basename]}, _, _} ->
-        case {expand_alias(alias_, caller), basename} do
+        case {Macro.expand(alias_, caller), basename} do
           {String         , :t} -> quote do: is_binary(unquote(v))
           {Dict           , :t} -> quote do: is_list(unquote(v)) or is_map(unquote(v))
           {Keyword        , :t} -> quote do: is_list(unquote(v))
@@ -52,13 +52,6 @@ defmodule Croma.Guard do
           _ -> raise "cannot generate guard for the given type: #{Macro.to_string type_expr}"
         end
       _ -> raise "cannot generate guard for the given type: #{Macro.to_string type_expr}"
-    end
-  end
-
-  defp expand_alias(alias_, %Macro.Env{aliases: aliases, macro_aliases: maliases, lexical_tracker: ltracker}) do
-    case :elixir_aliases.expand(alias_, aliases, maliases, ltracker) do
-      a when is_atom(a) -> a
-      l when is_list(l) -> Module.concat(l)
     end
   end
 end
