@@ -70,6 +70,7 @@ Elixir macro utilities.
     - Known limitations:
         - Pattern matching against function parameters should use `(param1, param2) when guards -> block` style.
         - Overloaded typespecs are not supported.
+        - Using unquote fragment in parameter list is not fully supported.
 
 ## `Croma.Monad`
 

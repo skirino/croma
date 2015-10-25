@@ -104,6 +104,7 @@ defmodule Croma.Defun do
   ## Known limitations
   - Overloaded typespecs are not supported.
   - Guard generation and validation are not allowed to be used with multi-clause syntax.
+  - Using unquote fragment in parameter list is not fully supported.
   """
   defmacro defun({:::, _, [fun, ret_type]}, [do: block]) do
     defun_impl(:def, fun, ret_type, [], block, __CALLER__)

@@ -173,6 +173,24 @@ defmodule Croma.Struct do
         new(dict) |> R.get!
       end
 
+      Enum.each(fields, fn {name, mod} ->
+        @doc """
+        Type-aware getter for #{name}.
+        """
+        @spec unquote(name)(t) :: unquote(mod).t
+        def unquote(name)(%__MODULE__{unquote(name) => field}) do
+          field
+        end
+
+        @doc """
+        Type-aware setter for #{name}.
+        """
+        @spec unquote(name)(t, unquote(mod).t) :: t
+        def unquote(name)(s, field) do
+          %__MODULE__{s | unquote(name) => field}
+        end
+      end)
+
       @doc """
       Checks that the given `dict` is valid or not by using each field's `validate/1` function.
       Returns `{:ok, valid_struct}` or `{:error, reason}`.

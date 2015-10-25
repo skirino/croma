@@ -41,6 +41,18 @@ defmodule Croma.StructTest do
     catch_error S1.new!([])
   end
 
+  test "Croma.Struct: getter and setter" do
+    s1 = S1.new!(field1: 0, field2: true)
+    assert S1.field1(s1) == 0
+    assert S1.field2(s1) == true
+    s2 = S1.field1(s1, 1)
+    assert S1.field1(s2) == 1
+    assert S1.field2(s2) == true
+    s3 = S1.field2(s2, false)
+    assert S1.field1(s3) == 1
+    assert S1.field2(s3) == false
+  end
+
   test "Croma.Struct: validate/1" do
     assert S1.validate( [                                 ]) == {:error, {:invalid_value, [S1, I1]}}
     assert S1.validate(%{                                 }) == {:error, {:invalid_value, [S1, I1]}}
