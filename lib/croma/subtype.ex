@@ -57,6 +57,13 @@ defmodule Croma.SubtypeOfInt do
           end
       end
 
+      if !is_nil(@min) do
+        def min, do: @min
+      end
+      if !is_nil(@max) do
+        def max, do: @max
+      end
+
       @default default
       if @default do
         if !is_integer(@default)           , do: raise ":default must be an integer"
@@ -115,6 +122,13 @@ defmodule Croma.SubtypeOfFloat do
           end
       end
 
+      if !is_nil(@min) do
+        def min, do: @min
+      end
+      if !is_nil(@max) do
+        def max, do: @max
+      end
+
       @default default
       if @default do
         if !is_float(@default)             , do: raise ":default must be a float"
@@ -148,6 +162,7 @@ defmodule Croma.SubtypeOfString do
     quote bind_quoted: [pattern: opts[:pattern], default: opts[:default]] do
       @pattern pattern
       if !Regex.regex?(@pattern), do: raise ":pattern must be a regex"
+      def pattern, do: @pattern
 
       @type t :: String.t
 
@@ -196,6 +211,8 @@ defmodule Croma.SubtypeOfAtom do
     quote bind_quoted: [values: opts[:values], default: opts[:default]] do
       @values values
       if is_nil(@values) or Enum.empty?(@values), do: raise ":values must be present"
+      def values, do: @values
+
       @value_strings Enum.map(@values, &Atom.to_string/1)
 
       @type t :: unquote(Croma.SubtypeOfAtom.values_as_typespec(@values))
@@ -286,6 +303,13 @@ defmodule Croma.SubtypeOfList do
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
+      if !is_nil(@min) do
+        def min_length, do: @min
+      end
+      if !is_nil(@max) do
+        def max_length, do: @max
+      end
+
       @default default
       if @default do
         if Enum.any?(@default, fn e -> @mod.validate(e) |> R.error? end), do: raise ":default must be a valid list"
@@ -361,6 +385,13 @@ defmodule Croma.SubtypeOfMap do
             {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
           end
         _ -> {:error, {:invalid_value, [__MODULE__]}}
+      end
+
+      if !is_nil(@min) do
+        def min_size, do: @min
+      end
+      if !is_nil(@max) do
+        def max_size, do: @max
       end
 
       @default default

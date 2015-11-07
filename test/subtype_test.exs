@@ -38,8 +38,17 @@ defmodule Croma.SubtypeTest do
   test "Croma.SubtypeOfInt: default/0" do
     catch_error I1.default
     catch_error I2.default
-    assert I3.default == -5
-    assert I4.default ==  0
+    assert      I3.default == -5
+    assert      I4.default ==  0
+
+    assert      I1.min == 1
+    catch_error I1.max
+    assert      I2.min == 0
+    assert      I2.max == 10
+    catch_error I3.min
+    assert      I3.max == -1
+    assert      I4.min == -5
+    assert      I4.max == 5
   end
 
   defmodule F1 do
@@ -70,8 +79,15 @@ defmodule Croma.SubtypeTest do
 
   test "Croma.SubtypeOfFloat: default/0" do
     catch_error F1.default
-    assert F2.default == 1.0
-    assert F3.default == 0.5
+    assert      F2.default == 1.0
+    assert      F3.default == 0.5
+
+    assert      F1.min == -5.0
+    catch_error F1.max
+    catch_error F2.min
+    assert      F2.max == 10.0
+    assert      F3.min == 0.0
+    assert      F3.max == 1.5
   end
 
   defmodule S1 do
@@ -88,6 +104,7 @@ defmodule Croma.SubtypeTest do
 
   test "Croma.SubtypeOfString: default/0" do
     assert S1.default == "foo"
+    assert S1.pattern == ~r/^foo|bar$/
   end
 
   defmodule A1 do
@@ -109,6 +126,7 @@ defmodule Croma.SubtypeTest do
 
   test "Croma.SubtypeOfAtom: default/0" do
     assert A1.default == :a1
+    assert A1.values  == [:a1, :a2, :a3]
   end
 
   defmodule L1 do
@@ -146,10 +164,19 @@ defmodule Croma.SubtypeTest do
   end
 
   test "Croma.SubtypeOfList: default/0" do
-    assert L1.default == []
-    assert L2.default == [0, 0, 0]
+    assert      L1.default == []
+    assert      L2.default == [0, 0, 0]
     catch_error L3.default
     catch_error L4.default
+
+    catch_error L1.min_length
+    catch_error L1.max_length
+    catch_error L2.min_length
+    assert      L2.max_length == 3
+    assert      L3.min_length == 2
+    catch_error L3.max_length
+    assert      L4.min_length == 1
+    assert      L4.max_length == 3
   end
 
   defmodule M1 do
@@ -192,9 +219,18 @@ defmodule Croma.SubtypeTest do
   end
 
   test "Croma.SubtypeOfMap: default/0" do
-    assert M1.default == %{}
-    assert M2.default == %{a1: 0}
+    assert      M1.default == %{}
+    assert      M2.default == %{a1: 0}
     catch_error M3.default
     catch_error M4.default
+
+    catch_error M1.min_size
+    catch_error M1.max_size
+    assert      M2.min_size == 1
+    catch_error M2.max_size
+    catch_error M3.min_size
+    assert      M3.max_size == 2
+    assert      M4.min_size == 1
+    assert      M4.max_size == 2
   end
 end
