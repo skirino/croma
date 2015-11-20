@@ -110,7 +110,7 @@ defmodule Croma.Result do
   """
   defun get!(result :: t(a)) :: a when a: any do
     {:ok   , val}     -> val
-    {:error, _  } = e -> raise ArgumentError, message: "element not present: #{inspect e}"
+    {:error, _  } = e -> raise ArgumentError, message: "element not present: #{inspect(e)}"
   end
 
   @doc """

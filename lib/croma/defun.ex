@@ -197,7 +197,7 @@ defmodule Croma.Defun do
           rhs = quote bind_quoted: [name: name, v: v] do
             case validate(v) do
               {:ok   , value } -> value
-              {:error, reason} -> raise "validation error for #{name}: #{inspect reason}"
+              {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
             end
           end
           {:=, meta, [v, rhs]}
@@ -205,11 +205,11 @@ defmodule Croma.Defun do
           rhs = quote bind_quoted: [name: name, v: v, mod: mod_alias] do
             case mod.validate(v) do
               {:ok   , value } -> value
-              {:error, reason} -> raise "validation error for #{name}: #{inspect reason}"
+              {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
             end
           end
           {:=, meta, [v, rhs]}
-        _ -> raise "cannot generate validation code for the given type: #{Macro.to_string type}"
+        _ -> raise "cannot generate validation code for the given type: #{Macro.to_string(type)}"
       end
     end
   end
@@ -239,7 +239,7 @@ defmodule Croma.Defun do
 
   defp bodyless_function(def_or_defp, fname, env, args) do
     arg_exprs = Enum.with_index(args) |> Enum.map(fn {%Arg{default: default} = arg, index} ->
-      var = Arg.as_var(arg) || Macro.var(:"a#{index}", nil)
+      var = Arg.as_var(arg) || Macro.var(:"a#{Integer.to_string(index)}", nil)
       case default do
         :none            -> var
         {:some, default} -> {:\\, [], [var, default]}

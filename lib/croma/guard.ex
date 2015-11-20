@@ -49,9 +49,9 @@ defmodule Croma.Guard do
           {Croma.Tuple    , :t} -> quote do: is_tuple(unquote(v))
           {Croma.List     , :t} -> quote do: is_list(unquote(v))
           {Croma.Map      , :t} -> quote do: is_map(unquote(v))
-          _ -> raise "cannot generate guard for the given type: #{Macro.to_string type_expr}"
+          _ -> raise "cannot generate guard for the given type: #{Macro.to_string(type_expr)}"
         end
-      _ -> raise "cannot generate guard for the given type: #{Macro.to_string type_expr}"
+      _ -> raise "cannot generate guard for the given type: #{Macro.to_string(type_expr)}"
     end
   end
 end

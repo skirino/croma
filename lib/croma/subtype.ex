@@ -314,8 +314,8 @@ defmodule Croma.SubtypeOfList do
       if @default do
         if Enum.any?(@default, fn e -> @mod.validate(e) |> R.error? end), do: raise ":default must be a valid list"
         len = length(@default)
-        if !is_nil(@min) && len < @min, do: raise ":default is shorter than the given :min_length #{@min}"
-        if !is_nil(@max) && @max < len, do: raise ":default is longer than the given :max_length #{@max}"
+        if !is_nil(@min) && len < @min, do: raise ":default is shorter than the given :min_length #{Integer.to_string(@min)}"
+        if !is_nil(@max) && @max < len, do: raise ":default is longer than the given :max_length #{Integer.to_string(@max)}"
         defun default :: t, do: @default
       end
     end
@@ -398,12 +398,12 @@ defmodule Croma.SubtypeOfMap do
       if @default do
         if !is_map(@default), do: raise ":default must be a map"
         size = map_size(@default)
-        if !is_nil(@min) && size < @min, do: raise "items in :default is less than the given :min_size #{@min}"
-        if !is_nil(@max) && @max < size, do: raise "items in :default is more than the given :max_size #{@max}"
+        if !is_nil(@min) && size < @min, do: raise "items in :default is less than the given :min_size #{Integer.to_string(@min)}"
+        if !is_nil(@max) && @max < size, do: raise "items in :default is more than the given :max_size #{Integer.to_string(@max)}"
         any_kv_invalid? = Enum.any?(@default, fn {k, v} ->
           R.error?(@key_module.validate(k)) or R.error?(@value_module.validate(v))
         end)
-        if any_kv_invalid?, do: raise ":default must be a valid value of #{__MODULE__}"
+        if any_kv_invalid?, do: raise ":default must be a valid value of #{Atom.to_string(__MODULE__)}"
         defun default :: t, do: @default
       end
     end
