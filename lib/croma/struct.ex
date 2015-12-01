@@ -66,10 +66,11 @@ defmodule Croma.Struct do
   You can specify the acceptable naming schemes of data structures to be validated
   by `:accept_case` option of `use Croma.Struct`.
 
-  - `nil` (default): Accepts only the given field names as they are.
-  - `:lower_camel`: Accepts both the given field names and their lower camel cased variants.
-  - `:upper_camel`: Accepts both the given field names and their upper camel cased variants.
+  - `nil` (default): Accepts only the given field names.
+  - `:lower_camel`: Accepts both the given field names and their lower camel variants.
+  - `:upper_camel`: Accepts both the given field names and their upper camel variants.
   - `:snake`: Accepts both the given field names and their snake cased variants.
+  - `:capital`: Accepts both the given field names and their variants where all characters are capital.
   """
 
   import Croma.Defun
@@ -112,7 +113,8 @@ defmodule Croma.Struct do
       :snake       -> &Mix.Utils.underscore/1
       :lower_camel -> &lower_camelize/1
       :upper_camel -> &Mix.Utils.camelize/1
-      _            -> raise ":accept_case option must be :lower_camel, :upper_camel or :snake"
+      :capital     -> &String.upcase/1
+      _            -> raise ":accept_case option must be :lower_camel, :upper_camel, :snake or :capital"
     end
     fields2 = Enum.map(fields, fn {key, mod} ->
       key2 = Atom.to_string(key) |> f.() |> String.to_atom

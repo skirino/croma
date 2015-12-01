@@ -115,6 +115,7 @@ defmodule Croma.StructTest do
     assert S2.new(bool_field: true) == {:ok, %S2{int_field: 0, bool_field: true}}
     assert S2.new(boolField:  true) == {:ok, %S2{int_field: 0, bool_field: true}}
     assert S2.new(BoolField:  true) == {:error, {:value_missing, [S2, Croma.Boolean]}}
+    assert S2.new(BOOL_FIELD: true) == {:error, {:value_missing, [S2, Croma.Boolean]}}
   end
 
   defmodule S3 do
@@ -125,6 +126,7 @@ defmodule Croma.StructTest do
     assert S3.new(%{bool_field: true}) == {:ok, %S3{int_field: 0, bool_field: true}}
     assert S3.new(%{BoolField:  true}) == {:ok, %S3{int_field: 0, bool_field: true}}
     assert S3.new(%{boolField:  true}) == {:error, {:value_missing, [S3, Croma.Boolean]}}
+    assert S3.new(%{BOOL_FIELD: true}) == {:error, {:value_missing, [S3, Croma.Boolean]}}
   end
 
   defmodule S4 do
@@ -135,5 +137,17 @@ defmodule Croma.StructTest do
     assert S4.new(%{"bool_field" => true}) == {:ok, %S4{intField: 0, boolField: true}}
     assert S4.new(%{"boolField"  => true}) == {:ok, %S4{intField: 0, boolField: true}}
     assert S4.new(%{"BoolField"  => true}) == {:error, {:value_missing, [S4, Croma.Boolean]}}
+    assert S4.new(%{"BOOL_FIELD" => true}) == {:error, {:value_missing, [S4, Croma.Boolean]}}
+  end
+
+  defmodule S5 do
+    use Croma.Struct, fields: [int_field: I1, bool_field: Croma.Boolean], accept_case: :capital
+  end
+
+  test "Croma.Struct with capital case" do
+    assert S5.new(%{"bool_field" => true}) == {:ok, %S5{int_field: 0, bool_field: true}}
+    assert S5.new(%{"BOOL_FIELD" => true}) == {:ok, %S5{int_field: 0, bool_field: true}}
+    assert S5.new(%{"boolField"  => true}) == {:error, {:value_missing, [S5, Croma.Boolean]}}
+    assert S5.new(%{"BoolField"  => true}) == {:error, {:value_missing, [S5, Croma.Boolean]}}
   end
 end
