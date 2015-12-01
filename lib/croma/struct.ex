@@ -95,8 +95,10 @@ defmodule Croma.Struct do
     end
   end
   defp dict_fetch2_impl(dict, key) when is_list(dict) do
-    Enum.find_value(dict, :error, fn {k, v} ->
-      if k == key || k == Atom.to_string(key), do: {:ok, v}
+    key_str = Atom.to_string(key)
+    Enum.find_value(dict, :error, fn
+      {k, v} when k == key or k == key_str -> {:ok, v}
+      _                                    -> nil
     end)
   end
   defp dict_fetch2_impl(dict, key) when is_map(dict) do
