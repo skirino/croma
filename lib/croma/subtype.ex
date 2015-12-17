@@ -203,10 +203,6 @@ defmodule Croma.SubtypeOfAtom do
       end
   """
 
-  @doc false
-  def values_as_typespec([v    ]), do: v
-  def values_as_typespec([h | t]), do: {:|, [], [h, values_as_typespec(t)]}
-
   defmacro __using__(opts) do
     quote bind_quoted: [values: opts[:values], default: opts[:default]] do
       @values values
@@ -215,7 +211,7 @@ defmodule Croma.SubtypeOfAtom do
 
       @value_strings Enum.map(@values, &Atom.to_string/1)
 
-      @type t :: unquote(Croma.SubtypeOfAtom.values_as_typespec(@values))
+      @type t :: unquote(Croma.Util.list_to_type_union(@values))
 
       defun validate(term :: any) :: R.t(t) do
         a when is_atom(a) ->
