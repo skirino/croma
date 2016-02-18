@@ -1,6 +1,6 @@
 defmodule Croma.StructCallSyntaxTest do
-  use ExUnit.Case
-  import Croma.StructCallSyntax
+  use Croma.TestCase
+  import StructCallSyntax
 
   defmodule S do
     defstruct [field1: 0]

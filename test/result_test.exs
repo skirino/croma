@@ -1,7 +1,6 @@
 defmodule Croma.ResultTest do
-  use ExUnit.Case
+  use Croma.TestCase, alias_as: R
   use ExCheck
-  alias Croma.Result, as: R
   require R
 
   def int2result(i) do

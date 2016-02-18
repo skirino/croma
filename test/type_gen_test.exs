@@ -1,6 +1,6 @@
-defmodule Croma.TypeTest do
-  use ExUnit.Case
-  import Croma.TypeGen
+defmodule Croma.TypeGenTest do
+  use Croma.TestCase
+  import TypeGen
 
   defmodule I do
     use Croma.SubtypeOfInt, min: 0
