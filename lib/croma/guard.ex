@@ -33,22 +33,28 @@ defmodule Croma.Guard do
       {_, _                  } -> quote do: is_tuple(unquote(v)) # tuple with two elements
       {{:., _, [alias_, basename]}, _, _} ->
         case {Macro.expand(alias_, caller), basename} do
-          {String         , :t} -> quote do: is_binary(unquote(v))
-          {Dict           , :t} -> quote do: is_list(unquote(v)) or is_map(unquote(v))
-          {Keyword        , :t} -> quote do: is_list(unquote(v))
-          {Croma.Atom     , :t} -> quote do: is_atom(unquote(v))
-          {Croma.Boolean  , :t} -> quote do: is_boolean(unquote(v))
-          {Croma.Float    , :t} -> quote do: is_float(unquote(v))
-          {Croma.Integer  , :t} -> quote do: is_integer(unquote(v))
-          {Croma.String   , :t} -> quote do: is_binary(unquote(v))
-          {Croma.BitString, :t} -> quote do: is_bitstring(unquote(v))
-          {Croma.Function , :t} -> quote do: is_function(unquote(v))
-          {Croma.Pid      , :t} -> quote do: is_pid(unquote(v))
-          {Croma.Port     , :t} -> quote do: is_port(unquote(v))
-          {Croma.Reference, :t} -> quote do: is_reference(unquote(v))
-          {Croma.Tuple    , :t} -> quote do: is_tuple(unquote(v))
-          {Croma.List     , :t} -> quote do: is_list(unquote(v))
-          {Croma.Map      , :t} -> quote do: is_map(unquote(v))
+          {String             , :t} -> quote do: is_binary(unquote(v))
+          {Dict               , :t} -> quote do: is_list(unquote(v)) or is_map(unquote(v))
+          {Keyword            , :t} -> quote do: is_list(unquote(v))
+          {Croma.Atom         , :t} -> quote do: is_atom(unquote(v))
+          {Croma.Boolean      , :t} -> quote do: is_boolean(unquote(v))
+          {Croma.Float        , :t} -> quote do: is_float(unquote(v))
+          {Croma.Integer      , :t} -> quote do: is_integer(unquote(v))
+          {Croma.String       , :t} -> quote do: is_binary(unquote(v))
+          {Croma.Binary       , :t} -> quote do: is_binary(unquote(v))
+          {Croma.BitString    , :t} -> quote do: is_bitstring(unquote(v))
+          {Croma.Function     , :t} -> quote do: is_function(unquote(v))
+          {Croma.Pid          , :t} -> quote do: is_pid(unquote(v))
+          {Croma.Port         , :t} -> quote do: is_port(unquote(v))
+          {Croma.Reference    , :t} -> quote do: is_reference(unquote(v))
+          {Croma.Tuple        , :t} -> quote do: is_tuple(unquote(v))
+          {Croma.List         , :t} -> quote do: is_list(unquote(v))
+          {Croma.Map          , :t} -> quote do: is_map(unquote(v))
+          {Croma.Byte         , :t} -> quote do: unquote(v) in 0..255
+          {Croma.Char         , :t} -> quote do: unquote(v) in 0..0x10ffff
+          {Croma.PosInteger   , :t} -> quote do: is_integer(unquote(v)) and unquote(v) > 0
+          {Croma.NegInteger   , :t} -> quote do: is_integer(unquote(v)) and unquote(v) < 0
+          {Croma.NonNegInteger, :t} -> quote do: is_integer(unquote(v)) and unquote(v) >= 0
           _ -> raise "cannot generate guard for the given type: #{Macro.to_string(type_expr)}"
         end
       _ -> raise "cannot generate guard for the given type: #{Macro.to_string(type_expr)}"

@@ -4,19 +4,26 @@ defmodule Croma.BuiltinType do
   @moduledoc false
 
   @type_infos [
-    {Croma.Atom     , :is_atom     , "atom"     , quote do: atom     },
-    {Croma.Boolean  , :is_boolean  , "boolean"  , quote do: boolean  },
-    {Croma.Float    , :is_float    , "float"    , quote do: float    },
-    {Croma.Integer  , :is_integer  , "integer"  , quote do: integer  },
-    {Croma.String   , :is_binary   , "String.t" , quote do: String.t },
-    {Croma.BitString, :is_bitstring, "bitstring", quote do: bitstring},
-    {Croma.Function , :is_function , "function" , quote do: function },
-    {Croma.Pid      , :is_pid      , "pid"      , quote do: pid      },
-    {Croma.Port     , :is_port     , "port"     , quote do: port     },
-    {Croma.Reference, :is_reference, "reference", quote do: reference},
-    {Croma.Tuple    , :is_tuple    , "tuple"    , quote do: tuple    },
-    {Croma.List     , :is_list     , "list"     , quote do: list     },
-    {Croma.Map      , :is_map      , "map"      , quote do: map      },
+    {Croma.Atom         , "atom"           , (quote do: atom           ), (quote do: is_atom     (var!(x)))},
+    {Croma.Boolean      , "boolean"        , (quote do: boolean        ), (quote do: is_boolean  (var!(x)))},
+    {Croma.Float        , "float"          , (quote do: float          ), (quote do: is_float    (var!(x)))},
+    {Croma.Integer      , "integer"        , (quote do: integer        ), (quote do: is_integer  (var!(x)))},
+    {Croma.Number       , "number"         , (quote do: number         ), (quote do: is_number   (var!(x)))},
+    {Croma.String       , "String.t"       , (quote do: String.t       ), (quote do: is_binary   (var!(x)))},
+    {Croma.Binary       , "binary"         , (quote do: binary         ), (quote do: is_binary   (var!(x)))},
+    {Croma.BitString    , "bitstring"      , (quote do: bitstring      ), (quote do: is_bitstring(var!(x)))},
+    {Croma.Function     , "function"       , (quote do: function       ), (quote do: is_function (var!(x)))},
+    {Croma.Pid          , "pid"            , (quote do: pid            ), (quote do: is_pid      (var!(x)))},
+    {Croma.Port         , "port"           , (quote do: port           ), (quote do: is_port     (var!(x)))},
+    {Croma.Reference    , "reference"      , (quote do: reference      ), (quote do: is_reference(var!(x)))},
+    {Croma.Tuple        , "tuple"          , (quote do: tuple          ), (quote do: is_tuple    (var!(x)))},
+    {Croma.List         , "list"           , (quote do: list           ), (quote do: is_list     (var!(x)))},
+    {Croma.Map          , "map"            , (quote do: map            ), (quote do: is_map      (var!(x)))},
+    {Croma.Byte         , "byte"           , (quote do: byte           ), (quote do: var!(x) in 0..255)},
+    {Croma.Char         , "char"           , (quote do: char           ), (quote do: var!(x) in 0..0x10ffff)},
+    {Croma.PosInteger   , "pos_integer"    , (quote do: pos_integer    ), (quote do: is_integer(var!(x)) and var!(x) >  0)},
+    {Croma.NegInteger   , "neg_integer"    , (quote do: neg_integer    ), (quote do: is_integer(var!(x)) and var!(x) <  0)},
+    {Croma.NonNegInteger, "non_neg_integer", (quote do: non_neg_integer), (quote do: is_integer(var!(x)) and var!(x) >= 0)},
   ]
 
   def type_infos, do: @type_infos
@@ -25,7 +32,7 @@ defmodule Croma.BuiltinType do
   end
 end
 
-Croma.BuiltinType.type_infos |> Enum.each(fn {mod, pred, type_name, type_expr} ->
+Croma.BuiltinType.type_infos |> Enum.each(fn {mod, type_name, type_expr, guard_expr} ->
   defmodule mod do
     @moduledoc """
     Module that represents the Elixir's built-in #{type_name} type.
@@ -35,11 +42,11 @@ Croma.BuiltinType.type_infos |> Enum.each(fn {mod, pred, type_name, type_expr} -
     @type t :: unquote(type_expr)
 
     @doc """
-    Simply checks the argument's type using `#{pred}/1` and returns a `Croma.Result`.
+    Simply checks the argument's type using `#{Macro.to_string guard_expr}` and returns a `Croma.Result`.
     """
     defun validate(value :: term) :: Croma.Result.t(t) do
-      b when unquote(pred)(b) -> {:ok, b}
-      _                       -> {:error, {:invalid_value, [__MODULE__]}}
+      x when unquote(guard_expr) -> {:ok, x}
+      _                          -> {:error, {:invalid_value, [__MODULE__]}}
     end
   end
 end)
