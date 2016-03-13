@@ -160,7 +160,7 @@ defmodule Croma.DefunTest do
     defun l3(l :: g[list]) :: list, do: l
     defun l4(l :: g[list(atom)]) :: list(atom), do: l
 
-    defun f(d :: g[Dict.t], p :: g[pos_integer], n :: g[number] \\ 0.5) :: :ok, do: :ok
+    defun f(d :: g[map], p :: g[pos_integer], n :: g[number] \\ 0.5) :: :ok, do: :ok
   end
 
   test "should define function with guard" do
@@ -187,10 +187,9 @@ defmodule Croma.DefunTest do
     catch_error M2.l3(nil)
     catch_error M2.l4(nil)
 
-    assert      M2.f([] , 1, 0.5) == :ok
     assert      M2.f(%{}, 2, 0  ) == :ok
     catch_error M2.f("" , 1, 0.5)
-    catch_error M2.f([] , 0)
+    catch_error M2.f(%{}, 0)
   end
 
   defmodule M3 do
