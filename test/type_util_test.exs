@@ -12,7 +12,6 @@ defmodule Croma.TypeUtilTest do
       {:b1, {:ok, :binary}},
       {:b2, {:ok, :binary}},
       {:b3, {:ok, :binary}},
-      {:b4, {:ok, :binary}},
 
       {:l1, {:ok, :list}},
       {:l2, {:ok, :list}},

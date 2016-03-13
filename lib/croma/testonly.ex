@@ -4,7 +4,6 @@ if Mix.env == :test do
     @type   b1 :: String.t
     @typep  b2 :: S.t
     @opaque b3 :: b2
-    @type   b4 :: Croma.String.t
 
     @type l1 :: []
     @type l2 :: [integer]
@@ -14,7 +13,7 @@ if Mix.env == :test do
     @type t0 :: {}
     @type t1 :: {atom}
     @type t2 :: {atom, integer}
-    @type t3 :: {String.t, Croma.String.t, binary}
+    @type t3 :: {String.t, float, binary}
     @type t4 :: tuple
 
     @type m1 :: %{}
