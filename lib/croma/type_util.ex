@@ -72,4 +72,7 @@ defmodule Croma.TypeUtil do
         resolve_primitive(mod_expanded, n)
     end
   end
+
+  def list_to_type_union([v    ]), do: v
+  def list_to_type_union([h | t]), do: {:|, [], [h, list_to_type_union(t)]}
 end

@@ -98,7 +98,7 @@ defmodule Croma.TypeGen do
   end
 
   defp union_impl(modules, location) do
-    type = Enum.map(modules, fn m -> quote do: unquote(m).t end) |> Croma.Util.list_to_type_union
+    type = Enum.map(modules, fn m -> quote do: unquote(m).t end) |> Croma.TypeUtil.list_to_type_union
     q = quote do
       @moduledoc false
 

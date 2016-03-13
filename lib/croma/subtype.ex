@@ -211,7 +211,7 @@ defmodule Croma.SubtypeOfAtom do
 
       @value_strings Enum.map(@values, &Atom.to_string/1)
 
-      @type t :: unquote(Croma.Util.list_to_type_union(@values))
+      @type t :: unquote(Croma.TypeUtil.list_to_type_union(@values))
 
       defun validate(term :: any) :: R.t(t) do
         a when is_atom(a) ->
