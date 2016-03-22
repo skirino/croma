@@ -1,6 +1,8 @@
 defmodule Croma.Mixfile do
   use Mix.Project
 
+  @github_url "https://github.com/skirino/croma"
+
   def project do
     [
       app:             :croma,
@@ -11,8 +13,8 @@ defmodule Croma.Mixfile do
       deps:            deps,
       description:     description,
       package:         package,
-      source_url:      "https://github.com/skirino/croma",
-      homepage_url:    "https://github.com/skirino/croma",
+      source_url:      @github_url,
+      homepage_url:    @github_url,
       test_coverage:   [tool: Coverex.Task, coveralls: true],
     ]
   end
@@ -44,7 +46,7 @@ defmodule Croma.Mixfile do
       files:       ["lib", "mix.exs", "README.md", "LICENSE"],
       maintainers: ["Shunsuke Kirino"],
       licenses:    ["MIT"],
-      links:       %{"GitHub repository" => "https://github.com/skirino/croma", "Doc" => "http://hexdocs.pm/croma/"},
+      links:       %{"GitHub repository" => @github_url, "Doc" => "http://hexdocs.pm/croma/"},
     ]
   end
 end
