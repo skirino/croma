@@ -112,9 +112,9 @@ defmodule Croma.Struct do
   def fields_with_accept_case(fields, accept_case) do
     f = case accept_case do
       nil          -> fn a -> a end
-      :snake       -> &Mix.Utils.underscore/1
+      :snake       -> &Macro.underscore/1
       :lower_camel -> &lower_camelize/1
-      :upper_camel -> &Mix.Utils.camelize/1
+      :upper_camel -> &Macro.camelize/1
       :capital     -> &String.upcase/1
       _            -> raise ":accept_case option must be :lower_camel, :upper_camel, :snake or :capital"
     end
@@ -133,7 +133,7 @@ defmodule Croma.Struct do
     if byte_size(s) == 0 do
       ""
     else
-      c = Mix.Utils.camelize(s)
+      c = Macro.camelize(s)
       String.downcase(String.first(c)) <> String.slice(c, 1..-1)
     end
   end
