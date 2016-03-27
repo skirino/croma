@@ -75,6 +75,15 @@ defmodule Croma.Defun do
 
   For supported types of guard-generation please refer to the source code of `Croma.Guard.make/3`.
 
+  Guard generation can be disabled by setting application config during compilation.
+  For example, by putting the following into `config/config.exs`,
+
+      config :croma, [
+        defun_generate_guard: false
+      ]
+
+  then `g[String.t]` becomes semantically the same as `String.t`.
+
   ## Validating arguments based on their types
   You can instrument check of preconditions on arguments by specifying argument's type as `v[type]`.
   For instance,
@@ -100,6 +109,12 @@ defmodule Croma.Defun do
       end
 
   The generated code assumes that `validate/1` function is defined in the same module as the specified type.
+
+  Generating validation of arguments can be disabled by setting application config during compilation.
+
+      config :croma, [
+        defun_generate_validation: false
+      ]
 
   ## Known limitations
   - Overloaded typespecs are not supported.
@@ -145,7 +160,9 @@ defmodule Croma.Defun do
       %__MODULE__{new(inner_expr) | default: {:some, default}}
     end
     def new({:::, _, [arg_expr, type_expr]}) do
-      {type_expr2, guard?, validate?} = extract_guard_and_validate(type_expr)
+      {type_expr2, g_used?, v_used?} = extract_guard_and_validate(type_expr)
+      guard?    = g_used? and Application.get_env(:croma, :defun_generate_guard, true)
+      validate? = v_used? and Application.get_env(:croma, :defun_generate_validation, true)
       %__MODULE__{arg_expr: arg_expr, type: type_expr2, default: :none, guard?: guard?, validate?: validate?}
     end
     def new(arg_expr) do

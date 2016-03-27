@@ -239,4 +239,22 @@ defmodule Croma.DefunTest do
     assert      M3.f4(0) == 0
     catch_error M3.f4(1)
   end
+
+  Application.put_env(:croma, :defun_generate_guard, false)
+  Application.put_env(:croma, :defun_generate_validation, false)
+
+  defmodule M4 do
+    defun f(x :: g[Croma.String.t], y :: v[Croma.String.t]) :: String.t do
+      "#{x} #{y}"
+    end
+  end
+
+  Application.delete_env(:croma, :defun_generate_guard)
+  Application.delete_env(:croma, :defun_generate_validation)
+
+  test "should disable generation of guards/validations by application config" do
+    assert M4.f("x", "y") == "x y"
+    assert M4.f(:x , "y") == "x y"
+    assert M4.f("x", :y ) == "x y"
+  end
 end
