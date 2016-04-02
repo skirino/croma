@@ -3,7 +3,7 @@ defmodule Croma.ResultTest do
   use ExCheck
   require R
 
-  def int2result(i) do
+  defp int2result(i) do
     if rem(i, 2) == 0, do: {:ok, i}, else: {:error, i}
   end
 

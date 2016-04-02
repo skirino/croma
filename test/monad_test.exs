@@ -4,13 +4,13 @@ defmodule Croma.MonadTest do
   alias Croma.Result   , as: R
   alias Croma.ListMonad, as: L
 
-  def id(a), do: a
+  defp id(a), do: a
 
-  def int2result(i) do
+  defp int2result(i) do
     if rem(i, 2) == 0, do: {:ok, i}, else: {:error, i}
   end
 
-  def functor_law1(mod, f) do
+  defp functor_law1(mod, f) do
     mod.map(f, &id/1) == f
   end
 
@@ -27,7 +27,7 @@ defmodule Croma.MonadTest do
     end
   end
 
-  def functor_law2(mod, f) do
+  defp functor_law2(mod, f) do
     g1  = fn x -> x + 1 end
     g2  = fn x -> x * 2 end
     g12 = fn x -> x |> g1.() |> g2.() end
@@ -47,7 +47,7 @@ defmodule Croma.MonadTest do
     end
   end
 
-  def applicative_law1_identity(mod, a) do
+  defp applicative_law1_identity(mod, a) do
     mod.ap(a, mod.pure(&id/1)) == a
   end
 
@@ -64,7 +64,7 @@ defmodule Croma.MonadTest do
     end
   end
 
-  def applicative_law2_homomorphism(mod, x) do
+  defp applicative_law2_homomorphism(mod, x) do
     f = fn i -> i + 1 end
     mod.ap(mod.pure(x), mod.pure(f)) == mod.pure(f.(x))
   end
@@ -81,7 +81,7 @@ defmodule Croma.MonadTest do
     end
   end
 
-  def applicative_law3_interchange(mod, x) do
+  defp applicative_law3_interchange(mod, x) do
     af = mod.pure(fn i -> i + 1 end)
     applier = fn f -> f.(x) end
     mod.ap(mod.pure(x), af) == mod.ap(af, mod.pure(applier))
@@ -99,7 +99,7 @@ defmodule Croma.MonadTest do
     end
   end
 
-  def applicative_law4_compoisition(mod, a) do
+  defp applicative_law4_compoisition(mod, a) do
     au = mod.pure(fn i -> i + 1 end)
     av = mod.pure(fn i -> i * 2 end)
     compose = fn f1 ->
@@ -123,7 +123,7 @@ defmodule Croma.MonadTest do
     end
   end
 
-  def monad_law1(mod, x) do
+  defp monad_law1(mod, x) do
     f = fn i -> mod.pure(i + 1) end
     mod.bind(mod.pure(x), f) == f.(x)
   end
@@ -140,7 +140,7 @@ defmodule Croma.MonadTest do
     end
   end
 
-  def monad_law2(mod, m) do
+  defp monad_law2(mod, m) do
     mod.bind(m, &mod.pure/1) == m
   end
 
@@ -157,7 +157,7 @@ defmodule Croma.MonadTest do
     end
   end
 
-  def monad_law3(mod, m) do
+  defp monad_law3(mod, m) do
     k = fn i -> mod.pure(i + 1) end
     h = fn i -> mod.pure(i * 2) end
     mod.bind(m, fn x -> mod.bind(k.(x), h) end) == m |> mod.bind(k) |> mod.bind(h)
