@@ -230,6 +230,26 @@ defmodule Croma.DefunTest do
     defun f4(i :: v[t]) :: t do
       i
     end
+
+    defun f5(i :: v[integer], j :: v[non_neg_integer]) :: integer do
+      i + j
+    end
+
+    defun f6(l1 :: v[list], l2 :: v[list(integer)], l3 :: v[[]], l4 :: v[[String.t]], l5 :: v[[a: atom]]) :: integer do
+      length(l1) + length(l2) + length(l3) + length(l4) + length(l5)
+    end
+
+    defun f7(m1 :: v[map], m2 :: v[%{}], m3 :: v[%{a: atom}], m4 :: v[%{String.t => integer}]) :: integer do
+      map_size(m1) + map_size(m2) + map_size(m3) + map_size(m4)
+    end
+
+    defun f8(t :: v[tuple], t0 :: v[{}], t1 :: v[{atom}], t2 :: v[{integer, String.t}], t3 :: v[{atom, atom, atom}]) :: integer do
+      tuple_size(t) + tuple_size(t0) + tuple_size(t1) + tuple_size(t2) + tuple_size(t3)
+    end
+
+    defun f9(b1 :: v[binary], b2 :: v[bitstring], b3 :: v[<<>>], b4 :: v[<<_ :: _*8>>]) :: integer do
+      bit_size(b1) + bit_size(b2) + bit_size(b3) + bit_size(b4)
+    end
   end
 
   test "should define function with argument validation" do
@@ -252,6 +272,36 @@ defmodule Croma.DefunTest do
 
     assert      M3.f4(0) == 0
     catch_error M3.f4(1)
+
+    assert      M3.f5(1  ,  0) == 1
+    catch_error M3.f5("0",  0)
+    catch_error M3.f5(1  , -1)
+
+    assert      M3.f6([], [], [], [], []) == 0
+    catch_error M3.f6(0 , [], [], [], [])
+    catch_error M3.f6([], 0 , [], [], [])
+    catch_error M3.f6([], [], 0 , [], [])
+    catch_error M3.f6([], [], [], 0 , [])
+    catch_error M3.f6([], [], [], [], 0 )
+
+    assert      M3.f7(%{}, %{}, %{}, %{}) == 0
+    catch_error M3.f7(0  , %{}, %{}, %{})
+    catch_error M3.f7(%{}, 0  , %{}, %{})
+    catch_error M3.f7(%{}, %{}, 0  , %{})
+    catch_error M3.f7(%{}, %{}, %{}, 0  )
+
+    assert      M3.f8({}, {}, {}, {}, {}) == 0
+    catch_error M3.f8(0 , {}, {}, {}, {})
+    catch_error M3.f8({}, 0 , {}, {}, {})
+    catch_error M3.f8({}, {}, 0 , {}, {})
+    catch_error M3.f8({}, {}, {}, 0 , {})
+    catch_error M3.f8({}, {}, {}, {}, 0 )
+
+    assert      M3.f9(<<>>, <<>>, <<>>, <<>>) == 0
+    catch_error M3.f9(0   , <<>>, <<>>, <<>>)
+    catch_error M3.f9(<<>>, 0   , <<>>, <<>>)
+    catch_error M3.f9(<<>>, <<>>, 0   , <<>>)
+    catch_error M3.f9(<<>>, <<>>, <<>>, 0   )
   end
 
   Application.put_env(:croma, :defun_generate_guard, false)
