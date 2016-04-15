@@ -160,6 +160,11 @@ defmodule Croma.DefunTest do
     defun l3(l :: g[list]) :: list, do: l
     defun l4(l :: g[list(atom)]) :: list(atom), do: l
 
+    defun b1(b :: g[binary]) :: binary, do: b
+    defun b2(b :: g[bitstring]) :: bitstring, do: b
+    defun b3(b :: g[<<>>]) :: <<>>, do: b
+    defun b4(b :: g[<<_ :: _*8>>]) :: <<>>, do: b
+
     defun f(d :: g[map], p :: g[pos_integer], n :: g[number] \\ 0.5) :: :ok, do: :ok
   end
 
@@ -186,6 +191,15 @@ defmodule Croma.DefunTest do
     catch_error M2.l2(nil)
     catch_error M2.l3(nil)
     catch_error M2.l4(nil)
+
+    assert      M2.b1(<<>>) == <<>>
+    assert      M2.b2(<<>>) == <<>>
+    assert      M2.b3(<<>>) == <<>>
+    assert      M2.b4(<<>>) == <<>>
+    catch_error M2.b1([])
+    catch_error M2.b2([])
+    catch_error M2.b3([])
+    catch_error M2.b4([])
 
     assert      M2.f(%{}, 2, 0  ) == :ok
     catch_error M2.f("" , 1, 0.5)

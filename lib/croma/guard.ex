@@ -38,6 +38,7 @@ defmodule Croma.Guard do
       :tuple                      -> quote do: is_tuple(unquote(v))
       :%{}                        -> quote do: is_map(unquote(v))
       :{}                         -> quote do: is_tuple(unquote(v))
+      :<<>>                       -> quote do: is_bitstring(unquote(v))
       {:., _, [alias_, basename]} -> make_with_simplify(type_expr, v, caller, alias_, basename)
       _                           -> error(type_expr)
     end
