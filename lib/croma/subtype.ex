@@ -328,7 +328,7 @@ defmodule Croma.SubtypeOfMap do
 
   Options:
   - `:key_module` - A module that defines the type of keys. The module must provide `@type t` and `@spec validate(term) :: Croma.Result.t(t)`.
-  - `value_module` - A module that defines the type of values. The module must provide `@type t` and `@spec validate(term) :: Croma.Result.t(t)`.
+  - `:value_module` - A module that defines the type of values. The module must provide `@type t` and `@spec validate(term) :: Croma.Result.t(t)`.
   - `:min_size` - Minimum size of valid values of this type (inclusive).
   - `:max_size` - Maximum size of valid values of this type (inclusive).
   - `:default` - Default value for this type. Passing this option generates `default/0`.

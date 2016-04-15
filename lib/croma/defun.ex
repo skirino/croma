@@ -209,26 +209,7 @@ defmodule Croma.Defun do
 
     def validation_expr(%Arg{validate?: false}), do: nil
     def validation_expr(%Arg{validate?: true, type: type} = arg) do
-      {name, _, _} = v = Arg.as_var!(arg)
-      case type do
-        {:t, meta, _} ->
-          rhs = quote bind_quoted: [name: name, v: v] do
-            case validate(v) do
-              {:ok   , value } -> value
-              {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
-            end
-          end
-          {:=, meta, [v, rhs]}
-        {{:., meta, [mod_alias, :t]}, _, _} ->
-          rhs = quote bind_quoted: [name: name, v: v, mod: mod_alias] do
-            case mod.validate(v) do
-              {:ok   , value } -> value
-              {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
-            end
-          end
-          {:=, meta, [v, rhs]}
-        _ -> raise "cannot generate validation code for the given type: #{Macro.to_string(type)}"
-      end
+      Croma.Validation.make(type, as_var!(arg))
     end
   end
 

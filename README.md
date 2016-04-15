@@ -27,6 +27,8 @@ Elixir macro utilities.
 - Unit-testable `defp` that is simply converted to
     - `def` if `Mix.env == :test`,
     - `defp` otherwise.
+- This is particularly useful when e.g. you want to test your module's internal logic
+  which is implemented as a pure function and thus easily testable.
 
 ### `Croma.Defun`
 
@@ -67,7 +69,7 @@ Elixir macro utilities.
         end
         ```
     - There are also `defunp` and `defunpt` macros for private functions.
-    - Known limitations:
+    - Limitations:
         - Pattern matching against function parameters should use `(param1, param2) when guards -> block` style.
         - Overloaded typespecs are not supported.
         - Using unquote fragment in parameter list is not fully supported.

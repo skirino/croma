@@ -1,6 +1,6 @@
 defmodule Croma.Guard do
   @moduledoc """
-  Module to work with guard generation (ses `Croma.Defun.defun/2`).
+  Module to work with guard generation (see `Croma.Defun.defun/2`).
   This module is intended for internal use.
   """
 
