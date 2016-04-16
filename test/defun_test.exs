@@ -250,6 +250,10 @@ defmodule Croma.DefunTest do
     defun f9(b1 :: v[binary], b2 :: v[bitstring], b3 :: v[<<>>], b4 :: v[<<_ :: _*8>>]) :: integer do
       bit_size(b1) + bit_size(b2) + bit_size(b3) + bit_size(b4)
     end
+
+    defun f10(s :: v[String.t]) :: String.t do
+      s
+    end
   end
 
   test "should define function with argument validation" do
@@ -302,6 +306,9 @@ defmodule Croma.DefunTest do
     catch_error M3.f9(<<>>, 0   , <<>>, <<>>)
     catch_error M3.f9(<<>>, <<>>, 0   , <<>>)
     catch_error M3.f9(<<>>, <<>>, <<>>, 0   )
+
+    assert      M3.f10("a") == "a"
+    catch_error M3.f10(:a )
   end
 
   defmodule M4 do

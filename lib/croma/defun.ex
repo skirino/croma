@@ -207,9 +207,9 @@ defmodule Croma.Defun do
       Croma.Guard.make(type, as_var!(arg), caller)
     end
 
-    def validation_expr(%Arg{validate?: false}), do: nil
-    def validation_expr(%Arg{validate?: true, type: type} = arg) do
-      Croma.Validation.make(type, as_var!(arg))
+    def validation_expr(%Arg{validate?: false}, _), do: nil
+    def validation_expr(%Arg{validate?: true, type: type} = arg, caller) do
+      Croma.Validation.make(type, as_var!(arg), caller)
     end
   end
 
@@ -231,7 +231,7 @@ defmodule Croma.Defun do
     def wrap_body_with_return_value_check(ret, body, caller) do
       cond do
         ret.guard?    -> wrap_body_with_guard(ret, body, caller)
-        ret.validate? -> wrap_body_with_validation(ret, body)
+        ret.validate? -> wrap_body_with_validation(ret, body, caller)
         :otherwise    -> body
       end
     end
@@ -245,8 +245,8 @@ defmodule Croma.Defun do
       end
     end
 
-    defp wrap_body_with_validation(%__MODULE__{type: type, validate?: true}, body) do
-      validation_expr = Croma.Validation.make(type, Macro.var(:return_value, __MODULE__))
+    defp wrap_body_with_validation(%__MODULE__{type: type, validate?: true}, body, caller) do
+      validation_expr = Croma.Validation.make(type, Macro.var(:return_value, __MODULE__), caller)
       quote do
         return_value = unquote(body)
         unquote(validation_expr)
@@ -303,7 +303,7 @@ defmodule Croma.Defun do
       {:__block__, env, clause_defs}
     else
       call_expr = call_expr_with_guard(fname, env, args, caller)
-      body = body_with_validation(args, block)
+      body = body_with_validation(args, block, caller)
       wrapped_body = Ret.wrap_body_with_return_value_check(ret, body, caller)
       {def_or_defp, env, [call_expr, [do: wrapped_body]]}
     end
@@ -334,13 +334,13 @@ defmodule Croma.Defun do
     end
   end
 
-  defp body_with_validation(args, block) do
+  defp body_with_validation(args, block, caller) do
     exprs = case reset_hygienic_counter(block) do
       {:__block__, _, exprs} -> exprs
       nil                    -> []
       expr                   -> [expr]
     end
-    validation_exprs = Enum.map(args, &Arg.validation_expr/1) |> Enum.reject(&is_nil/1)
+    validation_exprs = Enum.map(args, &Arg.validation_expr(&1, caller)) |> Enum.reject(&is_nil/1)
     case validation_exprs ++ exprs do
       []     -> nil
       [expr] -> expr

@@ -4,12 +4,12 @@ defmodule Croma.Validation do
   This module is intended for internal use.
   """
 
-  def make(type_expr, v) do
+  def make(type_expr, v, caller) do
     case type_expr do
       l when is_list(l)                   -> validation_expr(v, [], Croma.List)
       {_, _}                              -> validation_expr(v, [], Croma.Tuple)
       {:t, meta, _}                       -> validation_expr(v, meta)
-      {{:., meta, [mod_alias, :t]}, _, _} -> validation_expr(v, meta, mod_alias)
+      {{:., meta, [mod_alias, :t]}, _, _} -> validation_expr(v, meta, replace_elixir_type_module(mod_alias, caller))
       {first, meta, _}                    -> make_from_tuple3(type_expr, v, first, meta)
       _                                   -> error(type_expr)
     end
@@ -66,6 +66,14 @@ defmodule Croma.Validation do
       end
     end
     {:=, meta, [v, rhs]}
+  end
+
+  defp replace_elixir_type_module(mod_alias, caller) do
+    mod = Macro.expand(mod_alias, caller)
+    case mod do
+      String -> Croma.String
+      _      -> mod
+    end
   end
 
   defp error(type_expr) do
