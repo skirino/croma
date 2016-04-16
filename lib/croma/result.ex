@@ -163,6 +163,73 @@ defmodule Croma.Result do
     end
   end
 
+  @doc """
+  Based on existing functions that return `Croma.Result.t(any)`, defines functions that raise on error.
+
+  Each generated function simply calls the specified function and then passes the returned value to `Croma.Result.get!/1`.
+
+  ## Examples
+      iex> defmodule M do
+      ...>   def f(a) do
+      ...>     {:ok, a + 1}
+      ...>   end
+      ...>   Croma.Result.define_bang_version_of(f: 1)
+      ...> end
+      iex> M.f(1)
+      {:ok, 2}
+      iex> M.f!(1)
+      2
+
+  If appropriate spec of original function is available, spec of the bang version is also declared.
+  For functions that have default arguments it's necessary to explicitly pass all arities to `Croma.Result.define_bang_version_of/1`.
+  """
+  defmacro define_bang_version_of(name_arity_pairs) do
+    quote bind_quoted: [name_arity_pairs: name_arity_pairs] do
+      specs = Module.get_attribute(__MODULE__, :spec)
+      Enum.each(name_arity_pairs, fn {name, arity} ->
+        spec = Enum.find_value(specs, &Croma.Result.Impl.match_and_convert_spec(name, arity, &1))
+        if spec do
+          @spec unquote(spec)
+        end
+        vars = Croma.Result.Impl.make_vars(arity, __MODULE__)
+        def unquote(:"#{name}!")(unquote_splicing(vars)) do
+          unquote(name)(unquote_splicing(vars)) |> Croma.Result.get!
+        end
+      end)
+    end
+  end
+
+  defmodule Impl do
+    @moduledoc false
+
+    def match_and_convert_spec(name, arity, spec) do
+      case spec do
+        {:spec, {:::, meta1, [{^name, meta2, args}, ret_type]}, env} when length(args) == arity ->
+          make_spec_fun = fn r -> {:::, meta1, [{:"#{name}!", meta2, args}, r]} end
+          case ret_type do
+            {:ok, r} -> make_spec_fun.(r)
+            {:|, _, types} ->
+              Enum.find_value(types, fn
+                {:ok, r} -> make_spec_fun.(r)
+                _        -> nil
+              end)
+            {{:., _, [mod_alias, :t]}, _, r} ->
+              if Macro.expand(mod_alias, env) == Croma.Result, do: make_spec_fun.(r), else: nil
+            _ -> nil
+          end
+        _ -> nil
+      end
+    end
+
+    def make_vars(n, module) do
+      if n == 0 do
+        []
+      else
+        Enum.map(0 .. n-1, fn i -> Macro.var(String.to_atom("arg#{i}"), module) end)
+      end
+    end
+  end
+
   defmodule ErrorReason do
     @moduledoc false
 

@@ -112,4 +112,40 @@ defmodule Croma.ResultTest do
     assert R.or_else(e1, fe.()) == e2
     assert_receive(_)
   end
+
+  defmodule Bang do
+    use Croma
+    def f do
+      {:ok, 1}
+    end
+    defun g :: R.t(integer) do
+      {:ok, 1}
+    end
+    defun h(a :: integer) :: R.t(integer) do
+      if rem(a, 2) == 0, do: {:ok, a}, else: {:error, :odd}
+    end
+    defun i :: {:ok, integer} do
+      f
+    end
+    defun j(a :: integer \\ 0) :: {:ok, integer} | {:error, atom} do
+      h(a)
+    end
+    def k do
+      {:ok, 1}
+    end
+
+    R.define_bang_version_of(f: 0, g: 0, h: 1, i: 0, j: 0, j: 1)
+  end
+
+  test "define_bang_version_of" do
+    assert      Bang.f! == 1
+    assert      Bang.g! == 1
+    assert      Bang.h!(2) == 2
+    catch_error Bang.h!(1)
+    assert      Bang.i! == 1
+    assert      Bang.j! == 0
+    assert      Bang.j!(2) == 2
+    catch_error Bang.j!(1)
+    catch_error Bang.k!
+  end
 end
