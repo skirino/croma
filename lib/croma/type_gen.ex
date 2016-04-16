@@ -115,7 +115,8 @@ defmodule Croma.TypeGen do
         end)
       end
     end
-    name = Module.concat([Croma.TypeGen.Union | modules])
+    hash = Enum.map(modules, &Atom.to_string/1) |> :erlang.md5 |> Base.encode16
+    name = Module.concat(Croma.TypeGen.Union, hash)
     ensure_module_defined(name, q, location)
     name
   end
