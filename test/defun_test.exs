@@ -304,10 +304,26 @@ defmodule Croma.DefunTest do
     catch_error M3.f9(<<>>, <<>>, <<>>, 0   )
   end
 
-  Application.put_env(:croma, :defun_generate_guard, false)
+  defmodule M4 do
+    defun f1(f :: (() -> integer)) :: g[integer] do
+      f.()
+    end
+    defun f2(f :: (() -> String.t)) :: v[Croma.String.t] do
+      f.()
+    end
+  end
+
+  test "should generate guard/validation of return value (postcondition)" do
+    assert      M4.f1(fn -> 1 end) == 1
+    catch_error M4.f1(fn -> "1" end)
+    assert      M4.f2(fn -> "a" end) == "a"
+    catch_error M4.f2(fn -> :a end)
+  end
+
+  Application.put_env(:croma, :defun_generate_guard     , false)
   Application.put_env(:croma, :defun_generate_validation, false)
 
-  defmodule M4 do
+  defmodule M5 do
     defun f(x :: g[Croma.String.t], y :: v[Croma.String.t]) :: String.t do
       "#{x} #{y}"
     end
@@ -317,8 +333,8 @@ defmodule Croma.DefunTest do
   Application.delete_env(:croma, :defun_generate_validation)
 
   test "should disable generation of guards/validations by application config" do
-    assert M4.f("x", "y") == "x y"
-    assert M4.f(:x , "y") == "x y"
-    assert M4.f("x", :y ) == "x y"
+    assert M5.f("x", "y") == "x y"
+    assert M5.f(:x , "y") == "x y"
+    assert M5.f("x", :y ) == "x y"
   end
 end

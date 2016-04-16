@@ -122,22 +122,22 @@ defmodule Croma.Defun do
   - Using unquote fragment in parameter list is not fully supported.
   - `try` block is not implicitly started in body of `defun`, in contrast to `def`.
   """
-  defmacro defun({:::, _, [fun, ret_type]}, [do: block]) do
-    defun_impl(:def, fun, ret_type, [], block, __CALLER__)
+  defmacro defun({:::, _, [fun, ret]}, [do: block]) do
+    defun_impl(:def, fun, ret, [], block, __CALLER__)
   end
-  defmacro defun({:when, _, [{:::, _, [fun, ret_type]}, type_params]}, [do: block]) do
-    defun_impl(:def, fun, ret_type, type_params, block, __CALLER__)
+  defmacro defun({:when, _, [{:::, _, [fun, ret]}, type_params]}, [do: block]) do
+    defun_impl(:def, fun, ret, type_params, block, __CALLER__)
   end
 
   @doc """
   Defines a private function together with its typespec.
   See `defun/2` for usage of this macro.
   """
-  defmacro defunp({:::, _, [fun, ret_type]}, [do: block]) do
-    defun_impl(:defp, fun, ret_type, [], block, __CALLER__)
+  defmacro defunp({:::, _, [fun, ret]}, [do: block]) do
+    defun_impl(:defp, fun, ret, [], block, __CALLER__)
   end
-  defmacro defunp({:when, _, [{:::, _, [fun, ret_type]}, type_params]}, [do: block]) do
-    defun_impl(:defp, fun, ret_type, type_params, block, __CALLER__)
+  defmacro defunp({:when, _, [{:::, _, [fun, ret]}, type_params]}, [do: block]) do
+    defun_impl(:defp, fun, ret, type_params, block, __CALLER__)
   end
 
   @doc """
@@ -145,11 +145,11 @@ defmodule Croma.Defun do
   See `defun/2` for usage of this macro.
   See also `Croma.Defpt.defpt/2`.
   """
-  defmacro defunpt({:::, _, [fun, ret_type]}, [do: block]) do
-    defun_impl(:defpt, fun, ret_type, [], block, __CALLER__)
+  defmacro defunpt({:::, _, [fun, ret]}, [do: block]) do
+    defun_impl(:defpt, fun, ret, [], block, __CALLER__)
   end
-  defmacro defunpt({:when, _, [{:::, _, [fun, ret_type]}, type_params]}, [do: block]) do
-    defun_impl(:defpt, fun, ret_type, type_params, block, __CALLER__)
+  defmacro defunpt({:when, _, [{:::, _, [fun, ret]}, type_params]}, [do: block]) do
+    defun_impl(:defpt, fun, ret, type_params, block, __CALLER__)
   end
 
   defmodule Arg do
@@ -161,7 +161,7 @@ defmodule Croma.Defun do
     end
     def new({:::, _, [arg_expr, type_expr]}) do
       {type_expr2, g_used?, v_used?} = extract_guard_and_validate(type_expr)
-      guard?    = g_used? and Application.get_env(:croma, :defun_generate_guard, true)
+      guard?    = g_used? and Application.get_env(:croma, :defun_generate_guard     , true)
       validate? = v_used? and Application.get_env(:croma, :defun_generate_validation, true)
       %__MODULE__{arg_expr: arg_expr, type: type_expr2, default: :none, guard?: guard?, validate?: validate?}
     end
@@ -213,20 +213,63 @@ defmodule Croma.Defun do
     end
   end
 
-  defp defun_impl(def_or_defp, {fname, env, args0}, ret_type, type_params, block, caller) do
+  defmodule Ret do
+    @moduledoc false
+    defstruct [:type, :guard?, :validate?]
+
+    def new(expr) do
+      {type_expr, g_used?, v_used?} = extract(expr)
+      guard?    = g_used? and Application.get_env(:croma, :defun_generate_guard     , true)
+      validate? = v_used? and Application.get_env(:croma, :defun_generate_validation, true)
+      %__MODULE__{type: type_expr, guard?: guard?, validate?: validate?}
+    end
+
+    defp extract({{:., _, [Access, :get]}, _, [{:g, _, _}, inner_expr]}), do: {inner_expr, true , false}
+    defp extract({{:., _, [Access, :get]}, _, [{:v, _, _}, inner_expr]}), do: {inner_expr, false, true }
+    defp extract(expr                                                  ), do: {expr      , false, false}
+
+    def wrap_body_with_return_value_check(ret, body, caller) do
+      cond do
+        ret.guard?    -> wrap_body_with_guard(ret, body, caller)
+        ret.validate? -> wrap_body_with_validation(ret, body)
+        :otherwise    -> body
+      end
+    end
+
+    defp wrap_body_with_guard(%__MODULE__{type: type, guard?: true}, body, caller) do
+      guard_expr = Croma.Guard.make(type, Macro.var(:return_value, __MODULE__), caller)
+      quote do
+        case unquote(body) do
+          return_value when unquote(guard_expr) -> return_value
+        end
+      end
+    end
+
+    defp wrap_body_with_validation(%__MODULE__{type: type, validate?: true}, body) do
+      validation_expr = Croma.Validation.make(type, Macro.var(:return_value, __MODULE__))
+      quote do
+        return_value = unquote(body)
+        unquote(validation_expr)
+      end
+    end
+  end
+
+  defp defun_impl(def_or_defp, {fname, env, args0}, ret0, type_params, block, caller) do
     args = case args0 do
       context when is_atom(context) -> [] # function definition without parameter list
       _ -> Enum.map(args0, &Arg.new/1)
     end
-    spec = typespec(fname, env, args, ret_type, type_params)
-    bodyless = bodyless_function(def_or_defp, fname, env, args)
-    fundef = function_definition(def_or_defp, fname, env, args, block, caller)
-    {:__block__, [], [spec, bodyless, fundef]}
+    ret = Ret.new(ret0)
+    {:__block__, [], [
+        typespec(fname, env, args, ret, type_params),
+        bodyless_function(def_or_defp, fname, env, args),
+        function_definition(def_or_defp, fname, env, args, ret, block, caller),
+      ]}
   end
 
-  defp typespec(fname, env, args, ret_type, type_params) do
+  defp typespec(fname, env, args, ret, type_params) do
     arg_types = Enum.map(args, &(&1.type))
-    func_with_return_type = {:::, [], [{fname, [], arg_types}, ret_type]}
+    func_with_return_type = {:::, [], [{fname, [], arg_types}, ret.type]}
     spec_expr = case type_params do
       [] -> func_with_return_type
       _  -> {:when, [], [func_with_return_type, type_params]}
@@ -247,20 +290,22 @@ defmodule Croma.Defun do
     {def_or_defp, env, [{fname, env, arg_exprs}]}
   end
 
-  defp function_definition(def_or_defp, fname, env, args, block, caller) do
+  defp function_definition(def_or_defp, fname, env, args, ret, block, caller) do
     defs = case block do
       {:__block__, _, multiple_defs} -> multiple_defs
       single_def                     -> List.wrap(single_def)
     end
     if !Enum.empty?(defs) and Enum.all?(defs, &pattern_match_expr?/1) do
-      if Enum.any?(args, &(&1.guard?   )), do: raise "guard generation cannot be used with clause syntax"
-      if Enum.any?(args, &(&1.validate?)), do: raise "argument validation cannot be used with clause syntax"
+      if Enum.any?(args, &(&1.guard?   )), do: raise "guard generation cannot be used with multi-clause syntax"
+      if Enum.any?(args, &(&1.validate?)), do: raise "argument validation cannot be used with multi-clause syntax"
+      if ret.guard? or ret.validate?     , do: raise "return value validation cannot be used with multi-clause syntax"
       clause_defs = Enum.map(defs, &to_clause_definition(def_or_defp, fname, &1))
       {:__block__, env, clause_defs}
     else
       call_expr = call_expr_with_guard(fname, env, args, caller)
       body = body_with_validation(args, block)
-      {def_or_defp, env, [call_expr, [do: body]]}
+      wrapped_body = Ret.wrap_body_with_return_value_check(ret, body, caller)
+      {def_or_defp, env, [call_expr, [do: wrapped_body]]}
     end
   end
 
