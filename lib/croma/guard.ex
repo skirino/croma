@@ -19,10 +19,11 @@ defmodule Croma.Guard do
       :pos_integer                -> quote do: is_integer(unquote(v)) and unquote(v) > 0
       :neg_integer                -> quote do: is_integer(unquote(v)) and unquote(v) < 0
       :non_neg_integer            -> quote do: is_integer(unquote(v)) and unquote(v) >= 0
+      :boolean                    -> quote do: is_boolean(unquote(v))
       :byte                       -> quote do: is_integer(unquote(v)) and (unquote(v) in 0..255)
       :char                       -> quote do: is_integer(unquote(v)) and (unquote(v) in 0..0x10ffff)
       :float                      -> quote do: is_float(unquote(v))
-      :number                     -> quote do: is_integer(unquote(v)) or is_float(unquote(v))
+      :number                     -> quote do: is_number(unquote(v))
       :binary                     -> quote do: is_binary(unquote(v))
       :bitstring                  -> quote do: is_bitstring(unquote(v))
       :module                     -> quote do: is_atom(unquote(v)) or is_tuple(unquote(v))

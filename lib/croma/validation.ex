@@ -22,6 +22,7 @@ defmodule Croma.Validation do
         :pos_integer     -> Croma.PosInteger
         :neg_integer     -> Croma.NeInteger
         :non_neg_integer -> Croma.NonNegInteger
+        :boolean         -> Croma.Boolean
         :byte            -> Croma.Byte
         :char            -> Croma.Char
         :float           -> Croma.Float
