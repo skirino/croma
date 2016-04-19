@@ -84,31 +84,6 @@ defmodule Croma.Struct do
   end
 
   @doc false
-  def dict_fetch2(dict, keys) do
-    case keys do
-      [key]        -> dict_fetch2_impl(dict, key)
-      [key1, key2] ->
-        case dict_fetch2_impl(dict, key1) do
-          {:ok, _} = r -> r
-          :error       -> dict_fetch2_impl(dict, key2)
-        end
-    end
-  end
-  defp dict_fetch2_impl(dict, key) when is_list(dict) do
-    key_str = Atom.to_string(key)
-    Enum.find_value(dict, :error, fn
-      {k, v} when k == key or k == key_str -> {:ok, v}
-      _                                    -> nil
-    end)
-  end
-  defp dict_fetch2_impl(dict, key) when is_map(dict) do
-    case Map.fetch(dict, key) do
-      {:ok, _} = r -> r
-      :error       -> Map.fetch(dict, Atom.to_string(key))
-    end
-  end
-
-  @doc false
   def fields_with_accept_case(fields, accept_case) do
     f = case accept_case do
       nil          -> fn a -> a end
@@ -138,6 +113,82 @@ defmodule Croma.Struct do
     end
   end
 
+  @doc false
+  def new_impl(mod, struct_fields, dict) do
+    rs = Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
+      case dict_fetch2(dict, fields_to_fetch) do
+        {:ok, v} -> mod.validate(v)
+        :error   ->
+          try do
+            {:ok, mod.default}
+          rescue
+            _ -> {:error, {:value_missing, [mod]}}
+          end
+      end
+      |> R.map(&{field, &1})
+    end)
+    case R.sequence(rs) do
+      {:ok   , kvs   } -> {:ok, struct(mod, kvs)}
+      {:error, reason} -> {:error, R.ErrorReason.add_context(reason, mod)}
+    end
+  end
+
+  @doc false
+  def validate_impl(mod, struct_fields, dict) when is_list(dict) or is_map(dict) do
+    kv_results = Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
+      case dict_fetch2(dict, fields_to_fetch) do
+        {:ok, v} -> v
+        :error   -> nil
+      end
+      |> mod.validate
+      |> R.map(&{field, &1})
+    end)
+    case R.sequence(kv_results) do
+      {:ok   , kvs   } -> {:ok, struct(mod, kvs)}
+      {:error, reason} -> {:error, R.ErrorReason.add_context(reason, mod)}
+    end
+  end
+  def validate_impl(mod, _, _), do: {:error, {:invalid_value, [mod]}}
+
+  @doc false
+  def update_impl(s, mod, struct_fields, dict) when is_list(dict) or is_map(dict) do
+    kv_results = Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
+      case dict_fetch2(dict, fields_to_fetch) do
+        {:ok, v} -> mod.validate(v) |> R.map(&{field, &1})
+        :error   -> nil
+      end
+    end)
+    |> Enum.reject(&is_nil/1)
+    case R.sequence(kv_results) do
+      {:ok   , kvs   } -> {:ok, struct(s, kvs)}
+      {:error, reason} -> {:error, R.ErrorReason.add_context(reason, mod)}
+    end
+  end
+
+  defp dict_fetch2(dict, keys) do
+    case keys do
+      [key]        -> dict_fetch2_impl(dict, key)
+      [key1, key2] ->
+        case dict_fetch2_impl(dict, key1) do
+          {:ok, _} = r -> r
+          :error       -> dict_fetch2_impl(dict, key2)
+        end
+    end
+  end
+  defp dict_fetch2_impl(dict, key) when is_list(dict) do
+    key_str = Atom.to_string(key)
+    Enum.find_value(dict, :error, fn
+      {k, v} when k == key or k == key_str -> {:ok, v}
+      _                                    -> nil
+    end)
+  end
+  defp dict_fetch2_impl(dict, key) when is_map(dict) do
+    case Map.fetch(dict, key) do
+      {:ok, _} = r -> r
+      :error       -> Map.fetch(dict, Atom.to_string(key))
+    end
+  end
+
   defmacro __using__(opts) do
     quote bind_quoted: [fields: opts[:fields], accept_case: opts[:accept_case]] do
       defstruct Keyword.keys(fields)
@@ -151,22 +202,7 @@ defmodule Croma.Struct do
       The values in the `dict` are validated by each field's `validate/1` function.
       """
       defun new(dict :: Dict.t) :: R.t(t) do
-        rs = Enum.map(@croma_struct_fields, fn {field, fields_to_fetch, mod} ->
-          case Croma.Struct.dict_fetch2(dict, fields_to_fetch) do
-            {:ok, v} -> mod.validate(v)
-            :error   ->
-              try do
-                {:ok, mod.default}
-              rescue
-                _ -> {:error, {:value_missing, [mod]}}
-              end
-          end
-          |> R.map(&{field, &1})
-        end)
-        case R.sequence(rs) do
-          {:ok   , kvs   } -> {:ok, struct(__MODULE__, kvs)}
-          {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
-        end
+        Croma.Struct.new_impl(__MODULE__, @croma_struct_fields, dict)
       end
 
       @doc """
@@ -200,20 +236,7 @@ defmodule Croma.Struct do
       Returns `{:ok, valid_struct}` or `{:error, reason}`.
       """
       defun validate(dict :: Dict.t) :: R.t(t) do
-        dict when is_list(dict) or is_map(dict) ->
-          kv_results = Enum.map(@croma_struct_fields, fn {field, fields_to_fetch, mod} ->
-            case Croma.Struct.dict_fetch2(dict, fields_to_fetch) do
-              {:ok, v} -> v
-              :error   -> nil
-            end
-            |> mod.validate
-            |> R.map(&{field, &1})
-          end)
-          case R.sequence(kv_results) do
-            {:ok   , kvs   } -> {:ok, struct(__MODULE__, kvs)}
-            {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
-          end
-        _ -> {:error, {:invalid_value, [__MODULE__]}}
+        Croma.Struct.validate_impl(__MODULE__, @croma_struct_fields, dict)
       end
 
       @doc """
@@ -229,19 +252,8 @@ defmodule Croma.Struct do
       The values in the `dict` are validated by each field's `validate/1` function.
       Returns `{:ok, valid_struct}` or `{:error, reason}`.
       """
-      defun update(s :: t, dict :: Dict.t) :: R.t(t) do
-        (%{__struct__: __MODULE__} = s, dict) when is_list(dict) or is_map(dict) ->
-          kv_results = Enum.map(@croma_struct_fields, fn {field, fields_to_fetch, mod} ->
-            case Croma.Struct.dict_fetch2(dict, fields_to_fetch) do
-              {:ok, v} -> mod.validate(v) |> R.map(&{field, &1})
-              :error   -> nil
-            end
-          end)
-          |> Enum.reject(&is_nil/1)
-          case R.sequence(kv_results) do
-            {:ok   , kvs   } -> {:ok, struct(s, kvs)}
-            {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
-          end
+      defun update(%__MODULE__{} = s :: t, dict :: Dict.t) :: R.t(t) do
+        Croma.Struct.update_impl(s, __MODULE__, @croma_struct_fields, dict)
       end
 
       @doc """
