@@ -4,6 +4,14 @@ defmodule Croma.Validation do
   This module is intended for internal use.
   """
 
+  @doc false
+  def validate(mod, v, name) do
+    case mod.validate(v) do
+      {:ok   , value } -> value
+      {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
+    end
+  end
+
   def make(type_expr, v, caller) do
     case type_expr do
       l when is_list(l)                   -> validation_expr(v, [], Croma.List)
@@ -51,20 +59,14 @@ defmodule Croma.Validation do
   defp validation_expr(v, meta) do
     {name, _, _} = v
     rhs = quote bind_quoted: [name: name, v: v] do
-      case validate(v) do
-        {:ok   , value } -> value
-        {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
-      end
+      Croma.Validation.validate(__MODULE__, v, name)
     end
     {:=, meta, [v, rhs]}
   end
   defp validation_expr(v, meta, mod) do
     {name, _, _} = v
     rhs = quote bind_quoted: [name: name, v: v, mod: mod] do
-      case mod.validate(v) do
-        {:ok   , value } -> value
-        {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
-      end
+      Croma.Validation.validate(mod, v, name)
     end
     {:=, meta, [v, rhs]}
   end
