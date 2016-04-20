@@ -214,7 +214,7 @@ defmodule Croma.Result do
                 _        -> nil
               end)
             {{:., _, [mod_alias, :t]}, _, r} ->
-              if Macro.expand(mod_alias, env) == Croma.Result, do: make_spec_fun.(r), else: nil
+              if Macro.expand(mod_alias, env) == Croma.Result, do: make_spec_fun.(hd(r)), else: nil
             _ -> nil
           end
         _ -> nil

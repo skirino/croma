@@ -135,6 +135,10 @@ defmodule Croma.ResultTest do
     end
 
     R.define_bang_version_of(f: 0, g: 0, h: 1, i: 0, j: 0, j: 1)
+
+    # getter for compile-time typespec information
+    spec = Module.get_attribute(__MODULE__, :spec) |> Macro.escape
+    def typespecs, do: unquote(spec)
   end
 
   test "define_bang_version_of" do
@@ -147,5 +151,13 @@ defmodule Croma.ResultTest do
     assert      Bang.j!(2) == 2
     catch_error Bang.j!(1)
     catch_error Bang.k!
+
+    specs = Bang.typespecs |> Enum.map(fn {:spec, {:::, _, [call, ret]}, _env} -> {call, ret} end)
+    refute Enum.any?(specs, &match?({{:f!, _, _                 }, {_       , _, _}}, &1))
+    assert Enum.any?(specs, &match?({{:g!, _, _                 }, {:integer, _, _}}, &1))
+    assert Enum.any?(specs, &match?({{:h!, _, [{:integer, _, _}]}, {:integer, _, _}}, &1))
+    assert Enum.any?(specs, &match?({{:i!, _, _                 }, {:integer, _, _}}, &1))
+    assert Enum.any?(specs, &match?({{:j!, _, [{:integer, _, _}]}, {:integer, _, _}}, &1))
+    refute Enum.any?(specs, &match?({{:k!, _, _                 }, {_       , _, _}}, &1))
   end
 end
