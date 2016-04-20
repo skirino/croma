@@ -6,7 +6,7 @@ defmodule Croma.Mixfile do
   def project do
     [
       app:             :croma,
-      version:         "0.4.2",
+      version:         "0.4.3",
       elixir:          "~> 1.2",
       build_embedded:  Mix.env == :prod,
       start_permanent: Mix.env == :prod,
