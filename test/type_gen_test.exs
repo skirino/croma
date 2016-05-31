@@ -32,6 +32,11 @@ defmodule Croma.TypeGenTest do
     assert union([nilable(I), list_of(I)]).validate([-1]) == {:error, {:invalid_value, [union([nilable(I), list_of(I)])]}}
   end
 
+  test "Croma.TypeGen.fixed" do
+    assert fixed(:a).validate(:a) == {:ok, :a}
+    assert fixed(1 ).validate(:a) == {:error, {:invalid_value, [fixed(1)]}}
+  end
+
   defmodule S do
     use Croma.Struct, fields: [i: nilable(I), l: list_of(I)]
   end
