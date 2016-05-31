@@ -233,4 +233,33 @@ defmodule Croma.SubtypeTest do
     assert      M4.min_size == 1
     assert      M4.max_size == 2
   end
+
+  defmodule T0 do
+    use Croma.SubtypeOfTuple, elem_modules: [], default: {}
+  end
+  defmodule T1 do
+    use Croma.SubtypeOfTuple, elem_modules: [I1]
+  end
+  defmodule T3 do
+    use Croma.SubtypeOfTuple, elem_modules: [I1, S1, L1]
+  end
+
+  test "Croma.SubtypeOfTuple: validate/1" do
+    assert T0.validate(nil) == {:error, {:invalid_value, [T0]}}
+    assert T0.validate({} ) == {:ok, {}}
+
+    assert T1.validate({} ) == {:error, {:invalid_value, [T1]}}
+    assert T1.validate({0}) == {:error, {:invalid_value, [T1, I1]}}
+    assert T1.validate({1}) == {:ok, {1}}
+
+    assert T3.validate({}            ) == {:error, {:invalid_value, [T3]}}
+    assert T3.validate({1, ""   , []}) == {:error, {:invalid_value, [T3, S1]}}
+    assert T3.validate({1, "foo", []}) == {:ok, {1, "foo", []}}
+  end
+
+  test "Croma.SubtypeOfTuple: default/0" do
+    assert      T0.default == {}
+    catch_error T1.default
+    catch_error T3.default
+  end
 end
