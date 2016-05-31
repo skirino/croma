@@ -64,8 +64,8 @@ defmodule Croma.SubtypeOfInt do
         def max, do: @max
       end
 
-      @default default
-      if @default do
+      if default do
+        @default default
         if !is_integer(@default)           , do: raise ":default must be an integer"
         if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
         if !is_nil(@max) && @max < @default, do: raise ":default must be a valid value"
@@ -129,8 +129,8 @@ defmodule Croma.SubtypeOfFloat do
         def max, do: @max
       end
 
-      @default default
-      if @default do
+      if default do
+        @default default
         if !is_float(@default)             , do: raise ":default must be a float"
         if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
         if !is_nil(@max) && @max < @default, do: raise ":default must be a valid value"
@@ -176,8 +176,8 @@ defmodule Croma.SubtypeOfString do
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
-      @default default
-      if @default do
+      if default do
+        @default default
         if !Regex.match?(@pattern, @default), do: raise ":default must be a valid string"
         defun default :: t, do: @default
       end
@@ -229,8 +229,8 @@ defmodule Croma.SubtypeOfAtom do
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
-      @default default
-      if @default do
+      if default do
+        @default default
         if !Enum.member?(@values, @default), do: raise ":default must be a valid atom"
         defun default :: t, do: @default
       end
@@ -306,8 +306,8 @@ defmodule Croma.SubtypeOfList do
         def max_length, do: @max
       end
 
-      @default default
-      if @default do
+      if default do
+        @default default
         if Enum.any?(@default, fn e -> @mod.validate(e) |> R.error? end), do: raise ":default must be a valid list"
         len = length(@default)
         if !is_nil(@min) && len < @min, do: raise ":default is shorter than the given :min_length #{Integer.to_string(@min)}"
@@ -390,8 +390,8 @@ defmodule Croma.SubtypeOfMap do
         def max_size, do: @max
       end
 
-      @default default
-      if @default do
+      if default do
+        @default default
         if !is_map(@default), do: raise ":default must be a map"
         size = map_size(@default)
         if !is_nil(@min) && size < @min, do: raise "items in :default is less than the given :min_size #{Integer.to_string(@min)}"
