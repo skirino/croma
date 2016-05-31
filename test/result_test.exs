@@ -113,6 +113,11 @@ defmodule Croma.ResultTest do
     assert_receive(_)
   end
 
+  test "map_error/2" do
+    assert R.map_error({:ok, 1}      , &Atom.to_string/1) == {:ok, 1}
+    assert R.map_error({:error, :foo}, &Atom.to_string/1) == {:error, "foo"}
+  end
+
   defmodule Bang do
     use Croma
     def f do

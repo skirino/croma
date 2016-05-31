@@ -164,6 +164,17 @@ defmodule Croma.Result do
   end
 
   @doc """
+  Transforms a `Croma.Result` by applying a function to its contained `:error` value.
+  If the given `Croma.Result` is in `:ok` state it is returned without using the given function.
+  """
+  defun map_error(result :: t(a), f :: ((any) -> any)) :: t(a) when a: any do
+    case result do
+      {:error, e}  -> {:error, f.(e)}
+      {:ok, _} = r -> r
+    end
+  end
+
+  @doc """
   Based on existing functions that return `Croma.Result.t(any)`, defines functions that raise on error.
 
   Each generated function simply calls the specified function and then passes the returned value to `Croma.Result.get!/1`.
