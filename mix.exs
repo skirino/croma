@@ -46,7 +46,7 @@ defmodule Croma.Mixfile do
       files:       ["lib", "mix.exs", "README.md", "LICENSE"],
       maintainers: ["Shunsuke Kirino"],
       licenses:    ["MIT"],
-      links:       %{"GitHub repository" => @github_url, "Doc" => "http://hexdocs.pm/croma/"},
+      links:       %{"GitHub repository" => @github_url},
     ]
   end
 end
