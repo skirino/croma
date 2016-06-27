@@ -6,11 +6,10 @@ defmodule Croma.Mixfile do
   def project do
     [
       app:             :croma,
-      version:         "0.4.4",
+      version:         "0.4.5",
       elixir:          "~> 1.2",
       build_embedded:  Mix.env == :prod,
       start_permanent: Mix.env == :prod,
-      compilers:       compilers,
       deps:            deps,
       description:     description,
       package:         package,
@@ -24,20 +23,14 @@ defmodule Croma.Mixfile do
     []
   end
 
-  defp compilers do
-    additional = if Mix.env == :prod, do: [], else: [:exref]
-    Mix.compilers ++ additional
-  end
-
   defp deps do
     [
-      {:exref, "~> 0.1", only: [:dev, :test]},
-      {:excheck, "~> 0.3", only: :test},
+      {:excheck, "~> 0.4", only: :test},
       {:triq, github: "krestenkrab/triq", only: :test},
       {:coverex, "~> 1.4", only: :test},
       {:dialyze, "~> 0.2", only: :dev},
       {:earmark, "~> 0.2", only: :dev},
-      {:ex_doc, "~> 0.11", only: :dev},
+      {:ex_doc, "~> 0.12", only: :dev},
       {:inch_ex, "~> 0.5", only: :docs},
     ]
   end

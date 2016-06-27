@@ -261,7 +261,7 @@ defmodule Croma.SubtypeOfList do
   defmacro __using__(opts) do
     quote bind_quoted: [mod: opts[:elem_module], min: opts[:min_length], max: opts[:max_length], default: opts[:default]] do
       @mod mod
-      @type t :: [@mod.t]
+      @type t :: [unquote(@mod).t]
 
       @min min
       @max max
@@ -346,7 +346,7 @@ defmodule Croma.SubtypeOfMap do
       if is_nil(@key_module  ), do: raise ":key_module must be given"
       if is_nil(@value_module), do: raise ":value_module must be given"
 
-      @type t :: %{@key_module.t => @value_module.t}
+      @type t :: %{unquote(@key_module).t => unquote(@value_module).t}
 
       @min min_size
       @max max_size
