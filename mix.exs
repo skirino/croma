@@ -6,12 +6,12 @@ defmodule Croma.Mixfile do
   def project do
     [
       app:             :croma,
-      version:         "0.4.5",
+      version:         "0.4.6",
       elixir:          "~> 1.2",
       build_embedded:  Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       deps:            deps,
-      description:     description,
+      description:     "Elixir macro utilities",
       package:         package,
       source_url:      @github_url,
       homepage_url:    @github_url,
@@ -33,12 +33,6 @@ defmodule Croma.Mixfile do
       {:ex_doc, "~> 0.13", only: :dev},
       {:inch_ex, "~> 0.5", only: :docs},
     ]
-  end
-
-  defp description do
-    """
-    Elixir macro utilities
-    """
   end
 
   defp package do
