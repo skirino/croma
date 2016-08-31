@@ -5,7 +5,7 @@ defmodule Croma.Monad do
   Modules that `use` this module must provide concrete implementations of the following:
 
   - `@type t(a)`
-  - `@spec pure(a: a) :: t(a) when a: any`
+  - `@spec pure(a) :: t(a) when a: any`
   - `@spec bind(t(a), (a -> t(b))) :: t(b) when a: any, b: any`
 
   Using concrete implementations of the above interfaces, this module generates default implementations of some functions/macros.
@@ -17,7 +17,7 @@ defmodule Croma.Monad do
   # that will be defined in the module that use this module.
   defmacro __using__(_) do
     quote do
-      @spec pure(a: a) :: t(a) when a: any
+      @spec pure(a) :: t(a) when a: any
       @spec bind(t(a), (a -> t(b))) :: t(b) when a: any, b: any
 
       @doc """

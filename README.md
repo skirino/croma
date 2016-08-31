@@ -79,7 +79,7 @@ Elixir macro utilities.
 - An interface definition of the monad typeclass.
 - Modules that `use Croma.Monad` must implement the following interface:
     - `@type t(a)` with a type parameter `a`.
-    - `@spec pure(a: a) :: t(a) when a: any`
+    - `@spec pure(a) :: t(a) when a: any`
     - `@spec bind(t(a), (a -> t(b))) :: t(b) when a: any, b: any`
 - By using the concrete implementations of the above interface, `Croma.Monad` provides the default implementations of the following functions:
     - As Functor:
@@ -153,7 +153,7 @@ This module implements `Croma.Monad` interface.
     {:error, {:invalid_value, [S, I]}}
     ```
 
-- Some helper modules for "per-field module"s that are passed as options to `use Croma.Struct` (e.g. `I` in the above example) are available.
+- Some helper modules for "per-field module"s that are passed as options to `use Croma.Struct` (`I` in the above example) are available.
     - Wrappers of built-in types such as `Croma.String`, `Croma.Integer`, etc.
     - Utility modules such as `Croma.SubtypeOfString` to define "subtypes" of existing types.
     - Ad-hoc module generators defined in `Croma.TypeGen`.
