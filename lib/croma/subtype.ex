@@ -58,10 +58,10 @@ defmodule Croma.SubtypeOfInt do
       end
 
       if !is_nil(@min) do
-        def min, do: @min
+        defun min :: t, do: @min
       end
       if !is_nil(@max) do
-        def max, do: @max
+        defun max :: t, do: @max
       end
 
       if default do
@@ -123,10 +123,10 @@ defmodule Croma.SubtypeOfFloat do
       end
 
       if !is_nil(@min) do
-        def min, do: @min
+        defun min :: t, do: @min
       end
       if !is_nil(@max) do
-        def max, do: @max
+        defun max :: t, do: @max
       end
 
       if default do
@@ -300,10 +300,10 @@ defmodule Croma.SubtypeOfList do
       end
 
       if !is_nil(@min) do
-        def min_length, do: @min
+        defun min_length :: non_neg_integer, do: @min
       end
       if !is_nil(@max) do
-        def max_length, do: @max
+        defun max_length :: non_neg_integer, do: @max
       end
 
       if default do
@@ -384,10 +384,10 @@ defmodule Croma.SubtypeOfMap do
       end
 
       if !is_nil(@min) do
-        def min_size, do: @min
+        defun min_size :: non_neg_integer, do: @min
       end
       if !is_nil(@max) do
-        def max_size, do: @max
+        defun max_size :: non_neg_integer, do: @max
       end
 
       if default do
