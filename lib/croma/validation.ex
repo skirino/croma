@@ -4,6 +4,7 @@ defmodule Croma.Validation do
   This module is intended for internal use.
   """
 
+  # `validate/3` is not used in the latest croma; this is kept here just for backward compatibility of compiled beam files using older croma
   @doc false
   def validate(mod, v, name) do
     case mod.validate(v) do
@@ -13,62 +14,72 @@ defmodule Croma.Validation do
   end
 
   def make(type_expr, v, caller) do
-    case type_expr do
-      l when is_list(l)                   -> validation_expr(v, [], Croma.List)
-      {_, _}                              -> validation_expr(v, [], Croma.Tuple)
-      {:t, meta, _}                       -> validation_expr(v, meta)
-      {{:., meta, [mod_alias, :t]}, _, _} -> validation_expr(v, meta, replace_elixir_type_module(mod_alias, caller))
-      {first, meta, _}                    -> make_from_tuple3(type_expr, v, first, meta)
-      _                                   -> error(type_expr)
-    end
-  end
-
-  defp make_from_tuple3(type_expr, v, first, meta) do
-    mod =
-      case first do
-        :integer         -> Croma.Integer
-        :pos_integer     -> Croma.PosInteger
-        :neg_integer     -> Croma.NeInteger
-        :non_neg_integer -> Croma.NonNegInteger
-        :boolean         -> Croma.Boolean
-        :byte            -> Croma.Byte
-        :char            -> Croma.Char
-        :float           -> Croma.Float
-        :number          -> Croma.Number
-        :binary          -> Croma.Binary
-        :bitstring       -> Croma.BitString
-        :module          -> Croma.Atom
-        :atom            -> Croma.Atom
-        :node            -> Croma.Atom
-        :fun             -> Croma.Function
-        :pid             -> Croma.Pid
-        :port            -> Croma.Port
-        :reference       -> Croma.Reference
-        :char_list       -> Croma.List
-        :list            -> Croma.List
-        :map             -> Croma.Map
-        :tuple           -> Croma.Tuple
-        :%{}             -> Croma.Map
-        :{}              -> Croma.Tuple
-        :<<>>            -> Croma.BitString
-        _                -> error(type_expr)
+    ast =
+      case type_expr do
+        a when is_atom(a)                -> validation_expr_equal(v, a)
+        l when is_list(l)                -> validation_expr_module(v, Croma.List)
+        {_, _}                           -> validation_expr_module(v, Croma.Tuple)
+        {:t, _, _}                       -> validation_expr_module(v, caller.module)
+        {{:., _, [mod_alias, :t]}, _, _} -> validation_expr_module(v, replace_elixir_type_module(mod_alias, caller))
+        {first, _, _}                    -> validation_expr_module(v, module_for(first, type_expr))
+        _                                -> error(type_expr)
       end
-    validation_expr(v, meta, mod)
+    {name, _, _} = v
+    rhs =
+      quote bind_quoted: [name: name, ast: ast] do
+        case ast do
+          {:ok, value}     -> value
+          {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
+        end
+      end
+    {:=, [], [v, rhs]}
   end
 
-  defp validation_expr(v, meta) do
-    {name, _, _} = v
-    rhs = quote bind_quoted: [name: name, v: v] do
-      Croma.Validation.validate(__MODULE__, v, name)
+  defp module_for(first, type_expr) do
+    case first do
+      :integer         -> Croma.Integer
+      :pos_integer     -> Croma.PosInteger
+      :neg_integer     -> Croma.NeInteger
+      :non_neg_integer -> Croma.NonNegInteger
+      :boolean         -> Croma.Boolean
+      :byte            -> Croma.Byte
+      :char            -> Croma.Char
+      :float           -> Croma.Float
+      :number          -> Croma.Number
+      :binary          -> Croma.Binary
+      :bitstring       -> Croma.BitString
+      :module          -> Croma.Atom
+      :atom            -> Croma.Atom
+      :node            -> Croma.Atom
+      :fun             -> Croma.Function
+      :pid             -> Croma.Pid
+      :port            -> Croma.Port
+      :reference       -> Croma.Reference
+      :char_list       -> Croma.List
+      :list            -> Croma.List
+      :map             -> Croma.Map
+      :tuple           -> Croma.Tuple
+      :%{}             -> Croma.Map
+      :{}              -> Croma.Tuple
+      :<<>>            -> Croma.BitString
+      _                -> error(type_expr)
     end
-    {:=, meta, [v, rhs]}
   end
-  defp validation_expr(v, meta, mod) do
-    {name, _, _} = v
-    rhs = quote bind_quoted: [name: name, v: v, mod: mod] do
-      Croma.Validation.validate(mod, v, name)
+
+  defp validation_expr_module(v, mod) do
+    quote bind_quoted: [v: v, mod: mod] do
+      mod.validate(v)
     end
-    {:=, meta, [v, rhs]}
+  end
+
+  defp validation_expr_equal(v, value) do
+    quote bind_quoted: [v: v, value: value] do
+      if v == value do
+        {:ok, v}
+      else
+        {:error, {:not_equal_to, value}}
+      end
+    end
   end
 
   defp replace_elixir_type_module(mod_alias, caller) do
