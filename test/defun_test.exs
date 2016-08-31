@@ -258,6 +258,10 @@ defmodule Croma.DefunTest do
     defun f11(a :: v[:a]) :: atom do
       a
     end
+
+    defun f12(a :: v[:ok | nil | String.t]) :: any do
+      a
+    end
   end
 
   test "should define function with argument validation" do
@@ -316,6 +320,11 @@ defmodule Croma.DefunTest do
 
     assert      M3.f11(:a) == :a
     catch_error M3.f11(:b)
+
+    assert      M3.f12(:ok) == :ok
+    assert      M3.f12(nil) == nil
+    assert      M3.f12("a") == "a"
+    catch_error M3.f12(:ng)
   end
 
   defmodule M4 do

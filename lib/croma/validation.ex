@@ -14,16 +14,7 @@ defmodule Croma.Validation do
   end
 
   def make(type_expr, v, caller) do
-    ast =
-      case type_expr do
-        a when is_atom(a)                -> validation_expr_equal(v, a)
-        l when is_list(l)                -> validation_expr_module(v, Croma.List)
-        {_, _}                           -> validation_expr_module(v, Croma.Tuple)
-        {:t, _, _}                       -> validation_expr_module(v, caller.module)
-        {{:., _, [mod_alias, :t]}, _, _} -> validation_expr_module(v, replace_elixir_type_module(mod_alias, caller))
-        {first, _, _}                    -> validation_expr_module(v, module_for(first, type_expr))
-        _                                -> error(type_expr)
-      end
+    ast = validation_expr(type_expr, v, caller)
     {name, _, _} = v
     rhs =
       quote bind_quoted: [name: name, ast: ast] do
@@ -33,6 +24,19 @@ defmodule Croma.Validation do
         end
       end
     {:=, [], [v, rhs]}
+  end
+
+  defp validation_expr(type_expr, v, caller) do
+    case type_expr do
+      a when is_atom(a)                -> validation_expr_equal(v, a)
+      l when is_list(l)                -> validation_expr_module(v, Croma.List)
+      {_, _}                           -> validation_expr_module(v, Croma.Tuple)
+      {:t, _, _}                       -> validation_expr_module(v, caller.module)
+      {:|, _, [t1, t2]}                -> validation_expr_union(v, t1, t2, caller)
+      {{:., _, [mod_alias, :t]}, _, _} -> validation_expr_module(v, replace_elixir_type_module(mod_alias, caller))
+      {first, _, _}                    -> validation_expr_module(v, module_for(first, type_expr))
+      _                                -> error(type_expr)
+    end
   end
 
   defp module_for(first, type_expr) do
@@ -79,6 +83,14 @@ defmodule Croma.Validation do
       else
         {:error, {:not_equal_to, value}}
       end
+    end
+  end
+
+  defp validation_expr_union(v, t1, t2, caller) do
+    q1 = validation_expr(t1, v, caller)
+    q2 = validation_expr(t2, v, caller)
+    quote do
+      Croma.Result.or_else(unquote(q1), unquote(q2))
     end
   end
 
