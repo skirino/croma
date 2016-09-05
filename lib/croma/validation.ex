@@ -90,7 +90,10 @@ defmodule Croma.Validation do
     q1 = validation_expr(t1, v, caller)
     q2 = validation_expr(t2, v, caller)
     quote do
-      Croma.Result.or_else(unquote(q1), unquote(q2))
+      case unquote(q1) do
+        {:ok, _} = ok -> ok
+        {:error, _}   -> unquote(q2)
+      end
     end
   end
 
