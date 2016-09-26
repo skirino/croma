@@ -181,7 +181,7 @@ defmodule Croma.Defun do
         {:{}, _, elements}                          -> quote do: {unquote_splicing(Enum.map(elements, &infer_type/1))}
         {elem1, elem2}                              -> quote do: {unquote(infer_type(elem1)), unquote(infer_type(elem2))}
         l when is_list(l)                           -> quote do: []
-        {:%{}, _, _}                                -> quote do: %{}
+        {:%{}, _, _}                                -> quote do: map
         {:%, _, [module_alias, _]}                  -> quote do: unquote(module_alias).t
         expr when is_atom(expr)                     -> expr
         expr when is_integer(expr)                  -> quote do: integer

@@ -140,7 +140,7 @@ defmodule Croma.DefunTest do
     assert "e1(integer, String.t()) :: String.t()"                     in typespec_codes
     assert "f1(atom) :: String.t()"                                    in typespec_codes
     assert "f2() :: String.t()"                                        in typespec_codes
-    assert "g1(%{}, [], {:ok, {String.t()}}) :: integer"               in typespec_codes
+    assert "g1(map, [], {:ok, {String.t()}}) :: integer"               in typespec_codes
     assert "g2(Regex.t(), String.t()) :: boolean"                      in typespec_codes
   end
 
