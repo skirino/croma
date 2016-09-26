@@ -4,26 +4,15 @@ defmodule Croma.Validation do
   This module is intended for internal use.
   """
 
-  # `validate/3` is not used in the latest croma; this is kept here just for backward compatibility of compiled beam files using older croma
-  @doc false
-  def validate(mod, v, name) do
-    case mod.validate(v) do
-      {:ok   , value } -> value
-      {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
-    end
-  end
-
   def make(type_expr, v, caller) do
     ast = validation_expr(type_expr, v, caller)
     {name, _, _} = v
-    rhs =
-      quote bind_quoted: [name: name, ast: ast] do
-        case ast do
-          {:ok, value}     -> value
-          {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
-        end
+    quote bind_quoted: [name: name, ast: ast] do
+      case ast do
+        {:ok, value}     -> nil
+        {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
       end
-    {:=, [], [v, rhs]}
+    end
   end
 
   defp validation_expr(type_expr, v, caller) do

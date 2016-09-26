@@ -270,9 +270,9 @@ defmodule Croma.DefunTest do
     catch_error M3.f1("baz")
 
     assert      M3.f2(:foo ) == :foo
-    assert      M3.f2("foo") == :foo
+    assert      M3.f2("foo") == "foo"
     assert      M3.f2(:bar ) == :bar
-    assert      M3.f2("bar") == :bar
+    assert      M3.f2("bar") == "bar"
     catch_error M3.f2(:baz )
     catch_error M3.f2("baz")
 

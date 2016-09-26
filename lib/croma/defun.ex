@@ -250,6 +250,7 @@ defmodule Croma.Defun do
       quote do
         return_value = unquote(body)
         unquote(validation_expr)
+        return_value
       end
     end
   end
