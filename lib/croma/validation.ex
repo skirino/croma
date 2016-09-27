@@ -9,7 +9,7 @@ defmodule Croma.Validation do
     {name, _, _} = v
     quote bind_quoted: [name: name, ast: ast] do
       case ast do
-        {:ok, value}     -> nil
+        {:ok, _}         -> nil
         {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
       end
     end
