@@ -15,14 +15,14 @@ defmodule Croma.MonadTest do
   end
 
   property :result_functor_law1 do
-    for_all x in int do
+    for_all x in int() do
       r = int2result(x)
       functor_law1(R, r)
     end
   end
 
   property :list_functor_law1 do
-    for_all l in list(int) do
+    for_all l in list(int()) do
       functor_law1(L, l)
     end
   end
@@ -35,14 +35,14 @@ defmodule Croma.MonadTest do
   end
 
   property :result_functor_law2 do
-    for_all x in int do
+    for_all x in int() do
       r = int2result(x)
       functor_law2(R, r)
     end
   end
 
   property :list_functor_law2 do
-    for_all l in list(int) do
+    for_all l in list(int()) do
       functor_law2(L, l)
     end
   end
@@ -52,14 +52,14 @@ defmodule Croma.MonadTest do
   end
 
   property :result_applicative_law1 do
-    for_all x in int do
+    for_all x in int() do
       r = int2result(x)
       applicative_law1_identity(R, r)
     end
   end
 
   property :list_applicative_law1 do
-    for_all l in list(int) do
+    for_all l in list(int()) do
       applicative_law1_identity(L, l)
     end
   end
@@ -70,13 +70,13 @@ defmodule Croma.MonadTest do
   end
 
   property :result_applicative_law2 do
-    for_all x in int do
+    for_all x in int() do
       applicative_law2_homomorphism(R, x)
     end
   end
 
   property :list_applicative_law2 do
-    for_all x in int do
+    for_all x in int() do
       applicative_law2_homomorphism(L, x)
     end
   end
@@ -88,13 +88,13 @@ defmodule Croma.MonadTest do
   end
 
   property :result_applicative_law3 do
-    for_all x in int do
+    for_all x in int() do
       applicative_law3_interchange(R, x)
     end
   end
 
   property :list_applicative_law3 do
-    for_all x in int do
+    for_all x in int() do
       applicative_law3_interchange(L, x)
     end
   end
@@ -111,14 +111,14 @@ defmodule Croma.MonadTest do
   end
 
   property :result_applicative_law4 do
-    for_all x in int do
+    for_all x in int() do
       r = int2result(x)
       applicative_law4_compoisition(R, r)
     end
   end
 
   property :list_applicative_law4 do
-    for_all l in list(int) do
+    for_all l in list(int()) do
       applicative_law4_compoisition(L, l)
     end
   end
@@ -129,13 +129,13 @@ defmodule Croma.MonadTest do
   end
 
   property :result_monad_law1 do
-    for_all i in int do
+    for_all i in int() do
       monad_law1(R, i)
     end
   end
 
   property :list_monad_law1 do
-    for_all i in int do
+    for_all i in int() do
       monad_law1(L, i)
     end
   end
@@ -145,14 +145,14 @@ defmodule Croma.MonadTest do
   end
 
   property :result_monad_law2 do
-    for_all i in int do
+    for_all i in int() do
       r = int2result(i)
       monad_law2(R, r)
     end
   end
 
   property :list_monad_law2 do
-    for_all l in list(int) do
+    for_all l in list(int()) do
       monad_law2(L, l)
     end
   end
@@ -164,14 +164,14 @@ defmodule Croma.MonadTest do
   end
 
   property :result_monad_law3 do
-    for_all i in int do
+    for_all i in int() do
       r = int2result(i)
       monad_law3(R, r)
     end
   end
 
   property :list_monad_law3 do
-    for_all l in list(int) do
+    for_all l in list(int()) do
       monad_law3(L, l)
     end
   end

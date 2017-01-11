@@ -6,13 +6,13 @@ defmodule Croma.Mixfile do
   def project do
     [
       app:             :croma,
-      version:         "0.5.0",
+      version:         "0.5.1",
       elixir:          "~> 1.2",
       build_embedded:  Mix.env == :prod,
       start_permanent: Mix.env == :prod,
-      deps:            deps,
+      deps:            deps(),
       description:     "Elixir macro utilities",
-      package:         package,
+      package:         package(),
       source_url:      @github_url,
       homepage_url:    @github_url,
       test_coverage:   [tool: Coverex.Task, coveralls: true],

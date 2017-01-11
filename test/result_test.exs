@@ -58,7 +58,7 @@ defmodule Croma.ResultTest do
   end
 
   property :sequence do
-    for_all l in list(int) do
+    for_all l in list(int()) do
       result = Enum.map(l, &int2result/1) |> R.sequence
       if Enum.all?(l, &(rem(&1, 2) == 0)) do
         result == {:ok, l}
@@ -101,16 +101,16 @@ defmodule Croma.ResultTest do
     assert R.or_else(e1, o2) == o2
     assert R.or_else(e1, e2) == e2
 
-    fo = fn -> send(self, :fo_called); o2 end
-    fe = fn -> send(self, :fe_called); e2 end
+    fo = fn -> send(self(), :fo_called); o2 end
+    fe = fn -> send(self(), :fe_called); e2 end
     assert R.or_else(o1, fo.()) == o1
     refute_receive(_)
     assert R.or_else(o1, fe.()) == o1
     refute_receive(_)
     assert R.or_else(e1, fo.()) == o2
-    assert_receive(_)
+    assert_receive(:fo_called)
     assert R.or_else(e1, fe.()) == e2
-    assert_receive(_)
+    assert_receive(:fe_called)
   end
 
   test "map_error/2" do
@@ -130,7 +130,7 @@ defmodule Croma.ResultTest do
       if rem(a, 2) == 0, do: {:ok, a}, else: {:error, :odd}
     end
     defun i :: {:ok, integer} do
-      f
+      f()
     end
     defun j(a :: integer \\ 0) :: {:ok, integer} | {:error, atom} do
       h(a)
