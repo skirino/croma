@@ -54,6 +54,8 @@ defmodule Croma.TypeGen do
           {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
         end
       end
+
+      defun default() :: t, do: nil
     end
     name = Module.concat(Croma.TypeGen.Nilable, mod)
     ensure_module_defined(name, q, location)
@@ -80,6 +82,8 @@ defmodule Croma.TypeGen do
           Enum.map(l, &unquote(mod).validate/1) |> R.sequence
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
+
+      defun default() :: t, do: []
     end
     name = Module.concat(Croma.TypeGen.ListOf, mod)
     ensure_module_defined(name, q, location)
@@ -143,6 +147,8 @@ defmodule Croma.TypeGen do
           {:error, {:invalid_value, [__MODULE__]}}
         end
       end
+
+      defun default() :: t, do: unquote(value)
     end
     hash = :erlang.term_to_binary(value) |> :erlang.md5 |> Base.encode16
     name = Module.concat(Croma.TypeGen.Fixed, hash)
