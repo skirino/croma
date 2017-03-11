@@ -150,4 +150,34 @@ defmodule Croma.StructTest do
     assert S5.new(%{"boolField"  => true}) == {:error, {:value_missing, [S5, Croma.Boolean]}}
     assert S5.new(%{"BoolField"  => true}) == {:error, {:value_missing, [S5, Croma.Boolean]}}
   end
+
+  defmodule S6 do
+    use Croma.Struct, fields: [int_field: I1]
+  end
+
+  defmodule S7 do
+    use Croma.Struct, fields: [struct_field: S6], recursive_new?: true
+  end
+
+  defmodule S8 do
+    use Croma.Struct, fields: [bool_field: Croma.Boolean, struct_field: S6], recursive_new?: true
+  end
+
+  test "Croma.Struct with recursive_new?" do
+    assert S7.new( [ struct_field:     [ int_field:    1]]) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
+    assert S7.new(%{"struct_field" => %{"int_field" => 1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
+    assert S7.new(%{"struct_field" => %{}}                ) == {:ok, %S7{struct_field: %S6{int_field: 0}}}
+    assert S7.new(%{}                                     ) == {:ok, %S7{struct_field: %S6{int_field: 0}}}
+
+    assert S7.new(%{"struct_field" => %{"int_field" => "non int"}}) == {:error, {:invalid_value, [S7, S6, I1]}}
+    assert S7.new(%{"struct_field" => "non_dict"}                 ) == {:error, {:invalid_value, [S7, S6]}}
+
+    assert S8.new(%{"bool_field" => true}) == {:ok, %S8{bool_field: true, struct_field: %S6{int_field: 0}}}
+    assert S8.new(%{}                    ) == {:error, {:value_missing, [S8, Croma.Boolean]}}
+
+    # validate/1 is not affected
+    assert S7.validate(%{"struct_field" => %{"int_field" => 1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
+    assert S7.validate(%{"struct_field" => %{}}                ) == {:error, {:invalid_value, [S7, S6, I1]}}
+    assert S7.validate(%{}                                     ) == {:error, {:invalid_value, [S7, S6]}}
+  end
 end
