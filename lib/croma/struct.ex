@@ -159,21 +159,17 @@ defmodule Croma.Struct do
   end
 
   defp evaluate_existing_field(mod, value, false), do: mod.validate(value)
-  defp evaluate_existing_field(mod, value, true )  do
-    R.or_else(mod.validate(value), try do
-      mod.new(value)
-    rescue
-      _ -> {:error, {:invalid_value, [mod]}}
-    end)
-  end
+  defp evaluate_existing_field(mod, value, true ), do: mod.validate(value) |> R.or_else(try_new(mod, value, :invalid_value))
 
   defp evaluate_non_existing_field(mod, false), do: try_default(mod)
-  defp evaluate_non_existing_field(mod, true )  do
-    R.or_else(try_default(mod), try do
-      mod.new(%{})
+  defp evaluate_non_existing_field(mod, true ), do: try_default(mod) |> R.or_else(try_new(mod, %{}, :value_missing))
+
+  defp try_new(mod, value, reason) do
+    try do
+      mod.new(value)
     rescue
-      _ -> {:error, {:value_missing, [mod]}}
-    end)
+      _ -> {:error, {reason, [mod]}}
+    end
   end
 
   defp try_default(mod) do
