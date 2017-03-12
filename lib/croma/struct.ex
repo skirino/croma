@@ -83,7 +83,7 @@ defmodule Croma.Struct do
   `:recursive_new?` option can be set to `true` for such case.
 
       iex> defmodule Leaf do
-      ...>   use Croma.Struct, fields: [ns: Croma.TypeGen.nilable(Croma.String)], recursive_new?: true
+      ...>   use Croma.Struct, fields: [ns: Croma.TypeGen.nilable(Croma.String)]
       ...> end
 
       ...> defmodule Branch do
@@ -249,7 +249,7 @@ defmodule Croma.Struct do
 
       if recursive_new? do
         @doc """
-        Creates a new instance of #{__MODULE__} by using the given `dict`.
+        Creates a new instance of #{inspect(__MODULE__)} by using the given `dict`.
 
         Returns `{:ok, valid_struct}` or `{:error, reason}`.
 
@@ -265,7 +265,7 @@ defmodule Croma.Struct do
         end
       else
         @doc """
-        Creates a new instance of #{__MODULE__} by using the given `dict`.
+        Creates a new instance of #{inspect(__MODULE__)} by using the given `dict`.
 
         For missing fields, `default/0` of each field type will be used.
 
@@ -321,7 +321,7 @@ defmodule Croma.Struct do
       end
 
       @doc """
-      Updates an existing instance of #{__MODULE__} with the given `dict`.
+      Updates an existing instance of #{inspect(__MODULE__)} with the given `dict`.
       The values in the `dict` are validated by each field's `validate/1` function.
       Returns `{:ok, valid_struct}` or `{:error, reason}`.
       """
