@@ -176,8 +176,10 @@ defmodule Croma.StructTest do
     assert S8.new(%{}                    ) == {:error, {:value_missing, [S8, Croma.Boolean]}}
 
     # validate/1 is not affected
-    assert S7.validate(%{"struct_field" => %{"int_field" => 1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
-    assert S7.validate(%{"struct_field" => %{}}                ) == {:error, {:invalid_value, [S7, S6, I1]}}
-    assert S7.validate(%{}                                     ) == {:error, {:invalid_value, [S7, S6]}}
+    assert S7.validate(%S7{ struct_field:    %S6{ int_field:    1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
+    assert S7.validate(  %{"struct_field" => %S6{ int_field:    1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
+    assert S7.validate(  %{"struct_field" =>   %{"int_field" => 1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
+    assert S7.validate(  %{"struct_field" =>   %{}}                ) == {:error, {:invalid_value, [S7, S6, I1]}}
+    assert S7.validate(  %{}                                       ) == {:error, {:invalid_value, [S7, S6]}}
   end
 end
