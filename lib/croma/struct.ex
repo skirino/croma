@@ -144,7 +144,7 @@ defmodule Croma.Struct do
   end
 
   @doc false
-  def new_impl(mod, struct_fields, dict, recursive?) do
+  def new_impl(mod, struct_fields, dict, recursive? \\ false) do # Default argument for backward compatibility
     rs = Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
       case dict_fetch2(dict, fields_to_fetch) do
         {:ok, v} -> evaluate_existing_field(mod, v, recursive?)
