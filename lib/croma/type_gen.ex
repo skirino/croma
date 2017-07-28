@@ -16,11 +16,13 @@ defmodule Croma.TypeGen do
 
   - `@type t`
   - `@spec validate(term) :: Croma.Result.t(t)`
+  - (Optional) `@spec new(term) :: Croma.Result.t(t)`
 
   Using the above members `nilable/1` generates a new module that also defines the same members:
 
   - `@type t :: nil | module.t`
   - `@spec validate(term) :: Croma.Result.t(t)`
+  - (If the given module exports `new/1`) `@spec new(term) :: Croma.Result.t(t)`
 
   ## Examples
       iex> use Croma
@@ -55,6 +57,15 @@ defmodule Croma.TypeGen do
         end
       end
 
+      if function_exported?(unquote(mod), :new, 1) do
+        defun new(value :: term) :: R.t(t) do
+          case unquote(mod).new(value) do
+            {:ok   , _     } = r -> r
+            {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+          end
+        end
+      end
+
       defun default() :: t, do: nil
     end
     name = Module.concat(Croma.TypeGen.Nilable, mod)
@@ -81,6 +92,14 @@ defmodule Croma.TypeGen do
         l when is_list(l) ->
           Enum.map(l, &unquote(mod).validate/1) |> R.sequence
         _ -> {:error, {:invalid_value, [__MODULE__]}}
+      end
+
+      if function_exported?(unquote(mod), :new, 1) do
+        defun new(list :: term) :: R.t(t) do
+          l when is_list(l) ->
+            Enum.map(l, &unquote(mod).new/1) |> R.sequence()
+          _ -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+        end
       end
 
       defun default() :: t, do: []
