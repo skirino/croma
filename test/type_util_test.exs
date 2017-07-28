@@ -2,11 +2,12 @@ defmodule Croma.TypeUtilTest do
   use Croma.TestCase
 
   test "resolve_primitive/2" do
-    assert TypeUtil.resolve_primitive(String, :t)              == {:ok, :binary}
-    assert TypeUtil.resolve_primitive(:erlang, :timestamp)     == {:ok, :tuple}
+    env = __ENV__
+    assert TypeUtil.resolve_primitive(String , :t        , env) == {:ok, :binary}
+    assert TypeUtil.resolve_primitive(:erlang, :timestamp, env) == {:ok, :tuple}
 
-    assert TypeUtil.resolve_primitive(NonexistingModule, :foo) == :error
-    assert TypeUtil.resolve_primitive(String, :nonexisting)    == :error
+    assert TypeUtil.resolve_primitive(NonexistingModule, :foo        , env) == :error
+    assert TypeUtil.resolve_primitive(String           , :nonexisting, env) == :error
 
     [
       {:b1, {:ok, :binary}},
@@ -38,7 +39,7 @@ defmodule Croma.TypeUtilTest do
       assert apply(Croma.Testonly, t, []) == r
 
       # beam file based
-      assert TypeUtil.resolve_primitive(Croma.Testonly, t) == r
+      assert TypeUtil.resolve_primitive(Croma.Testonly, t, env) == r
     end)
   end
 end

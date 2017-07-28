@@ -195,10 +195,10 @@ defmodule Croma.Result do
   For functions that have default arguments it's necessary to explicitly pass all arities to `Croma.Result.define_bang_version_of/1`.
   """
   defmacro define_bang_version_of(name_arity_pairs) do
-    quote bind_quoted: [name_arity_pairs: name_arity_pairs] do
+    quote bind_quoted: [name_arity_pairs: name_arity_pairs, caller: Macro.escape(__CALLER__)] do
       specs = Module.get_attribute(__MODULE__, :spec)
       Enum.each(name_arity_pairs, fn {name, arity} ->
-        spec = Enum.find_value(specs, &Croma.Result.Impl.match_and_convert_spec(name, arity, &1))
+        spec = Enum.find_value(specs, &Croma.Result.Impl.match_and_convert_spec(name, arity, &1, caller))
         if spec do
           @spec unquote(spec)
         end
@@ -213,9 +213,9 @@ defmodule Croma.Result do
   defmodule Impl do
     @moduledoc false
 
-    def match_and_convert_spec(name, arity, spec) do
+    def match_and_convert_spec(name, arity, spec, caller_env) do
       case spec do
-        {:spec, {:::, meta1, [{^name, meta2, args}, ret_type]}, env} when length(args) == arity ->
+        {:spec, {:::, meta1, [{^name, meta2, args}, ret_type]}, _} when length(args) == arity ->
           make_spec_fun = fn r -> {:::, meta1, [{:"#{name}!", meta2, args}, r]} end
           case ret_type do
             {:ok, r} -> make_spec_fun.(r)
@@ -225,7 +225,7 @@ defmodule Croma.Result do
                 _        -> nil
               end)
             {{:., _, [mod_alias, :t]}, _, r} ->
-              if Macro.expand(mod_alias, env) == Croma.Result, do: make_spec_fun.(hd(r)), else: nil
+              if Macro.expand(mod_alias, caller_env) == Croma.Result, do: make_spec_fun.(hd(r)), else: nil
             _ -> nil
           end
         _ -> nil

@@ -47,7 +47,7 @@ defmodule Croma.Guard do
 
   defp make_with_simplify(type_expr, v, caller, alias_, basename) do
     mod = Macro.expand(alias_, caller)
-    case Croma.TypeUtil.resolve_primitive(mod, basename) do
+    case Croma.TypeUtil.resolve_primitive(mod, basename, caller) do
       {:ok, primitive_type} -> make_from_tuple3(type_expr, v, caller, primitive_type)
       :error                -> error(type_expr)
     end

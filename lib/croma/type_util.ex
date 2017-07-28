@@ -27,8 +27,8 @@ defmodule Croma.TypeUtil do
     :fun,
   ]
 
-  @spec resolve_primitive(module, atom) :: {:ok, atom} | :error
-  def resolve_primitive(module, name) do
+  @spec resolve_primitive(module, atom, Macro.Env.t) :: {:ok, atom} | :error
+  def resolve_primitive(module, name, env) do
     case Typespec.beam_types(module) do
       nil -> # No beam file is available
         try do
@@ -36,8 +36,8 @@ defmodule Croma.TypeUtil do
           |> Enum.flat_map(&Module.get_attribute(module, &1))
           |> Enum.find(&match?({_, {:::, _, [{^name, _, _}, _ast]}, _}, &1))
           |> case do
-            nil                -> :error
-            {_, type_ast, env} -> destructure_type_expr(module, type_ast, env)
+            nil              -> :error
+            {_, type_ast, _} -> destructure_type_expr(module, type_ast, env)
           end
         rescue
           _ -> :error
@@ -45,7 +45,7 @@ defmodule Croma.TypeUtil do
       types ->
         case Enum.find(types, &match?({_, {^name, _, _}}, &1)) do
           nil            -> :error
-          {_, type_expr} -> destructure_type_expr(module, Typespec.type_to_ast(type_expr), nil)
+          {_, type_expr} -> destructure_type_expr(module, Typespec.type_to_ast(type_expr), env)
         end
     end
   end
@@ -66,10 +66,8 @@ defmodule Croma.TypeUtil do
   defp destructure_type_expr2(module, t, env) do
     case t do
       t when t in @primitive_types -> {:ok, t}
-      a when is_atom(a)            -> resolve_primitive(module, a)
-      {:., _, [mod, n]}            ->
-        mod_expanded = if env, do: Macro.expand(mod, env), else: mod
-        resolve_primitive(mod_expanded, n)
+      a when is_atom(a)            -> resolve_primitive(module, a, env)
+      {:., _, [mod, n]}            -> resolve_primitive(Macro.expand(mod, env), n, env)
     end
   end
 
