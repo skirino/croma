@@ -58,5 +58,10 @@ defmodule Croma.TypeGenTest do
     assert S.validate(%{"i" => -1, "l" => []}) == {:error, {:invalid_value, [S, nilable(I), I]}}
     assert S.update(s, %{i: -1})               == {:error, {:invalid_value, [S, nilable(I), I]}}
     assert S.update(s, %{l: [-1]})             == {:error, {:invalid_value, [S, I]}}
+
+    assert nilable(S).validate(nil     ) == {:ok, nil}
+    assert nilable(S).validate(%{}     ) == {:error, {:invalid_value, [nilable(S), S, list_of(I)]}}
+    assert nilable(S).validate(%{l: []}) == {:ok, %S{i: nil, l: []}}
+    assert nilable(S).new(%{})           == {:ok, %S{i: nil, l: []}}
   end
 end
