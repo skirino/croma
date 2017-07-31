@@ -51,18 +51,21 @@ defmodule Croma.TypeGen do
 
       defun validate(value :: term) :: R.t(t) do
         nil -> {:ok, nil}
-        v   -> case unquote(mod).validate(v) do
-          {:ok   , _     } = r -> r
-          {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
-        end
+        v   ->
+          case unquote(mod).validate(v) do
+            {:ok   , _     } = r -> r
+            {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+          end
       end
 
       if function_exported?(unquote(mod), :new, 1) do
         defun new(value :: term) :: R.t(t) do
-          case unquote(mod).new(value) do
-            {:ok   , _     } = r -> r
-            {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
-          end
+          nil -> {:ok, nil}
+          v   ->
+            case unquote(mod).new(v) do
+              {:ok   , _     } = r -> r
+              {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+            end
         end
       end
 
@@ -89,16 +92,14 @@ defmodule Croma.TypeGen do
       @type t :: [unquote(mod).t]
 
       defun validate(list :: term) :: R.t(t) do
-        l when is_list(l) ->
-          Enum.map(l, &unquote(mod).validate/1) |> R.sequence
-        _ -> {:error, {:invalid_value, [__MODULE__]}}
+        l when is_list(l) -> Enum.map(l, &unquote(mod).validate/1) |> R.sequence()
+        _                 -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
       if function_exported?(unquote(mod), :new, 1) do
         defun new(list :: term) :: R.t(t) do
-          l when is_list(l) ->
-            Enum.map(l, &unquote(mod).new/1) |> R.sequence()
-          _ -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+          l when is_list(l) -> Enum.map(l, &unquote(mod).new/1) |> R.sequence()
+          _                 -> {:error, {:invalid_value, [__MODULE__]}}
         end
       end
 
