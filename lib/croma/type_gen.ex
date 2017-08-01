@@ -221,8 +221,10 @@ defmodule Croma.TypeGen do
   @doc false
   def define_nilable_and_list_of(mod) do
     location = Macro.Env.location(__ENV__)
-    nilable_impl(mod, location)
-    list_of_impl(mod, location)
+    q1 = nilable_impl(mod, location)
+    q2 = list_of_impl(mod, location)
+    Code.eval_quoted(q1, [], __ENV__)
+    Code.eval_quoted(q2, [], __ENV__)
   end
 end
 

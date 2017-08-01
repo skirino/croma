@@ -72,4 +72,9 @@ defmodule Croma.TypeGenTest do
     assert list_of(S).new([])          == {:ok, []}
     assert list_of(S).new(:not_a_list) == {:error, {:invalid_value, [list_of(S)]}}
   end
+
+  test "nilable and list_of for primitive types should automatically be generated" do
+    assert Croma.TypeGen.Nilable.Croma.String.default() == nil
+    assert Croma.TypeGen.ListOf.Croma.Map.default()     == []
+  end
 end
