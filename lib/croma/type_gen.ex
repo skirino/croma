@@ -140,7 +140,7 @@ defmodule Croma.TypeGen do
     quote bind_quoted: [modules: modules, module_body: module_body, location: location] do
       hash = Enum.map(modules, &Atom.to_string/1) |> :erlang.md5() |> Base.encode16()
       name = Module.concat(Croma.TypeGen.Union, hash)
-      ensure_module_defined(name, module_body, location)
+      Croma.TypeGen.ensure_module_defined(name, module_body, location)
       name
     end
   end
@@ -178,7 +178,7 @@ defmodule Croma.TypeGen do
     quote bind_quoted: [value: value, module_body: module_body, location: location] do
       hash = :erlang.term_to_binary(value) |> :erlang.md5() |> Base.encode16()
       name = Module.concat(Croma.TypeGen.Fixed, hash)
-      ensure_module_defined(name, module_body, location)
+      Croma.TypeGen.ensure_module_defined(name, module_body, location)
       name
     end
   end

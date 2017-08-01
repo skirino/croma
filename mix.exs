@@ -6,10 +6,10 @@ defmodule Croma.Mixfile do
   def project do
     [
       app:             :croma,
-      version:         "0.6.5",
+      version:         "0.6.6",
       elixir:          "~> 1.2",
-      build_embedded:  Mix.env == :prod,
-      start_permanent: Mix.env == :prod,
+      build_embedded:  Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
       deps:            deps(),
       description:     "Elixir macro utilities",
       package:         package(),
@@ -19,11 +19,11 @@ defmodule Croma.Mixfile do
     ]
   end
 
-  def application do
+  def application() do
     []
   end
 
-  defp deps do
+  defp deps() do
     [
       {:excheck, "~> 0.5", only: :test},
       {:triq, github: "triqng/triq", only: :test},
@@ -35,7 +35,7 @@ defmodule Croma.Mixfile do
     ]
   end
 
-  defp package do
+  defp package() do
     [
       files:       ["lib", "mix.exs", "README.md", "LICENSE"],
       maintainers: ["Shunsuke Kirino"],
