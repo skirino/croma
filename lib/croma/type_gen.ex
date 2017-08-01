@@ -53,26 +53,27 @@ defmodule Croma.TypeGen do
   end
 
   defp nilable_module_body(mod) do
-    quote do
+    quote bind_quoted: [mod: mod] do
       @moduledoc false
 
-      @type t :: nil | unquote(mod).t
+      @mod mod
+      @type t :: nil | unquote(@mod).t
 
       defun validate(value :: term) :: R.t(t) do
         nil -> {:ok, nil}
         v   ->
-          case unquote(mod).validate(v) do
+          case @mod.validate(v) do
             {:ok   , _     } = r -> r
             {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
           end
       end
 
       # Invoking `module_info/0` on `mod` automatically compiles and loads the module if necessary.
-      if {:new, 1} in unquote(mod).module_info[:exports] do
+      if {:new, 1} in @mod.module_info[:exports] do
         defun new(value :: term) :: R.t(t) do
           nil -> {:ok, nil}
           v   ->
-            case unquote(mod).new(v) do
+            case @mod.new(v) do
               {:ok   , _     } = r -> r
               {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
             end
@@ -102,20 +103,21 @@ defmodule Croma.TypeGen do
   end
 
   defp list_of_module_body(mod) do
-    quote do
+    quote bind_quoted: [mod: mod] do
       @moduledoc false
 
-      @type t :: [unquote(mod).t]
+      @mod mod
+      @type t :: [unquote(@mod).t]
 
       defun validate(list :: term) :: R.t(t) do
-        l when is_list(l) -> Enum.map(l, &unquote(mod).validate/1) |> R.sequence()
+        l when is_list(l) -> Enum.map(l, &@mod.validate/1) |> R.sequence()
         _                 -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
       # Invoking `module_info/0` on `mod` automatically compiles and loads the module if necessary.
-      if {:new, 1} in unquote(mod).module_info[:exports] do
+      if {:new, 1} in @mod.module_info[:exports] do
         defun new(list :: term) :: R.t(t) do
-          l when is_list(l) -> Enum.map(l, &unquote(mod).new/1) |> R.sequence()
+          l when is_list(l) -> Enum.map(l, &@mod.new/1) |> R.sequence()
           _                 -> {:error, {:invalid_value, [__MODULE__]}}
         end
       end
@@ -184,20 +186,21 @@ defmodule Croma.TypeGen do
   end
 
   defp fixed_module_body(value) do
-    quote do
+    quote bind_quoted: [value: value] do
       @moduledoc false
 
-      @type t :: unquote(value)
+      @value value
+      @type t :: unquote(@value)
 
       defun validate(v :: term) :: R.t(t) do
-        if v == unquote(value) do
-          {:ok, unquote(value)}
+        if v == @value do
+          {:ok, @value}
         else
           {:error, {:invalid_value, [__MODULE__]}}
         end
       end
 
-      defun default() :: t, do: unquote(value)
+      defun default() :: t, do: @value
     end
   end
 
