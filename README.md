@@ -1,7 +1,7 @@
 Croma
 =====
 
-Elixir macro utilities.
+Elixir macro utilities to make type-based programming easier.
 - [API Documentation](http://hexdocs.pm/croma/)
 - [Hex package information](https://hex.pm/packages/croma)
 
@@ -9,9 +9,6 @@ Elixir macro utilities.
 [![Hex.pm](http://img.shields.io/hexpm/dt/croma.svg)](https://hex.pm/packages/croma)
 [![Build Status](https://travis-ci.org/skirino/croma.svg)](https://travis-ci.org/skirino/croma)
 [![Coverage Status](https://coveralls.io/repos/skirino/croma/badge.png?branch=master)](https://coveralls.io/r/skirino/croma?branch=master)
-[![Inline docs](http://inch-ci.org/github/skirino/croma.svg)](http://inch-ci.org/github/skirino/croma)
-[![Github Issues](http://githubbadges.herokuapp.com/skirino/croma/issues.svg)](https://github.com/skirino/croma/issues)
-[![Pending Pull-Requests](http://githubbadges.herokuapp.com/skirino/croma/pulls.svg)](https://github.com/skirino/croma/pulls)
 
 ## Usage
 
