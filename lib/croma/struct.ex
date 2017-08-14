@@ -187,7 +187,7 @@ defmodule Croma.Struct do
         {:ok, v} -> v
         :error   -> nil
       end
-      |> mod.validate
+      |> mod.validate()
       |> R.map(&{field, &1})
     end)
     case R.sequence(kv_results) do

@@ -58,10 +58,10 @@ defmodule Croma.SubtypeOfInt do
       end
 
       if !is_nil(@min) do
-        defun min :: t, do: @min
+        defun min() :: t, do: @min
       end
       if !is_nil(@max) do
-        defun max :: t, do: @max
+        defun max() :: t, do: @max
       end
 
       if default do
@@ -69,7 +69,7 @@ defmodule Croma.SubtypeOfInt do
         if !is_integer(@default)           , do: raise ":default must be an integer"
         if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
         if !is_nil(@max) && @max < @default, do: raise ":default must be a valid value"
-        defun default :: t, do: @default
+        defun default() :: t, do: @default
       end
     end
   end
@@ -123,10 +123,10 @@ defmodule Croma.SubtypeOfFloat do
       end
 
       if !is_nil(@min) do
-        defun min :: t, do: @min
+        defun min() :: t, do: @min
       end
       if !is_nil(@max) do
-        defun max :: t, do: @max
+        defun max() :: t, do: @max
       end
 
       if default do
@@ -134,7 +134,7 @@ defmodule Croma.SubtypeOfFloat do
         if !is_float(@default)             , do: raise ":default must be a float"
         if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
         if !is_nil(@max) && @max < @default, do: raise ":default must be a valid value"
-        defun default :: t, do: @default
+        defun default() :: t, do: @default
       end
     end
   end
@@ -162,7 +162,7 @@ defmodule Croma.SubtypeOfString do
     quote bind_quoted: [pattern: opts[:pattern], default: opts[:default]] do
       @pattern pattern
       if !Regex.regex?(@pattern), do: raise ":pattern must be a regex"
-      def pattern, do: @pattern
+      def pattern(), do: @pattern
 
       @type t :: String.t
 
@@ -179,7 +179,7 @@ defmodule Croma.SubtypeOfString do
       if default do
         @default default
         if !Regex.match?(@pattern, @default), do: raise ":default must be a valid string"
-        defun default :: t, do: @default
+        defun default() :: t, do: @default
       end
     end
   end
@@ -232,7 +232,7 @@ defmodule Croma.SubtypeOfAtom do
       if default do
         @default default
         if !Enum.member?(@values, @default), do: raise ":default must be a valid atom"
-        defun default :: t, do: @default
+        defun default() :: t, do: @default
       end
     end
   end
@@ -300,19 +300,19 @@ defmodule Croma.SubtypeOfList do
       end
 
       if !is_nil(@min) do
-        defun min_length :: non_neg_integer, do: @min
+        defun min_length() :: non_neg_integer, do: @min
       end
       if !is_nil(@max) do
-        defun max_length :: non_neg_integer, do: @max
+        defun max_length() :: non_neg_integer, do: @max
       end
 
       if default do
         @default default
-        if Enum.any?(@default, fn e -> @mod.validate(e) |> R.error? end), do: raise ":default must be a valid list"
+        if Enum.any?(@default, fn e -> @mod.validate(e) |> R.error?() end), do: raise ":default must be a valid list"
         len = length(@default)
         if !is_nil(@min) && len < @min, do: raise ":default is shorter than the given :min_length #{Integer.to_string(@min)}"
         if !is_nil(@max) && @max < len, do: raise ":default is longer than the given :max_length #{Integer.to_string(@max)}"
-        defun default :: t, do: @default
+        defun default() :: t, do: @default
       end
     end
   end
@@ -384,10 +384,10 @@ defmodule Croma.SubtypeOfMap do
       end
 
       if !is_nil(@min) do
-        defun min_size :: non_neg_integer, do: @min
+        defun min_size() :: non_neg_integer, do: @min
       end
       if !is_nil(@max) do
-        defun max_size :: non_neg_integer, do: @max
+        defun max_size() :: non_neg_integer, do: @max
       end
 
       if default do
@@ -400,7 +400,7 @@ defmodule Croma.SubtypeOfMap do
           R.error?(@key_module.validate(k)) or R.error?(@value_module.validate(v))
         end)
         if any_kv_invalid?, do: raise ":default must be a valid value of #{Atom.to_string(__MODULE__)}"
-        defun default :: t, do: @default
+        defun default() :: t, do: @default
       end
     end
   end
@@ -453,7 +453,7 @@ defmodule Croma.SubtypeOfTuple do
           Enum.zip(Tuple.to_list(@default), @elem_modules)
           |> Enum.any?(fn {elem, mod} -> R.error?(mod.validate(elem)) end)
         if any_elem_invalid?, do: raise ":default must be a valid value of #{Atom.to_string(__MODULE__)}"
-        defun default :: t, do: @default
+        defun default() :: t, do: @default
       end
     end
   end
