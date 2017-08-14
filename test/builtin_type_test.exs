@@ -1,7 +1,7 @@
 defmodule Croma.BuiltinTypeTest do
   use ExUnit.Case
 
-  test "validate/1" do
+  test "valid?/1" do
     [
       {Croma.Atom         , :a           , 0       },
       {Croma.Boolean      , true         , 0       },
@@ -25,6 +25,9 @@ defmodule Croma.BuiltinTypeTest do
       {Croma.NonNegInteger, 0            , -1      },
     ]
     |> Enum.each(fn {mod, o, e} ->
+      assert mod.valid?(o)
+      refute mod.valid?(e)
+
       assert mod.validate(o) == {:ok, o}
       assert mod.validate(e) == {:error, {:invalid_value, [mod]}}
     end)
