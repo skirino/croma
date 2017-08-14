@@ -8,8 +8,12 @@ defmodule Croma.Monad do
   - `@spec pure(a) :: t(a) when a: any`
   - `@spec bind(t(a), (a -> t(b))) :: t(b) when a: any, b: any`
 
+  Note that the order of parameters in `map`/`ap` is different from that of Haskell counterparts,
+  in order to leverage Elixir's pipe operator `|>`.
   Using concrete implementations of the above interfaces, this module generates default implementations of some functions/macros.
   See `Croma.Result` for the generated functions/macros.
+
+  `Croma.Monad` also provides `bind`-less syntax similar to Haskell's do-notation with `m/1` macro.
   """
 
   # Here I don't use Erlang behaviour

@@ -17,23 +17,43 @@ Elixir macro utilities to make type-based programming easier.
 - Add `use Croma` to import macros defined in this package.
 - Hack!
 
-## Defining functions
+## Type modules
 
-### `Croma.Defpt.defpt`
+Leveraging Elixir's lightweight syntax for defining modules
+(i.e. you don't have to make a separate source file for each module),
+croma encourages you to define lots of small modules to organize code, especially types, in your Elixir projects.
+Many features of croma expect that a type is defined in its dedicated module, which we call hereafter as "type module".
+This way a type can have associated functions within its type module.
+The following definitions in type modules are used by croma:
 
-- Unit-testable `defp` that is simply converted to
-    - `def` if `Mix.env == :test`,
-    - `defp` otherwise.
-- This is particularly useful when e.g. you want to test your module's internal logic
-  which is implemented as a pure function and thus easily testable.
+- `@type t`
+    - The type this type module represents. Used in typespecs.
+- `valid?(any) :: boolean`
+    - Runtime check of whether a given value belongs to the type.
+      Used by validation of arguments and return values in `defun`-family of macros.
+- `new(any) :: {:ok, t} | {:error, any}`
+    - Tries to convert a given value to a value that belongs to this type.
+      Useful e.g. when converting a JSON value into an Elixir value.
+- `default() :: t`
+    - Default value of the module. Used as default values of struct fields.
 
-### `Croma.Defun`
+`@type t` is mandatory as it's the raison d'etre of a type module,
+but the others above are optional if you don't use specific features of croma.
+And of course you can define any other functions in your type modules as you like.
 
-- Type specification oriented function definition
+You can always define your type modules by directly implementing above functions.
+For simple type modules croma prepares some helpers for you:
+    - Type modules of built-in types such as `Croma.String`, `Croma.Integer`, etc.
+    - Helper modules such as `Croma.SubtypeOfString` to define "subtype"s of existing types
+    - Ad-hoc module generator macros defined in `Croma.TypeGen`
+
+## `Croma.Defun` : Typespec-oriented function definition
+
+- `defun/2` macro provides shorthand syntax for defining function and annotating its typespec at once.
     - Example 1
 
         ```ex
-        import Croma.Defun
+        use Croma
         defun f(a :: integer, b :: String.t) :: String.t do
           "#{a} #{b}"
         end
@@ -48,7 +68,7 @@ Elixir macro utilities to make type-based programming easier.
     - Example 2
 
         ```ex
-        import Croma.Defun
+        use Croma
         defun dumbmap(as :: [a], f :: (a -> b)) :: [b] when a: term, b: term do
           ([]     , _) -> []
           ([h | t], f) -> [f.(h) | dumbmap(t, f)]
@@ -65,80 +85,65 @@ Elixir macro utilities to make type-based programming easier.
           [f.(h) | dumbmap(t, f)]
         end
         ```
-    - There are also `defunp` and `defunpt` macros for private functions.
-    - Limitations:
-        - Pattern matching against function parameters should use `(param1, param2) when guards -> block` style.
-        - Overloaded typespecs are not supported.
-        - Using unquote fragment in parameter list is not fully supported.
 
-## `Croma.Monad`
+- In addition to the shorthand syntax, `defun` is able to generate code for runtime type checking:
+    - guard: `soma_arg :: g[integer]`
+    - validation with type module's `valid?/1`: `some_arg :: v[SomeType.t]`
+- There are also `defunp` and `defunpt` macros for private functions.
+- Limitations:
+    - Pattern matching against function parameters must use `(param1, param2) when guards -> block` syntax.
+    - Overloaded typespecs are not supported.
+    - Using unquote fragment in parameter list is not fully supported.
 
-- An interface definition of the monad typeclass.
-- Modules that `use Croma.Monad` must implement the following interface:
-    - `@type t(a)` with a type parameter `a`.
-    - `@spec pure(a) :: t(a) when a: any`
-    - `@spec bind(t(a), (a -> t(b))) :: t(b) when a: any, b: any`
-- By using the concrete implementations of the above interface, `Croma.Monad` provides the default implementations of the following functions:
-    - As Functor:
-        - `@spec map(t(a), (a -> b)) :: t(b) when a: any, b: any`
-    - As Applicative:
-        - `@spec ap(t(a), t((a -> b))) :: t(b) when a: any, b: any`
-        - `@spec sequence([t(a)]) :: t([a]) when a: any`
-- Note that the order of parameters in `map`/`ap` is different from that of Haskell counterparts, in order to leverage Elixir's pipe operator `|>`.
-- `Croma.Monad` also provides `bind`-less syntax similar to Haskell's do-notation.
-For example,
+## `Croma.Result`
+
+- `Corma.Result.t(a)` is defined as `@type t(a) :: {:ok, a} | {:error, any}`.
+- Utilities such as `get/2`, `get!/1`, `map/2`, `map_error/2`, `bind/2` and `sequence/1` are provided.
+- This module also implements `Croma.Monad` interface and thus
+  you can use Haskell-like do-notation to combine results of multiple computations that may fail.
+  For example,
 
     ```ex
-    MonadImpl.m do
-      x <- mx
-      y <- my
-      pure f(x, y)
+    Croma.Result.m do
+      x <- {:ok, 1}
+      y <- {:ok, 2}
+      pure x + y
     end
     ```
-is converted to
+
+  is converted to
+
     ```ex
-    MonadImpl.bind(mx, fn x ->
-      MonadImpl.bind(my, fn y ->
-        MonadImpl.pure f(x, y)
+    Croma.Result.bind(mx, fn x ->
+      Croma.Result.bind(my, fn y ->
+        Croma.Result.pure(x + y)
       end)
     end)
     ```
 
-### `Croma.Result`
+  and is evaluated to `{:ok, 3}`.
 
-- `Corma.Result.t(a)` is defined as `@type t(a) :: {:ok, a} | {:error, any}`.
-This module implements `Croma.Monad` interface.
-
-### `Croma.ListMonad`
-
-- Implementation of `Croma.Monad` for lists.
-`Croma.ListMonad.t(a)` is just an alias to `[a]`.
-
-
-
-## Working with structs
-
-### `Croma.Struct`
+## `Croma.Struct`
 
 - Utility module to define structs with type specification and validation functions.
 
     ```ex
     iex> defmodule I do
     ...>   @type t :: integer
-    ...>   def validate(i) when is_integer(i), do: {:ok, i}
-    ...>   def validate(_), do: {:error, {:invalid_value, [__MODULE__]}}
-    ...>   def default, do: 0
+    ...>   def valid?(i) when is_integer(i), do: true
+    ...>   def valid?(_), do: false
+    ...>   def default(), do: 0
     ...> end
 
     ...> defmodule S do
     ...>   use Croma.Struct, fields: [i: I]
     ...> end
 
-    ...> S.validate([i: 5])
-    {:ok, %S{i: 5}}
+    ...> S.valid?(%S{i: 5})
+    true
 
-    ...> S.validate(%{i: "not_an_integer"})
-    {:error, {:invalid_value, [S, I]}}
+    ...> S.valid?(%S{i: "not_an_integer"})
+    false
 
     ...> {:ok, s} = S.new([])
     {:ok, %S{i: 0}}
@@ -149,8 +154,3 @@ This module implements `Croma.Monad` interface.
     ...> S.update(s, %{"i" => "not_an_integer"})
     {:error, {:invalid_value, [S, I]}}
     ```
-
-- Some helper modules for "per-field module"s that are passed as options to `use Croma.Struct` (`I` in the above example) are available.
-    - Wrappers of built-in types such as `Croma.String`, `Croma.Integer`, etc.
-    - Utility modules such as `Croma.SubtypeOfString` to define "subtypes" of existing types.
-    - Ad-hoc module generators defined in `Croma.TypeGen`.
