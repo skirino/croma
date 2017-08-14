@@ -17,6 +17,7 @@ defmodule Croma do
       require Croma.TypeGen
       require Croma.Result
       require Croma.ListMonad
+      :ok
     end
   end
 end
