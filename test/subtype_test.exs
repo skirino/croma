@@ -1,6 +1,20 @@
 defmodule Croma.SubtypeTest do
   use ExUnit.Case
 
+  defp assert_valid(mod, value) do
+    assert mod.valid?(value)
+    assert mod.validate(value) == {:ok, value}
+  end
+
+  defp refute_valid(mod, value) do
+    refute_valid(mod, value, [mod])
+  end
+  defp refute_valid(mod, value, error_modules) do
+    refute mod.valid?(value)
+    assert mod.validate(value) == {:error, {:invalid_value, error_modules}}
+  end
+
+
   defmodule I1 do
     use Croma.SubtypeOfInt, min: 1
   end
@@ -14,25 +28,25 @@ defmodule Croma.SubtypeTest do
     use Croma.SubtypeOfInt, min: -5, max: 5, default: 0
   end
 
-  test "Croma.SubtypeOfInt: validate/1" do
-    assert I1.validate(0) == {:error, {:invalid_value, [I1]}}
-    assert I1.validate(1) == {:ok   , 1}
+  test "Croma.SubtypeOfInt: valid?/1" do
+    refute_valid(I1, 0)
+    assert_valid(I1, 1)
 
-    assert I2.validate(-1) == {:error, {:invalid_value, [I2]}}
-    assert I2.validate( 0) == {:ok   ,  0}
-    assert I2.validate(10) == {:ok   , 10}
-    assert I2.validate(11) == {:error, {:invalid_value, [I2]}}
+    refute_valid(I2, -1)
+    assert_valid(I2,  0)
+    assert_valid(I2, 10)
+    refute_valid(I2, 11)
 
-    assert I3.validate(-1) == {:ok   , -1}
-    assert I3.validate( 0) == {:error, {:invalid_value, [I3]}}
+    assert_valid(I3, -1)
+    refute_valid(I3,  0)
 
-    assert I4.validate(-6) == {:error, {:invalid_value, [I4]}}
-    assert I4.validate(-5) == {:ok   , -5}
-    assert I4.validate( 5) == {:ok   ,  5}
-    assert I4.validate( 6) == {:error, {:invalid_value, [I4]}}
+    refute_valid(I4, -6)
+    assert_valid(I4, -5)
+    assert_valid(I4,  5)
+    refute_valid(I4,  6)
 
-    assert I1.validate(nil) == {:error, {:invalid_value, [I1]}}
-    assert I1.validate([] ) == {:error, {:invalid_value, [I1]}}
+    refute_valid(I1, nil)
+    refute_valid(I1, [])
   end
 
   test "Croma.SubtypeOfInt: default/0" do
@@ -61,20 +75,20 @@ defmodule Croma.SubtypeTest do
     use Croma.SubtypeOfFloat, min: 0.0, max: 1.5, default: 0.5
   end
 
-  test "Croma.SubtypeOfFloat: validate/1" do
-    assert F1.validate(-5.1) == {:error, {:invalid_value, [F1]}}
-    assert F1.validate(-5.0) == {:ok   , -5.0}
+  test "Croma.SubtypeOfFloat: valid?/1" do
+    refute_valid(F1, -5.1)
+    assert_valid(F1, -5.0)
 
-    assert F2.validate(10.0) == {:ok   , 10.0}
-    assert F2.validate(10.1) == {:error, {:invalid_value, [F2]}}
+    assert_valid(F2, 10.0)
+    refute_valid(F2, 10.1)
 
-    assert F3.validate(-0.1) == {:error, {:invalid_value, [F3]}}
-    assert F3.validate( 0.0) == {:ok   , 0.0}
-    assert F3.validate( 1.5) == {:ok   , 1.5}
-    assert F3.validate( 1.6) == {:error, {:invalid_value, [F3]}}
+    refute_valid(F3, -0.1)
+    assert_valid(F3,  0.0)
+    assert_valid(F3,  1.5)
+    refute_valid(F3,  1.6)
 
-    assert F1.validate(nil) == {:error, {:invalid_value, [F1]}}
-    assert F1.validate([] ) == {:error, {:invalid_value, [F1]}}
+    refute_valid(F1, nil)
+    refute_valid(F1, [])
   end
 
   test "Croma.SubtypeOfFloat: default/0" do
@@ -94,12 +108,12 @@ defmodule Croma.SubtypeTest do
     use Croma.SubtypeOfString, pattern: ~r/^foo|bar$/, default: "foo"
   end
 
-  test "Croma.SubtypeOfString: validate/1" do
-    assert S1.validate("foo") == {:ok   , "foo"}
-    assert S1.validate("bar") == {:ok   , "bar"}
-    assert S1.validate("buz") == {:error, {:invalid_value, [S1]}}
-    assert S1.validate(nil  ) == {:error, {:invalid_value, [S1]}}
-    assert S1.validate([]   ) == {:error, {:invalid_value, [S1]}}
+  test "Croma.SubtypeOfString: valid?/1" do
+    assert_valid(S1, "foo")
+    assert_valid(S1, "bar")
+    refute_valid(S1, "baz")
+    refute_valid(S1, nil)
+    refute_valid(S1, [])
   end
 
   test "Croma.SubtypeOfString: default/0" do
@@ -111,17 +125,20 @@ defmodule Croma.SubtypeTest do
     use Croma.SubtypeOfAtom, values: [:a1, :a2, :a3], default: :a1
   end
 
-  test "Croma.SubtypeOfAtom: validate/1" do
-    assert A1.validate(:a1 ) == {:ok   , :a1}
-    assert A1.validate("a1") == {:ok   , :a1}
-    assert A1.validate(:a2 ) == {:ok   , :a2}
-    assert A1.validate("a2") == {:ok   , :a2}
-    assert A1.validate(:a3 ) == {:ok   , :a3}
-    assert A1.validate("a3") == {:ok   , :a3}
-    assert A1.validate(:a4 ) == {:error, {:invalid_value, [A1]}}
-    assert A1.validate("a4") == {:error, {:invalid_value, [A1]}}
-    assert A1.validate(nil ) == {:error, {:invalid_value, [A1]}}
-    assert A1.validate([]  ) == {:error, {:invalid_value, [A1]}}
+  test "Croma.SubtypeOfAtom: valid?/1" do
+    assert_valid(A1, :a1)
+    assert_valid(A1, :a2)
+    assert_valid(A1, :a3)
+    refute_valid(A1, :a4)
+    refute_valid(A1, nil)
+    refute_valid(A1, [])
+  end
+
+  test "Croma.SubtypeOfAtom: new/1" do
+    assert A1.new("a1") == {:ok, :a1}
+    assert A1.new("a2") == {:ok, :a2}
+    assert A1.new("a3") == {:ok, :a3}
+    assert A1.new("a4") == {:error, {:invalid_value, [A1]}}
   end
 
   test "Croma.SubtypeOfAtom: default/0" do
@@ -141,26 +158,36 @@ defmodule Croma.SubtypeTest do
   defmodule L4 do
     use Croma.SubtypeOfList, elem_module: I4, min_length: 1, max_length: 3
   end
+  defmodule L5 do
+    use Croma.SubtypeOfList, elem_module: A1, min_length: 1
+  end
 
-  test "Croma.SubtypeOfList: validate/1" do
-    assert L1.validate([] ) == {:ok   , []}
-    assert L1.validate([1]) == {:ok   , [1]}
-    assert L1.validate([0]) == {:error, {:invalid_value, [L1, I1]}}
+  test "Croma.SubtypeOfList: valid?/1" do
+    assert_valid(L1, [])
+    assert_valid(L1, [1])
+    refute_valid(L1, [0], [L1, I1])
 
-    assert L2.validate([]          ) == {:ok   , []}
-    assert L2.validate([1, 2, 3]   ) == {:ok   , [1, 2, 3]}
-    assert L2.validate([1, 2, 11]  ) == {:error, {:invalid_value, [L2, I2]}}
-    assert L2.validate([1, 2, 3, 4]) == {:error, {:invalid_value, [L2]}}
+    assert_valid(L2, [])
+    assert_valid(L2, [1, 2, 3])
+    refute_valid(L2, [1, 2, 11], [L2, I2])
+    refute_valid(L2, [1, 2, 3, 4])
 
-    assert L3.validate([ 1]    ) == {:error, {:invalid_value, [L3, I3]}}
-    assert L3.validate([-1]    ) == {:error, {:invalid_value, [L3]}}
-    assert L3.validate([-1, -2]) == {:ok   , [-1, -2]}
+    refute_valid(L3, [ 1], [L3, I3])
+    refute_valid(L3, [-1])
+    assert_valid(L3, [-1, -2])
 
-    assert L4.validate([]          ) == {:error, {:invalid_value, [L4]}}
-    assert L4.validate([-5]        ) == {:ok   , [-5]}
-    assert L4.validate([-5, 0, 5]  ) == {:ok   , [-5, 0, 5]}
-    assert L4.validate([-5, 10]    ) == {:error, {:invalid_value, [L4, I4]}}
-    assert L4.validate([0, 0, 0, 0]) == {:error, {:invalid_value, [L4]}}
+    refute_valid(L4, [])
+    assert_valid(L4, [-5])
+    assert_valid(L4, [-5, 0, 5])
+    refute_valid(L4, [-5, 10], [L4, I4])
+    refute_valid(L4, [0, 0, 0, 0])
+  end
+
+  test "Croma.SubtypeOfList: new/1" do
+    assert L5.new([])          == {:error, {:invalid_value, [L5]}}
+    assert L5.new([:a1, :a2])  == {:ok, [:a1, :a2]}
+    assert L5.new([:a1, "a3"]) == {:ok, [:a1, :a3]}
+    assert L5.new([:a1, :a4])  == {:error, {:invalid_value, [L5, A1]}}
   end
 
   test "Croma.SubtypeOfList: default/0" do
@@ -192,30 +219,41 @@ defmodule Croma.SubtypeTest do
     use Croma.SubtypeOfMap, key_module: A1, value_module: I4, min_size: 1, max_size: 2
   end
 
-  test "Croma.SubtypeOfMap: validate/1" do
-    assert M1.validate(%{})                    == {:ok, %{}}
-    assert M1.validate(%{"a1" => 1})           == {:ok, %{a1: 1}}
-    assert M1.validate(%{a1: 1, a2: 2, a3: 3}) == {:ok, %{a1: 1, a2: 2, a3: 3}}
-    assert M1.validate(%{a: 1})                == {:error, {:invalid_value, [M1, A1]}}
-    assert M1.validate(%{a1: 0})               == {:error, {:invalid_value, [M1, I1]}}
+  test "Croma.SubtypeOfMap: valid?/1" do
+    assert_valid(M1, %{})
+    assert_valid(M1, %{a1: 1})
+    assert_valid(M1, %{a1: 1, a2: 2, a3: 3})
+    refute_valid(M1, %{a: 1}, [M1, A1])
+    refute_valid(M1, %{a1: 0}, [M1, I1])
 
-    assert M2.validate(%{})                    == {:error, {:invalid_value, [M2]}}
-    assert M2.validate(%{"a1" => 1})           == {:ok, %{a1: 1}}
-    assert M2.validate(%{a1: 1, a2: 2, a3: 3}) == {:ok, %{a1: 1, a2: 2, a3: 3}}
-    assert M2.validate(%{a: 1})                == {:error, {:invalid_value, [M2, A1]}}
-    assert M2.validate(%{a1: -1})              == {:error, {:invalid_value, [M2, I2]}}
+    refute_valid(M2, %{})
+    assert_valid(M2, %{a1: 1})
+    assert_valid(M2, %{a1: 1, a2: 2, a3: 3})
+    refute_valid(M2, %{a: 1}, [M2, A1])
+    refute_valid(M2, %{a1: -1}, [M2, I2])
 
-    assert M3.validate(%{})                    == {:ok, %{}}
-    assert M3.validate(%{"a1" => -1})          == {:ok, %{a1: -1}}
-    assert M3.validate(%{a1: 1, a2: 2, a3: 3}) == {:error, {:invalid_value, [M3]}}
-    assert M3.validate(%{a: 1})                == {:error, {:invalid_value, [M3, A1]}}
-    assert M3.validate(%{a1: "not_int"})       == {:error, {:invalid_value, [M3, I3]}}
+    assert_valid(M3, %{})
+    assert_valid(M3, %{a1: -1})
+    refute_valid(M3, %{a1: 1, a2: 2, a3: 3})
+    refute_valid(M3, %{a: 1}, [M3, A1])
+    refute_valid(M3, %{a1: "not_int"}, [M3, I3])
 
-    assert M4.validate(%{})                    == {:error, {:invalid_value, [M4]}}
-    assert M4.validate(%{"a1" => -1})          == {:ok, %{a1: -1}}
-    assert M4.validate(%{a1: 1, a2: 2, a3: 3}) == {:error, {:invalid_value, [M4]}}
-    assert M4.validate(%{a: 1})                == {:error, {:invalid_value, [M4, A1]}}
-    assert M4.validate(%{a1: "not_int"})       == {:error, {:invalid_value, [M4, I4]}}
+    refute_valid(M4, %{})
+    assert_valid(M4, %{a1: -1})
+    refute_valid(M4, %{a1: 1, a2: 2, a3: 3})
+    refute_valid(M4, %{a: 1}, [M4, A1])
+    refute_valid(M4, %{a1: "not_int"}, [M4, I4])
+  end
+
+  test "Croma.SubtypeOfMap: new/1" do
+    assert M1.new(%{"a1" =>  1})    == {:ok, %{a1:  1}}
+    assert M1.new(%{a1: 0})         == {:error, {:invalid_value, [M1, I1]}}
+    assert M2.new(%{"a1" =>  1})    == {:ok, %{a1:  1}}
+    assert M2.new(%{"a4" => -1})    == {:error, {:invalid_value, [M2, A1]}}
+    assert M3.new(%{"a1" => -1})    == {:ok, %{a1: -1}}
+    assert M3.new(%{a1: "not_int"}) == {:error, {:invalid_value, [M3, I3]}}
+    assert M4.new(%{"a1" => -1})    == {:ok, %{a1: -1}}
+    assert M4.new(%{a4: "not_int"}) == {:error, {:invalid_value, [M4, A1]}}
   end
 
   test "Croma.SubtypeOfMap: default/0" do
@@ -238,23 +276,29 @@ defmodule Croma.SubtypeTest do
     use Croma.SubtypeOfTuple, elem_modules: [], default: {}
   end
   defmodule T1 do
-    use Croma.SubtypeOfTuple, elem_modules: [I1]
+    use Croma.SubtypeOfTuple, elem_modules: [A1]
   end
   defmodule T3 do
     use Croma.SubtypeOfTuple, elem_modules: [I1, S1, L1]
   end
 
-  test "Croma.SubtypeOfTuple: validate/1" do
-    assert T0.validate(nil) == {:error, {:invalid_value, [T0]}}
-    assert T0.validate({} ) == {:ok, {}}
+  test "Croma.SubtypeOfTuple: valid?/1" do
+    refute_valid(T0, nil)
+    assert_valid(T0, {})
 
-    assert T1.validate({} ) == {:error, {:invalid_value, [T1]}}
-    assert T1.validate({0}) == {:error, {:invalid_value, [T1, I1]}}
-    assert T1.validate({1}) == {:ok, {1}}
+    refute_valid(T1, {})
+    refute_valid(T1, {:a}, [T1, A1])
+    assert_valid(T1, {:a1})
 
-    assert T3.validate({}            ) == {:error, {:invalid_value, [T3]}}
-    assert T3.validate({1, ""   , []}) == {:error, {:invalid_value, [T3, S1]}}
-    assert T3.validate({1, "foo", []}) == {:ok, {1, "foo", []}}
+    refute_valid(T3, {})
+    refute_valid(T3, {1, "", []}, [T3, S1])
+    assert_valid(T3, {1, "foo", []})
+  end
+
+  test "Croma.SubtypeOfTuple: new/1" do
+    assert T1.new({:a1})  == {:ok, {:a1}}
+    assert T1.new({"a1"}) == {:ok, {:a1}}
+    assert T1.new({"a4"}) == {:error, {:invalid_value, [T1, A1]}}
   end
 
   test "Croma.SubtypeOfTuple: default/0" do
