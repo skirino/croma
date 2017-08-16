@@ -76,10 +76,7 @@ defmodule Croma.Validation do
     q1 = validation_expr(t1, v, caller)
     q2 = validation_expr(t2, v, caller)
     quote do
-      case unquote(q1) do
-        true  -> true
-        false -> unquote(q2)
-      end
+      unquote(q1) || unquote(q2)
     end
   end
 
