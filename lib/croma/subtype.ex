@@ -321,17 +321,14 @@ defmodule Croma.SubtypeOfList do
       end
 
       defun valid?(term :: any) :: boolean do
-        l when is_list(l) -> valid_length?(length(l)) and Enum.all?(l, &@mod.valid?/1)
+        l when is_list(l) -> valid_length?(length(l)) and Enum.all?(l, &Croma.Validation.call_valid1(@mod, &1))
         _                 -> false
       end
-      defun validate(term :: any) :: R.t(t) do
-        new(term)
-      end
 
-      defun new(term :: any) :: R.t(t) do
+      defun validate(term :: any) :: R.t(t) do
         l when is_list(l) ->
           valid_length? = valid_length?(length(l))
-          result = Enum.map(l, &@mod.validate/1) |> R.sequence()
+          result = Enum.map(l, &Croma.Validation.call_validate1(@mod, &1)) |> R.sequence()
           case result do
             {:ok, _} when valid_length? -> result
             _ ->
@@ -345,6 +342,26 @@ defmodule Croma.SubtypeOfList do
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
+      # Invoking `module_info/0` on `mod` automatically compiles and loads the module if necessary.
+      if {:new, 1} in @mod.module_info[:exports] do
+        defun new(term :: any) :: R.t(t) do
+          l when is_list(l) ->
+            valid_length? = valid_length?(length(l))
+            result = Enum.map(l, &@mod.new/1) |> R.sequence()
+            case result do
+              {:ok, _} when valid_length? -> result
+              _ ->
+                # suppress warning on unmatched case clause when both @min and @max are nil (`valid_length?` is always true)
+                # by separating case expressions
+                case result do
+                  {:ok   , _}      -> {:error, {:invalid_value, [__MODULE__]}}
+                  {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+                end
+            end
+          _ -> {:error, {:invalid_value, [__MODULE__]}}
+        end
+      end
+
       if !is_nil(@min) do
         defun min_length() :: non_neg_integer, do: @min
       end
@@ -354,7 +371,7 @@ defmodule Croma.SubtypeOfList do
 
       if default do
         @default default
-        if Enum.any?(@default, fn e -> @mod.validate(e) |> R.error?() end), do: raise ":default must be a valid list"
+        if Enum.any?(@default, fn e -> !Croma.Validation.call_valid1(@mod, e) end), do: raise ":default must be a valid list"
         len = length(@default)
         if !is_nil(@min) && len < @min, do: raise ":default is shorter than the given :min_length #{Integer.to_string(@min)}"
         if !is_nil(@max) && @max < len, do: raise ":default is longer than the given :max_length #{Integer.to_string(@max)}"
@@ -418,24 +435,55 @@ defmodule Croma.SubtypeOfMap do
         m when is_map(m) and valid_size?(map_size(m)) -> Enum.all?(m, fn {k, v} -> @key_module.valid?(k) and @value_module.valid?(v) end)
         _                                             -> false
       end
-      defun validate(term :: term) :: R.t(t) do
-        new(term)
-      end
 
-      defun new(term :: term) :: R.t(t) do
+      defun validate(term :: term) :: R.t(t) do
         m when is_map(m) and valid_size?(map_size(m)) ->
-          results = Enum.map(m, fn {k0, v0} ->
-            @key_module.validate(k0) |> R.bind(fn k ->
-              @value_module.validate(v0) |> R.map(fn v ->
+          Enum.map(m, fn {k0, v0} ->
+            Croma.Validation.call_validate1(@key_module, k0) |> R.bind(fn k ->
+              Croma.Validation.call_validate1(@value_module, v0) |> R.map(fn v ->
                 {k, v}
               end)
             end)
           end)
-          case R.sequence(results) do
-            {:ok   , kvs   } -> {:ok, Enum.into(kvs, %{})}
+          |> R.sequence()
+          |> case do
+            {:ok   , kvs   } -> {:ok, Map.new(kvs)}
             {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
           end
         _ -> {:error, {:invalid_value, [__MODULE__]}}
+      end
+
+      # Invoking `module_info/0` automatically compiles and loads the module if necessary.
+      module_flag_pairs = Enum.map([@key_module, @value_module], fn m -> {m, {:new, 1} in m.module_info[:exports]} end)
+      if Enum.any?(module_flag_pairs, fn {_, has_new1} -> has_new1 end) do
+        Enum.each(module_flag_pairs, fn {mod, has_new1} ->
+          if has_new1 do
+            defp __call_new_or_validate(unquote(mod), v) do
+              unquote(mod).new(v)
+            end
+          else
+            defp __call_new_or_validate(unquote(mod), v) do
+              Croma.Validation.call_validate1(unquote(mod), v)
+            end
+          end
+        end)
+
+        defun new(term :: term) :: R.t(t) do
+          m when is_map(m) and valid_size?(map_size(m)) ->
+            Enum.map(m, fn {k0, v0} ->
+              __call_new_or_validate(@key_module, k0) |> R.bind(fn k ->
+                __call_new_or_validate(@value_module, v0) |> R.map(fn v ->
+                  {k, v}
+                end)
+              end)
+            end)
+            |> R.sequence()
+            |> case do
+              {:ok   , kvs   } -> {:ok, Map.new(kvs)}
+              {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+            end
+          _ -> {:error, {:invalid_value, [__MODULE__]}}
+        end
       end
 
       if !is_nil(@min) do
@@ -452,9 +500,9 @@ defmodule Croma.SubtypeOfMap do
         if !is_nil(@min) && size < @min, do: raise "items in :default is less than the given :min_size #{Integer.to_string(@min)}"
         if !is_nil(@max) && @max < size, do: raise "items in :default is more than the given :max_size #{Integer.to_string(@max)}"
         any_kv_invalid? = Enum.any?(@default, fn {k, v} ->
-          R.error?(@key_module.validate(k)) or R.error?(@value_module.validate(v))
+          !Croma.Validation.call_valid1(@key_module, k) or !Croma.Validation.call_valid1(@value_module, v)
         end)
-        if any_kv_invalid?, do: raise ":default must be a valid value of #{Atom.to_string(__MODULE__)}"
+        if any_kv_invalid?, do: raise ":default must be a valid value of #{inspect(__MODULE__)}"
         defun default() :: t, do: @default
       end
     end
@@ -492,21 +540,45 @@ defmodule Croma.SubtypeOfTuple do
         t when is_tuple(t) and tuple_size(t) == @size -> Enum.zip(Tuple.to_list(t), @elem_modules) |> Enum.all?(fn {elem, mod} -> mod.valid?(elem) end)
         _                                             -> false
       end
-      defun validate(term :: any) :: R.t(t) do
-        new(term)
-      end
 
-      defun new(term :: any) :: R.t(t) do
+      defun validate(term :: any) :: R.t(t) do
         t when is_tuple(t) and tuple_size(t) == @size ->
-          result =
-            Enum.zip(Tuple.to_list(t), @elem_modules)
-            |> Enum.map(fn {elem, mod} -> mod.validate(elem) end)
-            |> R.sequence
-          case result do
+          Enum.zip(Tuple.to_list(t), @elem_modules)
+          |> Enum.map(fn {elem, mod} -> Croma.Validation.call_validate1(mod, elem) end)
+          |> R.sequence()
+          |> case do
             {:ok   , l     } -> {:ok, List.to_tuple(l)}
             {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
           end
         _ -> {:error, {:invalid_value, [__MODULE__]}}
+      end
+
+      # Invoking `module_info/0` automatically compiles and loads the module if necessary.
+      module_flag_pairs = Enum.map(@elem_modules, fn m -> {m, {:new, 1} in m.module_info[:exports]} end)
+      if Enum.any?(module_flag_pairs, fn {_, has_new1} -> has_new1 end) do
+        Enum.each(module_flag_pairs, fn {mod, has_new1} ->
+          if has_new1 do
+            defp __call_new_or_validate(unquote(mod), v) do
+              unquote(mod).new(v)
+            end
+          else
+            defp __call_new_or_validate(unquote(mod), v) do
+              Croma.Validation.call_validate1(unquote(mod), v)
+            end
+          end
+        end)
+
+        defun new(term :: any) :: R.t(t) do
+          t when is_tuple(t) and tuple_size(t) == @size ->
+            Enum.zip(Tuple.to_list(t), @elem_modules)
+            |> Enum.map(fn {elem, mod} -> __call_new_or_validate(mod, elem) end)
+            |> R.sequence()
+            |> case do
+              {:ok   , l     } -> {:ok, List.to_tuple(l)}
+              {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
+            end
+          _ -> {:error, {:invalid_value, [__MODULE__]}}
+        end
       end
 
       if default do
@@ -516,7 +588,7 @@ defmodule Croma.SubtypeOfTuple do
         any_elem_invalid? =
           Enum.zip(Tuple.to_list(@default), @elem_modules)
           |> Enum.any?(fn {elem, mod} -> R.error?(mod.validate(elem)) end)
-        if any_elem_invalid?, do: raise ":default must be a valid value of #{Atom.to_string(__MODULE__)}"
+        if any_elem_invalid?, do: raise ":default must be a valid value of #{inspect(__MODULE__)}"
         defun default() :: t, do: @default
       end
     end
