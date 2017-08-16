@@ -10,7 +10,7 @@ defmodule Croma.TypeGenTest do
     assert nilable(I).validate(nil) == {:ok, nil}
     assert nilable(I).validate( 0 ) == {:ok, 0}
     assert nilable(I).validate(-1 ) == {:error, {:invalid_value, [nilable(I), I]}}
-    assert nilable(I).default       == nil
+    assert nilable(I).default()     == nil
   end
 
   test "Croma.TypeGen.list_of" do
@@ -18,7 +18,7 @@ defmodule Croma.TypeGenTest do
     assert list_of(I).validate([0, 1, 2])  == {:ok, [0, 1, 2]}
     assert list_of(I).validate([0, -1, 2]) == {:error, {:invalid_value, [I]}}
     assert list_of(I).validate(nil)        == {:error, {:invalid_value, [list_of(I)]}}
-    assert list_of(I).default              == []
+    assert list_of(I).default()            == []
   end
 
   test "Croma.TypeGen.union" do
@@ -37,7 +37,7 @@ defmodule Croma.TypeGenTest do
   test "Croma.TypeGen.fixed" do
     assert fixed(:a).validate(:a) == {:ok, :a}
     assert fixed(1 ).validate(:a) == {:error, {:invalid_value, [fixed(1)]}}
-    assert fixed(:a).default      == :a
+    assert fixed(:a).default()    == :a
   end
 
   defmodule S do
