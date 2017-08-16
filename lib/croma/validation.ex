@@ -10,13 +10,8 @@ defmodule Croma.Validation do
     type_string = Macro.to_string(type_expr)
     quote bind_quoted: [name: name, ast: ast, type_string: type_string] do
       case ast do
-        # result returned by `valid?/1`
         true  -> nil
         false -> raise "validation error: #{Atom.to_string(name)} is not a valid #{type_string}"
-
-        # result returned by `validate/1`
-        {:ok, _}         -> nil
-        {:error, reason} -> raise "validation error for #{Atom.to_string(name)}: #{inspect reason}"
       end
     end
   end
@@ -67,29 +62,13 @@ defmodule Croma.Validation do
 
   defp validation_expr_module(v, mod) do
     quote bind_quoted: [v: v, mod: mod] do
-      # This should be a simple call to `valid?/1` but for backward compatibility we should also try `validate/1`.
-      try do
-        mod.valid?(v)
-      rescue
-        e in UndefinedFunctionError ->
-          try do
-            mod.validate(v)
-          rescue
-            UndefinedFunctionError -> reraise(e, System.stacktrace())
-          end
-      end
+      Croma.Validation.call_valid1(mod, v)
     end
   end
 
   defp validation_expr_equal(v, value) do
     quote bind_quoted: [v: v, value: value] do
-      # Essentially a boolean expression `v == value` is enough.
-      # To suppress unwanted warning by pattern matching in `validation_expr_union`, we return Result.t here.
-      if v == value do
-        {:ok, v}
-      else
-        {:error, {:not_equal_to, value}}
-      end
+      v == value
     end
   end
 
@@ -98,13 +77,8 @@ defmodule Croma.Validation do
     q2 = validation_expr(t2, v, caller)
     quote do
       case unquote(q1) do
-        # result returned by `valid?/1`
         true  -> true
         false -> unquote(q2)
-
-        # result returned by `validate/1`
-        {:ok, _}    -> true
-        {:error, _} -> unquote(q2)
       end
     end
   end
@@ -119,5 +93,40 @@ defmodule Croma.Validation do
 
   defp error(type_expr) do
     raise "cannot generate validation code for the given type: #{Macro.to_string(type_expr)}"
+  end
+
+  @doc false
+  def call_valid1(mod, v) do
+    # This should be a simple call to `valid?/1` but for backward compatibility we should fall back to `validate/1`.
+    try do
+      mod.valid?(v)
+    rescue
+      e in UndefinedFunctionError ->
+        try do
+          match?({:ok, _}, mod.validate(v))
+        rescue
+          UndefinedFunctionError -> reraise(e, System.stacktrace())
+        end
+    end
+  end
+
+  @doc false
+  def call_validate1(mod, v) do
+    # This function is introduced for backward compatibility of `validate/1`.
+    try do
+      if mod.valid?(v) do
+        {:ok, v}
+      else
+        {:error, {:invalid_value, [mod]}}
+      end
+    rescue
+      e in UndefinedFunctionError ->
+        # For backward compatibility we have to return `validate/1`.
+        try do
+          mod.validate(v)
+        rescue
+          UndefinedFunctionError -> reraise(e, System.stacktrace())
+        end
+    end
   end
 end
