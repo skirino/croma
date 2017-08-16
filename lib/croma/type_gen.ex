@@ -3,40 +3,29 @@ alias Croma.Result, as: R
 
 defmodule Croma.TypeGen do
   @moduledoc """
-  Module that defines macros for ad-hoc module definitions.
-
-  `Croma` leverages Elixir's lightweight module syntax and advocate coding styles to define many modules.
-  Macros in this module helps defining modules in an ad-hoc way (in other words "in-line") based on existing modules.
+  Module that defines macros for ad-hoc (in other words "in-line") module definitions.
   """
 
   @doc """
-  Creates a new module that represents a nilable type, based on the given module `module`.
+  Creates a new module that represents a nilable type, based on the given type module `module`.
 
-  The module passed to `nilable/1` must define the following members:
-
-  - `@type t`
-  - `@spec validate(term) :: Croma.Result.t(t)`
-  - (Optional) `@spec new(term) :: Croma.Result.t(t)`
-
-  Using the above members `nilable/1` generates a new module that also defines the same members:
+  Using the given type module `nilable/1` generates a new module that defines:
 
   - `@type t :: nil | module.t`
-  - `@spec validate(term) :: Croma.Result.t(t)`
+  - `@spec valid?(term) :: boolean`
   - (If the given module exports `new/1`) `@spec new(term) :: Croma.Result.t(t)`
+
+  This is useful in defining a struct with nilable fields using `Croma.Struct`.
 
   ## Examples
       iex> use Croma
       ...> defmodule I do
       ...>   use Croma.SubtypeOfInt, min: 0
       ...> end
-
-  This is useful in defining a struct with nilable fields using `Croma.Struct`.
-
       ...> defmodule S do
       ...>   use Croma.Struct, fields: [not_nilable_int: I, nilable_int: Croma.TypeGen.nilable(I)]
       ...> end
-
-      ...> S.new([not_nilable_int: 0, nilable_int: nil])
+      ...> S.new(%{not_nilable_int: 0, nilable_int: nil})
       %S{nilable_int: nil, not_nilable_int: 0}
   """
   defmacro nilable(mod) do
@@ -59,13 +48,13 @@ defmodule Croma.TypeGen do
       @mod mod
       @type t :: nil | unquote(@mod).t
 
+      defun valid?(value :: term) :: boolean do
+        nil -> true
+        v   -> Croma.Validation.call_valid1(@mod, v)
+      end
       defun validate(value :: term) :: R.t(t) do
         nil -> {:ok, nil}
-        v   ->
-          case @mod.validate(v) do
-            {:ok   , _     } = r -> r
-            {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
-          end
+        v   -> Croma.Validation.call_validate1(@mod, v) |> R.map_error(&R.ErrorReason.add_context(&1, __MODULE__))
       end
 
       # Invoking `module_info/0` on `mod` automatically compiles and loads the module if necessary.
@@ -109,8 +98,12 @@ defmodule Croma.TypeGen do
       @mod mod
       @type t :: [unquote(@mod).t]
 
+      defun valid?(list :: term) :: boolean do
+        l when is_list(l) -> Enum.all?(l, &Croma.Validation.call_valid1(@mod, &1))
+        _                 -> false
+      end
       defun validate(list :: term) :: R.t(t) do
-        l when is_list(l) -> Enum.map(l, &@mod.validate/1) |> R.sequence()
+        l when is_list(l) -> Enum.map(l, &Croma.Validation.call_validate1(@mod, &1)) |> R.sequence()
         _                 -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
@@ -154,10 +147,13 @@ defmodule Croma.TypeGen do
       @modules modules
       @type t :: unquote(Enum.map(@modules, fn m -> quote do: unquote(m).t end) |> Croma.TypeUtil.list_to_type_union())
 
+      defun valid?(value :: term) :: boolean do
+        Enum.any?(@modules, fn mod -> Croma.Validation.call_valid1(mod, value) end)
+      end
       defun validate(value :: term) :: R.t(t) do
         error_result = {:error, {:invalid_value, [__MODULE__]}}
         Enum.find_value(@modules, error_result, fn mod ->
-          case mod.validate(value) do
+          case Croma.Validation.call_validate1(mod, value) do
             {:ok   , _} = r -> r
             {:error, _}     -> nil
           end
@@ -192,6 +188,9 @@ defmodule Croma.TypeGen do
       @value value
       @type t :: unquote(@value)
 
+      defun valid?(v :: term) :: boolean do
+        v == @value
+      end
       defun validate(v :: term) :: R.t(t) do
         if v == @value do
           {:ok, @value}
