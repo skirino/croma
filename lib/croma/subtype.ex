@@ -432,7 +432,7 @@ defmodule Croma.SubtypeOfMap do
       end
 
       defun valid?(term :: term) :: boolean do
-        m when is_map(m) and valid_size?(map_size(m)) -> Enum.all?(m, fn {k, v} -> @key_module.valid?(k) and @value_module.valid?(v) end)
+        m when is_map(m) and valid_size?(map_size(m)) -> Enum.all?(m, fn {k, v} -> Croma.Validation.call_valid1(@key_module, k) and Croma.Validation.call_valid1(@value_module, v) end)
         _                                             -> false
       end
 
@@ -537,7 +537,7 @@ defmodule Croma.SubtypeOfTuple do
       @type t :: {unquote_splicing(Enum.map(@elem_modules, fn m -> (quote do: unquote(m).t) end))}
 
       defun valid?(term :: any) :: boolean do
-        t when is_tuple(t) and tuple_size(t) == @size -> Enum.zip(Tuple.to_list(t), @elem_modules) |> Enum.all?(fn {elem, mod} -> mod.valid?(elem) end)
+        t when is_tuple(t) and tuple_size(t) == @size -> Enum.zip(Tuple.to_list(t), @elem_modules) |> Enum.all?(fn {elem, mod} -> Croma.Validation.call_valid1(mod, elem) end)
         _                                             -> false
       end
 
