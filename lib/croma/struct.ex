@@ -6,10 +6,10 @@ defmodule Croma.Struct do
   Each of per-field module must provide the following members:
 
   - required: `@type t`
-  - required: `@spec validate(term) :: Croma.Result.t(t)`
-  - optional: `@spec default :: t`
+  - required: `@spec valid?(term) :: boolean`
+  - optional: `@spec default() :: t`
 
-  Some helpers for defining such per-field modules are available.
+  Some helpers for defining such per-field type modules are available.
 
   - Wrappers of built-in types such as `Croma.String`, `Croma.Integer`, etc.
   - Utility modules such as `Croma.SubtypeOfString` to define "subtypes" of existing types.
@@ -27,10 +27,9 @@ defmodule Croma.Struct do
 
   This module also generates the following functions.
 
+  - `@spec valid?(term) :: boolean`
   - `@spec new(Dict.t) :: Croma.Result.t(t)`
   - `@spec new!(Dict.t) :: t`
-  - `@spec validate(term) :: Croma.Result.t(t)`
-  - `@spec validate!(term) :: t`
   - `@spec update(t, Dict.t) :: Croma.Result.t(t)`
   - `@spec update!(t, Dict.t) :: t`
 
@@ -46,13 +45,13 @@ defmodule Croma.Struct do
       ...>   use Croma.Struct, fields: [i: I]
       ...> end
 
-      ...> S.validate([i: 5])
+      ...> S.new(%{i: 5})
       {:ok, %S{i: 5}}
 
-      ...> S.validate(%{i: "not_an_integer"})
-      {:error, {:invalid_value, [S, I]}}
+      ...> S.valid?(%S{i: "not_an_integer"})
+      false
 
-      ...> {:ok, s} = S.new([])
+      ...> {:ok, s} = S.new(%{})
       {:ok, %S{i: 0}}
 
       ...> S.update(s, [i: 2])
@@ -158,8 +157,8 @@ defmodule Croma.Struct do
     end
   end
 
-  defp evaluate_existing_field(mod, value, false), do: mod.validate(value)
-  defp evaluate_existing_field(mod, value, true ), do: mod.validate(value) |> R.or_else(try_new(mod, value, :invalid_value))
+  defp evaluate_existing_field(mod, value, false), do: Croma.Validation.call_validate1(mod, value)
+  defp evaluate_existing_field(mod, value, true ), do: Croma.Validation.call_validate1(mod, value) |> R.or_else(try_new(mod, value, :invalid_value))
 
   defp evaluate_non_existing_field(mod, false), do: try_default(mod)
   defp evaluate_non_existing_field(mod, true ), do: try_default(mod) |> R.or_else(try_new(mod, %{}, :value_missing))
@@ -183,12 +182,12 @@ defmodule Croma.Struct do
   @doc false
   def validate_impl(mod, struct_fields, dict) when is_list(dict) or is_map(dict) do
     kv_results = Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
-      case dict_fetch2(dict, fields_to_fetch) do
-        {:ok, v} -> v
-        :error   -> nil
-      end
-      |> mod.validate()
-      |> R.map(&{field, &1})
+      v =
+        case dict_fetch2(dict, fields_to_fetch) do
+          {:ok, v} -> v
+          :error   -> nil
+        end
+      Croma.Validation.call_validate1(mod, v) |> R.map(&{field, &1})
     end)
     case R.sequence(kv_results) do
       {:ok   , kvs   } -> {:ok, struct(mod, kvs)}
@@ -201,7 +200,7 @@ defmodule Croma.Struct do
   def update_impl(s, mod, struct_fields, dict) when is_list(dict) or is_map(dict) do
     kv_results = Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
       case dict_fetch2(dict, fields_to_fetch) do
-        {:ok, v} -> mod.validate(v) |> R.map(&{field, &1})
+        {:ok, v} -> Croma.Validation.call_validate1(mod, v) |> R.map(&{field, &1})
         :error   -> nil
       end
     end)
@@ -299,6 +298,17 @@ defmodule Croma.Struct do
           %__MODULE__{s | unquote(name) => field}
         end
       end)
+
+      @doc """
+      Checks if the given value belongs to `t:t/0` or not.
+      """
+      defun valid?(value :: term) :: boolean do
+        %__MODULE__{} = s ->
+          Enum.all?(@croma_struct_fields, fn {field, _fields_to_fetch, mod} ->
+            Croma.Validation.call_valid1(mod, Map.get(s, field))
+          end)
+        _ -> false
+      end
 
       @doc """
       Checks that the given `dict` is valid or not by using each field's `validate/1` function.

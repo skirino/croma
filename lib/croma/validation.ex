@@ -94,7 +94,9 @@ defmodule Croma.Validation do
 
   @doc false
   def call_valid1(mod, v) do
-    # This should be a simple call to `valid?/1` but for backward compatibility we should fall back to `validate/1`.
+    # This function is introduced for backward compatibility of `validate/1`;
+    # if `valid?/1` is not exported (i.e., the type module has not yet migrated to `valid?/1`),
+    # this function falls back to `validate/1` and check whether the result is an ok-tuple.
     try do
       mod.valid?(v)
     rescue
@@ -109,18 +111,20 @@ defmodule Croma.Validation do
 
   @doc false
   def call_validate1(mod, v) do
-    # This function is introduced for backward compatibility of `validate/1`.
+    # This function is introduced for backward compatibility of `validate/1`;
+    # if `validate/1` is not exported (i.e., the type module has already migrated to `valid?/1`),
+    # this function falls back to the dumb implementation of `validate/1` interface.
     try do
-      if mod.valid?(v) do
-        {:ok, v}
-      else
-        {:error, {:invalid_value, [mod]}}
-      end
+      mod.validate(v)
     rescue
       e in UndefinedFunctionError ->
         # For backward compatibility we have to return `validate/1`.
         try do
-          mod.validate(v)
+          if mod.valid?(v) do
+            {:ok, v}
+          else
+            {:error, {:invalid_value, [mod]}}
+          end
         rescue
           UndefinedFunctionError -> reraise(e, System.stacktrace())
         end
