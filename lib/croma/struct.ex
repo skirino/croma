@@ -100,6 +100,12 @@ defmodule Croma.Struct do
   `default/0` then `new/1` (with empty map as input).
 
   Also, if a field has an invalid value, `new/1` will be called with that value as input.
+
+  ## Limitation
+
+  - If you want to validate your struct with a rule that spans multiple fields
+    (e.g. `f1` and `f2` must be "both `nil`" or "both `integer`"),
+    you have to manually define `@type t`, `valid?/1`, etc.
   """
 
   import Croma.Defun
