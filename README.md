@@ -110,7 +110,7 @@ Elixir macro utilities to make type-based programming easier.
   This way a type can have associated functions within its type module.
 - The following definitions in type modules are used by croma:
     - `@type t`
-        - The type this type module represents. Used in typespecs.
+        - The type represented in Elixir's typespec.
     - `valid?(any) :: boolean`
         - Runtime check of whether a given value belongs to the type.
           Used by validation of arguments and return values in `defun`-family of macros.
@@ -118,10 +118,10 @@ Elixir macro utilities to make type-based programming easier.
         - Tries to convert a given value to a value that belongs to this type.
           Useful e.g. when converting a JSON-parsed value into an Elixir value.
     - `default() :: t`
-        - Default value of the module. Used as default values of struct fields.
+        - Default value of the type. Used as default values of struct fields.
 
-  `@type t` is mandatory as it's the raison d'etre of a type module,
-  but the others can be omitted if you don't use specific features of croma.
+  `@type t` and `valid?/1` are mandatory as they are the raison d'etre of a type module,
+  but the others can be omitted.
   And of course you can define any other functions in your type modules as you like.
 - You can always define your type modules by directly implementing above functions.
   For simple type modules croma prepares some helpers for you:
