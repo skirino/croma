@@ -51,7 +51,7 @@ Elixir macro utilities to make type-based programming easier.
 ## `Croma.Defun` : Typespec-oriented function definition
 
 - Annotating functions with type specifications is good but sometimes it's a bit tedious
-  since one has to repeat some tokens in `@spec` and `def`.
+  since one has to repeat some tokens (names of function and arguments, etc.) in `@spec` and `def`.
 - `defun/2` macro provides shorthand syntax for defining function with its typespec at once.
     - Example 1
 
@@ -61,7 +61,9 @@ Elixir macro utilities to make type-based programming easier.
           "#{a} #{b}"
         end
         ```
-    is expanded to
+
+      is expanded to
+
         ```ex
         @spec f(integer, String.t) :: String.t
         def f(a, b) do
@@ -77,7 +79,9 @@ Elixir macro utilities to make type-based programming easier.
           ([h | t], f) -> [f.(h) | dumbmap(t, f)]
         end
         ```
-    is expanded to
+
+      is expanded to
+
         ```ex
         @spec dumbmap([a], (a -> b)) :: [b] when a: term, b: term
         def dumbmap(as, f)
@@ -89,7 +93,7 @@ Elixir macro utilities to make type-based programming easier.
         end
         ```
 
-- In addition to the shorthand syntax, `defun` is able to generate code for runtime type checking:
+- In addition to the shorthand syntax explained above, `defun` is able to generate code for runtime type checking:
     - guard: `soma_arg :: g[integer]`
     - validation with `valid?/1` of a type module (see below): `some_arg :: v[SomeType.t]`
 - There are also `defunp` and `defunpt` macros for private functions.
