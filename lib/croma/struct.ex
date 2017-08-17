@@ -39,7 +39,7 @@ defmodule Croma.Struct do
       ...>   @type t :: integer
       ...>   def validate(i) when is_integer(i), do: {:ok, i}
       ...>   def validate(_), do: {:error, {:invalid_value, [__MODULE__]}}
-      ...>   def default, do: 0
+      ...>   def default(), do: 0
       ...> end
 
       ...> defmodule S do
@@ -124,7 +124,7 @@ defmodule Croma.Struct do
       _            -> raise ":accept_case option must be :lower_camel, :upper_camel, :snake or :capital"
     end
     fields2 = Enum.map(fields, fn {key, mod} ->
-      key2 = Atom.to_string(key) |> f.() |> String.to_atom
+      key2 = Atom.to_string(key) |> f.() |> String.to_atom()
       {key, Enum.uniq([key, key2]), mod}
     end)
     accepted_keys = Enum.flat_map(fields2, fn {_, keys, _} -> keys end)
@@ -279,7 +279,7 @@ defmodule Croma.Struct do
       In other words, `new/1` followed by `Croma.Result.get!/1`.
       """
       defun new!(dict :: Dict.t) :: t do
-        new(dict) |> R.get!
+        new(dict) |> R.get!()
       end
 
       Enum.each(fields, fn {name, mod} ->
@@ -313,7 +313,7 @@ defmodule Croma.Struct do
       In other words, `validate/1` followed by `Croma.Result.get!/1`.
       """
       defun validate!(dict :: Dict.t) :: t do
-        validate(dict) |> R.get!
+        validate(dict) |> R.get!()
       end
 
       @doc """
@@ -330,7 +330,7 @@ defmodule Croma.Struct do
       In other words, `update/2` followed by `Croma.Result.get!/1`.
       """
       defun update!(s :: t, dict :: Dict.t) :: t do
-        update(s, dict) |> R.get!
+        update(s, dict) |> R.get!()
       end
     end
   end

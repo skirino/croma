@@ -204,7 +204,7 @@ defmodule Croma.Result do
         end
         vars = Croma.Result.Impl.make_vars(arity, __MODULE__)
         def unquote(:"#{name}!")(unquote_splicing(vars)) do
-          unquote(name)(unquote_splicing(vars)) |> Croma.Result.get!
+          unquote(name)(unquote_splicing(vars)) |> Croma.Result.get!()
         end
       end)
     end
