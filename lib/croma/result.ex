@@ -36,7 +36,8 @@ defmodule Croma.Result do
   use Croma.Monad
   import Croma.Defun
 
-  @type t(a) :: {:ok, a} | {:error, any}
+  @type t(a, b) :: {:ok, a} | {:error, b}
+  @type t(a)    :: t(a, any)
 
   @doc """
   Implementation of `pure` operation of Monad (or Applicative).
