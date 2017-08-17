@@ -13,8 +13,8 @@ Elixir macro utilities to make type-based programming easier.
 ## Usage
 
 - Add `:croma` as a mix dependency.
-- `$ mix deps.get`
-- Add `use Croma` to import macros defined in this package.
+- Run `$ mix deps.get`.
+- Add `use Croma` in your source file to import/require macros defined in croma.
 - Hack!
 
 ## `Croma.Result`
@@ -177,6 +177,7 @@ Elixir macro utilities to make type-based programming easier.
 
     {:ok, s} = S.new(%{f: 1.5})        # => {:ok, %S{i: 1, f: 1.5}}
 
+    # `update/2` is also generated for convenience
     S.update(s, [i: 5])                # => {:ok, %S{i: 5, f: 1.5}}
     S.update(s, %{i: 6})               # => {:error, {:invalid_value, [S, I]}}
     ```
@@ -196,3 +197,9 @@ Elixir macro utilities to make type-based programming easier.
       ]
     end
     ```
+
+## Notes on backward compatibility
+
+- In `0.7.0` we separate responsibility of `validate/1` into `valid?/1` and `new/1`.
+  Although older type module implementations that define `validate/1` should work as before,
+  please migrate to the newer interface by replacing `validate/1` with `valid?/1` and optionally `new/1`.
