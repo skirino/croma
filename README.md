@@ -157,29 +157,19 @@ Elixir macro utilities to make type-based programming easier.
 - Using type modules for struct fields, `Croma.Struct` generates definition of type module for a struct.
 
     ```ex
-    iex> defmodule I do
-    ...>   @type t :: integer
-    ...>   def valid?(i) when is_integer(i), do: true
-    ...>   def valid?(_), do: false
-    ...>   def default(), do: 0
-    ...> end
+    defmodule I do
+      use Croma.SubtypeOfInt, min: 1, max: 5
+    end
 
-    ...> defmodule S do
-    ...>   use Croma.Struct, fields: [i: I]
-    ...> end
+    defmodule S do
+      use Croma.Struct, fields: [i: I]
+    end
 
-    ...> S.valid?(%S{i: 5})
-    true
+    S.valid?(%S{i: 5})            # => true
+    S.valid?(%S{i: "not_an_int"}) # => false
 
-    ...> S.valid?(%S{i: "not_an_integer"})
-    false
+    {:ok, s} = S.new(%{})         # => {:ok, %S{i: 0}}
 
-    ...> {:ok, s} = S.new([])
-    {:ok, %S{i: 0}}
-
-    ...> S.update(s, [i: 2])
-    {:ok, %S{i: 2}}
-
-    ...> S.update(s, %{"i" => "not_an_integer"})
-    {:error, {:invalid_value, [S, I]}}
+    S.update(s, [i: 5])           # => {:ok, %S{i: 5}}
+    S.update(s, %{i: 6})          # => {:error, {:invalid_value, [S, I]}}
     ```
