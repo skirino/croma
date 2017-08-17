@@ -100,7 +100,7 @@ Elixir macro utilities to make type-based programming easier.
 
 ## Type modules
 
-- Sometimes you want to have more fine-grained control of data types than is allowed by [Elixir's typespec](https://hexdocs.pm/elixir/typespecs.html).
+- Sometimes you may want to have more fine-grained control of data types than is allowed by [Elixir's typespec](https://hexdocs.pm/elixir/typespecs.html).
   For example you may want to distinguish "arbitrary `String.t`" with "`String.t` that matches a specific regex".
   Croma introduces "type module"s in order to express fine-grained types and enforce type contracts at runtime, with minimal effort.
 - Leveraging Elixir's lightweight syntax for defining modules
@@ -133,10 +133,10 @@ Elixir macro utilities to make type-based programming easier.
 ### `Croma.SubtypeOf*`
 
 - You can define your type module for "`String.t` that matches `~r/foo|bar/`" as follows
-  (we use `defun` for this but you can of course use `@spec` and `def` instead):
+  (we use `defun` here but you can of course use `@spec` and `def` instead):
 
     ```ex
-    defmodule S1 do
+    defmodule MyString1 do
       @type t :: String.t
       defun valid?(t :: term) :: boolean do
         s when is_binary(s) -> s =~ ~r/foo|bar/
@@ -148,7 +148,7 @@ Elixir macro utilities to make type-based programming easier.
 - However, as this is a common pattern, croma provides a shortcut:
 
     ```ex
-    defmodule S2 do
+    defmodule MyString2 do
       use Croma.SubtypeOfString, pattern: ~r/foo|bar/
     end
     ```
@@ -162,18 +162,37 @@ Elixir macro utilities to make type-based programming easier.
 
     ```ex
     defmodule I do
-      use Croma.SubtypeOfInt, min: 1, max: 5
+      use Croma.SubtypeOfInt, min: 1, max: 5, default: 1
     end
 
     defmodule S do
-      use Croma.Struct, fields: [i: I]
+      use Croma.Struct, fields: [
+        i: I,
+        f: Croma.Float,
+      ]
     end
 
-    S.valid?(%S{i: 5})            # => true
-    S.valid?(%S{i: "not_an_int"}) # => false
+    S.valid?(%S{i: 5, f: 1.5})         # => true
+    S.valid?(%S{i: "not_int", f: 1.5}) # => false
 
-    {:ok, s} = S.new(%{})         # => {:ok, %S{i: 0}}
+    {:ok, s} = S.new(%{f: 1.5})        # => {:ok, %S{i: 1, f: 1.5}}
 
-    S.update(s, [i: 5])           # => {:ok, %S{i: 5}}
-    S.update(s, %{i: 6})          # => {:error, {:invalid_value, [S, I]}}
+    S.update(s, [i: 5])                # => {:ok, %S{i: 5, f: 1.5}}
+    S.update(s, %{i: 6})               # => {:error, {:invalid_value, [S, I]}}
+    ```
+
+### `Croma.TypeGen`
+
+- Suppose you have a type module `I`.
+  Then suppose you want to define a struct that have a field with type `nil | I.t`.
+  Defining type modules for nilable fields introduces too much boilerplate code.
+- Croma has a set of macros to define this kind of trivial type modules in-line.
+  For example you can write as follows using `nilable/1`:
+
+    ```ex
+    defmodule S do
+      use Croma.Struct, fields: [
+        i: Croma.TypeGen.nilable(I),
+      ]
+    end
     ```
