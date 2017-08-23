@@ -36,8 +36,7 @@ defmodule Croma.Struct do
   ## Examples
       iex> defmodule I do
       ...>   @type t :: integer
-      ...>   def validate(i) when is_integer(i), do: {:ok, i}
-      ...>   def validate(_), do: {:error, {:invalid_value, [__MODULE__]}}
+      ...>   def valid?(i), do: is_integer(i)
       ...>   def default(), do: 0
       ...> end
 
