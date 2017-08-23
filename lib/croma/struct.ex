@@ -187,7 +187,7 @@ defmodule Croma.Struct do
 
   @doc false
   def validate_impl(mod, struct_fields, dict) when is_list(dict) or is_map(dict) do
-    kv_results = Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
+    Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
       v =
         case dict_fetch2(dict, fields_to_fetch) do
           {:ok, v} -> v
@@ -195,7 +195,8 @@ defmodule Croma.Struct do
         end
       Croma.Validation.call_validate1(mod, v) |> R.map(&{field, &1})
     end)
-    case R.sequence(kv_results) do
+    |> R.sequence()
+    |> case do
       {:ok   , kvs   } -> {:ok, struct(mod, kvs)}
       {:error, reason} -> {:error, R.ErrorReason.add_context(reason, mod)}
     end
@@ -204,14 +205,15 @@ defmodule Croma.Struct do
 
   @doc false
   def update_impl(s, mod, struct_fields, dict) when is_list(dict) or is_map(dict) do
-    kv_results = Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
+    Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
       case dict_fetch2(dict, fields_to_fetch) do
         {:ok, v} -> Croma.Validation.call_validate1(mod, v) |> R.map(&{field, &1})
         :error   -> nil
       end
     end)
     |> Enum.reject(&is_nil/1)
-    case R.sequence(kv_results) do
+    |> R.sequence()
+    |> case do
       {:ok   , kvs   } -> {:ok, struct(s, kvs)}
       {:error, reason} -> {:error, R.ErrorReason.add_context(reason, mod)}
     end
