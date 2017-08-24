@@ -118,6 +118,12 @@ defmodule Croma.ResultTest do
     assert R.map_error({:error, :foo}, &Atom.to_string/1) == {:error, "foo"}
   end
 
+  test "wrap_if_valid/2" do
+    alias Croma.Integer, as: I
+    assert R.wrap_if_valid(1  , I) == {:ok, 1}
+    assert R.wrap_if_valid(1.5, I) == {:error, {:invalid_value, [I]}}
+  end
+
   defmodule Bang do
     use Croma
     def f do

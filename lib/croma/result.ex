@@ -176,6 +176,17 @@ defmodule Croma.Result do
   end
 
   @doc """
+  Wraps a given value in an `:ok` tuple if `mod.valid?/1` returns true for the value.
+  Otherwise returns an `:error` tuple.
+  """
+  defun wrap_if_valid(v :: a, mod :: module) :: t(a) when a: any do
+    case mod.valid?(v) do
+      true  -> {:ok, v}
+      false -> {:error, {:invalid_value, [mod]}}
+    end
+  end
+
+  @doc """
   Based on existing functions that return `Croma.Result.t(any)`, defines functions that raise on error.
 
   Each generated function simply calls the specified function and then passes the returned value to `Croma.Result.get!/1`.

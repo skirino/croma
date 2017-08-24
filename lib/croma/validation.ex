@@ -118,13 +118,9 @@ defmodule Croma.Validation do
       mod.validate(v)
     rescue
       e in UndefinedFunctionError ->
-        # For backward compatibility we have to return `validate/1`.
+        # For backward compatibility we have to return the same value as `validate/1`.
         try do
-          if mod.valid?(v) do
-            {:ok, v}
-          else
-            {:error, {:invalid_value, [mod]}}
-          end
+          Croma.Result.wrap_if_valid(v, mod)
         rescue
           UndefinedFunctionError -> reraise(e, System.stacktrace())
         end
