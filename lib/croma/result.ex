@@ -3,7 +3,8 @@ defmodule Croma.Result do
   A simple data structure to represent a result of computation that can either succeed or fail,
   in the form of `{:ok, any}` or `{:error, any}`.
 
-  This module provides implementation of `Croma.Monad` interface for `Croma.Result.t`.
+  In addition to many utility functions, this module also provides implementation of
+  `Croma.Monad` interface for `t:Croma.Result.t/1`.
   This enables the following Haskell-ish syntax:
 
       iex> use Croma
@@ -67,8 +68,8 @@ defmodule Croma.Result do
   end
 
   @doc """
-  Returns the value associated with `:ok` in the given `Croma.Result`.
-  Returns `nil` if the argument is in the form of `{:error, _}`.
+  Returns the value associated with `:ok` in the given result.
+  Returns `nil` if the result is in the form of `{:error, _}`.
 
   ## Examples
       iex> Croma.Result.get({:ok, 1})
@@ -83,8 +84,8 @@ defmodule Croma.Result do
   end
 
   @doc """
-  Returns the value associated with `:ok` in the given `Croma.Result`.
-  Returns `default` if the argument is in the form of `{:error, _}`.
+  Returns the value associated with `:ok` in the given result.
+  Returns `default` if the result is in the form of `{:error, _}`.
 
   ## Examples
       iex> Croma.Result.get({:ok, 1}, 0)
@@ -99,8 +100,8 @@ defmodule Croma.Result do
   end
 
   @doc """
-  Returns the value associated with `:ok` in the given `Croma.Result`.
-  Raises `ArgumentError` if the argument is in the form of `{:error, _}`.
+  Returns the value associated with `:ok` in the given result.
+  Raises `ArgumentError` if the result is in the form of `{:error, _}`.
 
   ## Examples
       iex> Croma.Result.get!({:ok, 1})
@@ -115,7 +116,7 @@ defmodule Croma.Result do
   end
 
   @doc """
-  Returns true if the given argument is in the form of `{:ok, _value}`.
+  Returns true if the given result is in the form of `{:ok, _value}`.
   """
   defun ok?(result :: t(a)) :: boolean when a: any do
     {:ok   , _} -> true
@@ -123,7 +124,7 @@ defmodule Croma.Result do
   end
 
   @doc """
-  Returns true if the given argument is in the form of `{:error, _}`.
+  Returns true if the given result is in the form of `{:error, _}`.
   """
   defun error?(result :: t(a)) :: boolean when a: any do
     !ok?(result)
@@ -149,9 +150,9 @@ defmodule Croma.Result do
   end
 
   @doc """
-  Tries to take one `Croma.Result` in `:ok` state from the given two.
-  If the first `Croma.Result` is in `:ok` state it is returned.
-  Otherwise the second `Croma.Result` is returned.
+  Tries to take one result in `:ok` state from the given two.
+  If the first result is in `:ok` state it is returned.
+  Otherwise the second result is returned.
   Note that `or_else/2` is a macro instead of a function in order to short-circuit evaluation of the second argument,
   i.e. the second argument is evaluated only when the first argument is in `:error` state.
   """
@@ -165,8 +166,8 @@ defmodule Croma.Result do
   end
 
   @doc """
-  Transforms a `Croma.Result` by applying a function to its contained `:error` value.
-  If the given `Croma.Result` is in `:ok` state it is returned without using the given function.
+  Transforms a result by applying a function to its contained `:error` value.
+  If the given result is in `:ok` state it is returned without using the given function.
   """
   defun map_error(result :: t(a), f :: ((any) -> any)) :: t(a) when a: any do
     case result do
