@@ -167,13 +167,14 @@ defmodule Croma.StructTest do
     assert S7.new( [ struct_field:     [ int_field:    1]]) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
     assert S7.new(%{"struct_field" => %{"int_field" => 1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
     assert S7.new(%{"struct_field" => %{}}                ) == {:ok, %S7{struct_field: %S6{int_field: 0}}}
-    assert S7.new(%{}                                     ) == {:ok, %S7{struct_field: %S6{int_field: 0}}}
 
+    assert S7.new(%{}                                             ) == {:error, {:value_missing, [S7, S6]}}
     assert S7.new(%{"struct_field" => %{"int_field" => "non int"}}) == {:error, {:invalid_value, [S7, S6, I1]}}
     assert S7.new(%{"struct_field" => "non_dict"}                 ) == {:error, {:invalid_value, [S7, S6]}}
 
-    assert S8.new(%{"bool_field" => true}) == {:ok, %S8{bool_field: true, struct_field: %S6{int_field: 0}}}
-    assert S8.new(%{}                    ) == {:error, {:value_missing, [S8, Croma.Boolean]}}
+    assert S8.new(%{"bool_field" => true, struct_field: %{"int_field" => 0}}) == {:ok, %S8{bool_field: true, struct_field: %S6{int_field: 0}}}
+    assert S8.new(%{"bool_field" => true}                                   ) == {:error, {:value_missing, [S8, S6]}}
+    assert S8.new(%{}                                                       ) == {:error, {:value_missing, [S8, Croma.Boolean]}}
 
     # validate/1 is not affected
     assert S7.validate(%S7{ struct_field:    %S6{ int_field:    1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}

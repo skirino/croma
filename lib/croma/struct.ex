@@ -167,7 +167,7 @@ defmodule Croma.Struct do
   defp evaluate_existing_field(mod, value, true ), do: Croma.Validation.call_validate1(mod, value) |> R.or_else(try_new(mod, value, :invalid_value))
 
   defp evaluate_non_existing_field(mod, false), do: try_default(mod)
-  defp evaluate_non_existing_field(mod, true ), do: try_default(mod) |> R.or_else(try_new(mod, %{}, :value_missing))
+  defp evaluate_non_existing_field(mod, true ), do: try_default(mod) |> R.or_else(try_new(mod, nil, :value_missing))
 
   defp try_new(mod, value, reason) do
     try do
