@@ -13,8 +13,8 @@ defmodule Croma.StructTest do
     use Croma.Struct, fields: [field1: I1, field2: Croma.Boolean]
 
     # getter for compile-time typespec information
-    type = Module.get_attribute(__MODULE__, :type) |> Macro.escape
-    def type, do: unquote(type)
+    type = Module.get_attribute(__MODULE__, :type) |> Macro.escape()
+    def type(), do: unquote(type)
   end
 
   test "Croma.Struct: new/1" do

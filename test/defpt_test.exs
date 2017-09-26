@@ -4,12 +4,12 @@ defmodule Croma.DefptTest do
   defmodule M do
     use Croma
 
-    defpt f do
+    defpt f() do
       1
     end
   end
 
   test "should define accessible function in test environment" do
-    assert M.f == 1
+    assert M.f() == 1
   end
 end

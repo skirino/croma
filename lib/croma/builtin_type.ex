@@ -26,8 +26,8 @@ defmodule Croma.BuiltinType do
     {Croma.NonNegInteger, "non_neg_integer", (quote do: non_neg_integer), (quote do: is_integer(var!(x)) and var!(x) >= 0)},
   ]
 
-  def type_infos, do: @type_infos
-  def all do
+  def type_infos(), do: @type_infos
+  def all() do
     Enum.map(@type_infos, fn {m, _, _, _} -> m end)
   end
 end

@@ -85,13 +85,13 @@ defmodule Croma.DefunTest do
   end
 
   test "should define function" do
-    assert M.a1                             == "a1"
-    assert M.a2                             == "a2"
+    assert M.a1()                           == "a1"
+    assert M.a2()                           == "a2"
     assert M.a3(0)                          == "a3"
-    assert M.b1                             == "b1"
-    assert M.b2                             == "b2"
+    assert M.b1()                           == "b1"
+    assert M.b2()                           == "b2"
     assert M.b3("foo")                      == "b3"
-    assert M.b4                             == "b4"
+    assert M.b4()                           == "b4"
     assert M.c1("foo")                      == "foo"
     assert M.c2(1, "foo")                   == "1 foo"
     assert M.c2(2, "foo")                   == "2 foo"
@@ -106,7 +106,7 @@ defmodule Croma.DefunTest do
     assert M.d6([1], &is_nil/1)             == [false]
     assert M.e1(1)                          == "1 "
     assert M.e1(2, "bar")                   == "2 bar"
-    assert M.f2                             == "foo"
+    assert M.f2()                           == "foo"
     assert M.g1(%{a: 1}, [2], {:ok, {"s"}}) == 5
     assert M.g2(~r/^a$/, "a")               == true
 

@@ -59,7 +59,7 @@ defmodule Croma.ResultTest do
 
   property :sequence do
     for_all l in list(int()) do
-      result = Enum.map(l, &int2result/1) |> R.sequence
+      result = Enum.map(l, &int2result/1) |> R.sequence()
       if Enum.all?(l, &(rem(&1, 2) == 0)) do
         result == {:ok, l}
       else
@@ -77,11 +77,11 @@ defmodule Croma.ResultTest do
   end
 
   test "ok?/1 and error?/1" do
-    assert  R.ok?({:ok   , 1   })
-    assert !R.ok?({:error, :foo})
+    assert R.ok?({:ok   , 1   })
+    refute R.ok?({:error, :foo})
 
-    assert !R.error?({:ok   , 1   })
-    assert  R.error?({:error, :foo})
+    refute R.error?({:ok   , 1   })
+    assert R.error?({:error, :foo})
   end
 
   test "try/1" do
@@ -126,44 +126,44 @@ defmodule Croma.ResultTest do
 
   defmodule Bang do
     use Croma
-    def f do
+    def f() do
       {:ok, 1}
     end
-    defun g :: R.t(integer) do
+    defun g() :: R.t(integer) do
       {:ok, 1}
     end
     defun h(a :: integer) :: R.t(integer) do
       if rem(a, 2) == 0, do: {:ok, a}, else: {:error, :odd}
     end
-    defun i :: {:ok, integer} do
+    defun i() :: {:ok, integer} do
       f()
     end
     defun j(a :: integer \\ 0) :: {:ok, integer} | {:error, atom} do
       h(a)
     end
-    def k do
+    def k() do
       {:ok, 1}
     end
 
     R.define_bang_version_of(f: 0, g: 0, h: 1, i: 0, j: 0, j: 1)
 
     # getter for compile-time typespec information
-    spec = Module.get_attribute(__MODULE__, :spec) |> Macro.escape
-    def typespecs, do: unquote(spec)
+    spec = Module.get_attribute(__MODULE__, :spec) |> Macro.escape()
+    def typespecs(), do: unquote(spec)
   end
 
   test "define_bang_version_of" do
-    assert      Bang.f! == 1
-    assert      Bang.g! == 1
+    assert      Bang.f!()  == 1
+    assert      Bang.g!()  == 1
     assert      Bang.h!(2) == 2
     catch_error Bang.h!(1)
-    assert      Bang.i! == 1
-    assert      Bang.j! == 0
+    assert      Bang.i!()  == 1
+    assert      Bang.j!()  == 0
     assert      Bang.j!(2) == 2
     catch_error Bang.j!(1)
-    catch_error Bang.k!
+    catch_error Bang.k!()
 
-    specs = Bang.typespecs |> Enum.map(fn {:spec, {:::, _, [call, ret]}, _env} -> {call, ret} end)
+    specs = Bang.typespecs() |> Enum.map(fn {:spec, {:::, _, [call, ret]}, _env} -> {call, ret} end)
     refute Enum.any?(specs, &match?({{:f!, _, _                 }, {_       , _, _}}, &1))
     assert Enum.any?(specs, &match?({{:g!, _, _                 }, {:integer, _, _}}, &1))
     assert Enum.any?(specs, &match?({{:h!, _, [{:integer, _, _}]}, {:integer, _, _}}, &1))

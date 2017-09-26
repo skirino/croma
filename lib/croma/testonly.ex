@@ -1,4 +1,4 @@
-if Mix.env == :test do
+if Mix.env() == :test do
   defmodule Croma.Testonly do
     alias String, as: S
     @type   b1 :: String.t
