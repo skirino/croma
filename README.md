@@ -184,9 +184,8 @@ Elixir macro utilities to make type-based programming easier.
 
 ### `Croma.TypeGen`
 
-- Suppose you have a type module `I`.
-  Then suppose you want to define a struct that have a field with type `nil | I.t`.
-  Defining type modules for nilable fields introduces too much boilerplate code.
+- Suppose you have a type module `I`, and suppose you want to define a struct that have a field with type `nil | I.t`.
+  As nilable fields are common, defining type modules for all nilable fields introduces too much boilerplate code.
 - Croma has a set of macros to define this kind of trivial type modules in-line.
   For example you can write as follows using `nilable/1`:
 
