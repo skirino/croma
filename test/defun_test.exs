@@ -224,8 +224,8 @@ defmodule Croma.DefunTest do
     end
 
     @type t :: integer
-    def validate(v) do
-      if rem(v, 2) == 0, do: {:ok, v}, else: {:error, :odd}
+    def valid?(v) do
+      rem(v, 2) == 0
     end
     defun f4(i :: v[t]) :: t do
       i
