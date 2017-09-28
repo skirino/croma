@@ -164,16 +164,28 @@ defmodule Croma.Struct do
   end
 
   defp evaluate_existing_field(mod, value, false), do: Croma.Validation.call_validate1(mod, value)
-  defp evaluate_existing_field(mod, value, true ), do: Croma.Validation.call_validate1(mod, value) |> R.or_else(try_new(mod, value, :invalid_value))
+  defp evaluate_existing_field(mod, value, true ), do: Croma.Validation.call_validate1(mod, value) |> R.or_else(try_new1_with_given_value(mod, value))
 
   defp evaluate_non_existing_field(mod, false), do: try_default(mod)
-  defp evaluate_non_existing_field(mod, true ), do: try_default(mod) |> R.or_else(try_new(mod, nil, :value_missing))
+  defp evaluate_non_existing_field(mod, true ), do: try_default(mod) |> R.or_else(try_new1_from_scratch(mod))
 
-  defp try_new(mod, value, reason) do
+  defp try_new1_with_given_value(mod, value) do
     try do
       mod.new(value)
     rescue
-      _ -> {:error, {reason, [mod]}}
+      _ -> {:error, {:invalid_value, [mod]}}
+    end
+  end
+
+  defp try_new1_from_scratch(mod) do
+    try do
+      mod.new(nil)
+      |> R.map_error(fn
+        {:invalid_value, modules} -> {:value_missing, modules} # error is due to the missing value, not due to `nil`
+        other_reason              -> other_reason
+      end)
+    rescue
+      _ -> {:error, {:value_missing, [mod]}}
     end
   end
 

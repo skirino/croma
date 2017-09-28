@@ -183,4 +183,15 @@ defmodule Croma.StructTest do
     assert S7.validate(  %{"struct_field" =>   %{}}                ) == {:error, {:invalid_value, [S7, S6, I1]}}
     assert S7.validate(  %{}                                       ) == {:error, {:invalid_value, [S7, S6]}}
   end
+
+  defmodule S9 do
+    defmodule A do
+      use Croma.SubtypeOfAtom, values: [:a, :b]
+    end
+    use Croma.Struct, recursive_new?: true, fields: [f: A]
+  end
+
+  test "Croma.Struct with `recursive_new?: true` and `field module with new/1` and value_missing" do
+    assert S9.new([]) == {:error, {:value_missing, [S9, S9.A]}}
+  end
 end
