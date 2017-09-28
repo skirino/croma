@@ -268,7 +268,7 @@ defmodule Croma.Struct do
 
         Returns `{:ok, valid_struct}` or `{:error, reason}`.
 
-        The values in the `dict` are validated by each field's `validate/1` function.
+        The values in the `dict` are validated by each field's `valid?/1` function.
         If the value was invalid, it will be passed to `new/1` of the field
 
         For missing fields, followings will be tried:
@@ -285,7 +285,7 @@ defmodule Croma.Struct do
         For missing fields, `default/0` of each field type will be used.
 
         Returns `{:ok, valid_struct}` or `{:error, reason}`.
-        The values in the `dict` are validated by each field's `validate/1` function.
+        The values in the `dict` are validated by each field's `valid?/1` function.
         """
         defun new(dict :: Dict.t) :: R.t(t) do
           Croma.Struct.new_impl(__MODULE__, @croma_struct_fields, dict, false)
@@ -331,24 +331,8 @@ defmodule Croma.Struct do
       end
 
       @doc """
-      Checks that the given `dict` is valid or not by using each field's `validate/1` function.
-      Returns `{:ok, valid_struct}` or `{:error, reason}`.
-      """
-      defun validate(dict :: Dict.t) :: R.t(t) do
-        Croma.Struct.validate_impl(__MODULE__, @croma_struct_fields, dict)
-      end
-
-      @doc """
-      A variant of `validate/1` which returns `t` or raise if validation fails.
-      In other words, `validate/1` followed by `Croma.Result.get!/1`.
-      """
-      defun validate!(dict :: Dict.t) :: t do
-        validate(dict) |> R.get!()
-      end
-
-      @doc """
       Updates an existing instance of #{inspect(__MODULE__)} with the given `dict`.
-      The values in the `dict` are validated by each field's `validate/1` function.
+      The values in the `dict` are validated by each field's `valid?/1` function.
       Returns `{:ok, valid_struct}` or `{:error, reason}`.
       """
       defun update(%__MODULE__{} = s :: t, dict :: Dict.t) :: R.t(t) do

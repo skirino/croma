@@ -53,29 +53,31 @@ defmodule Croma.StructTest do
     assert S1.field2(s3) == false
   end
 
-  test "Croma.Struct: validate/1" do
-    assert S1.validate( [                                 ]) == {:error, {:invalid_value, [S1, I1]}}
-    assert S1.validate(%{                                 }) == {:error, {:invalid_value, [S1, I1]}}
-    assert S1.validate( [ field1:    2                    ]) == {:error, {:invalid_value, [S1, Croma.Boolean]}}
-    assert S1.validate(%{"field1" => 2                    }) == {:error, {:invalid_value, [S1, Croma.Boolean]}}
-    assert S1.validate( [                 field2:    true ]) == {:error, {:invalid_value, [S1, I1]}}
-    assert S1.validate(%{                "field2" => false}) == {:error, {:invalid_value, [S1, I1]}}
-    assert S1.validate( [ field1:    -1,  field2:    true ]) == {:error, {:invalid_value, [S1, I1]}}
-    assert S1.validate(%{"field1" => -1, "field2" => false}) == {:error, {:invalid_value, [S1, I1]}}
-    assert S1.validate( [ field1:     1,  field2:    0    ]) == {:error, {:invalid_value, [S1, Croma.Boolean]}}
-    assert S1.validate(%{"field1" =>  1, "field2" => 0    }) == {:error, {:invalid_value, [S1, Croma.Boolean]}}
-    assert S1.validate( [ field1:     1,  field2:    true ]) == {:ok   , %S1{field1: 1, field2: true }}
-    assert S1.validate(%{"field1" =>  1, "field2" => false}) == {:ok   , %S1{field1: 1, field2: false}}
+  test "Croma.Struct: valid?/1" do
+    refute S1.valid?( [                                 ])
+    refute S1.valid?(%{                                 })
+    refute S1.valid?( [ field1:    2                    ])
+    refute S1.valid?(%{"field1" => 2                    })
+    refute S1.valid?( [                 field2:    true ])
+    refute S1.valid?(%{                "field2" => false})
+    refute S1.valid?( [ field1:    -1,  field2:    true ])
+    refute S1.valid?(%{"field1" => -1, "field2" => false})
+    refute S1.valid?( [ field1:     1,  field2:    0    ])
+    refute S1.valid?(%{"field1" =>  1, "field2" => 0    })
+    refute S1.valid?(nil)
+    refute S1.valid?("" )
 
-    assert S1.validate(nil) == {:error, {:invalid_value, [S1]}}
-    assert S1.validate("" ) == {:error, {:invalid_value, [S1]}}
+    refute S1.valid?( [ field1:     1,  field2:    true ])
+    refute S1.valid?(%{"field1" =>  1, "field2" => false})
+    assert S1.valid?(S1.new!( [ field1:     1,  field2:    true ]))
+    assert S1.valid?(S1.new!(%{"field1" =>  1, "field2" => false}))
 
     # struct itself should be valid
     s = S1.new!(field2: false)
-    assert S1.validate(s) == {:ok, s}
+    assert S1.valid?(s)
 
-    assert S1.validate!([field1: 1, field2: true]) == %S1{field1: 1, field2: true}
-    catch_error S1.validate!([])
+    assert S1.new!([field1: 1, field2: true]) == %S1{field1: 1, field2: true}
+    catch_error S1.new!([])
   end
 
   test "Croma.Struct: update/2" do
@@ -175,13 +177,6 @@ defmodule Croma.StructTest do
     assert S8.new(%{"bool_field" => true, struct_field: %{"int_field" => 0}}) == {:ok, %S8{bool_field: true, struct_field: %S6{int_field: 0}}}
     assert S8.new(%{"bool_field" => true}                                   ) == {:error, {:value_missing, [S8, S6]}}
     assert S8.new(%{}                                                       ) == {:error, {:value_missing, [S8, Croma.Boolean]}}
-
-    # validate/1 is not affected
-    assert S7.validate(%S7{ struct_field:    %S6{ int_field:    1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
-    assert S7.validate(  %{"struct_field" => %S6{ int_field:    1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
-    assert S7.validate(  %{"struct_field" =>   %{"int_field" => 1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
-    assert S7.validate(  %{"struct_field" =>   %{}}                ) == {:error, {:invalid_value, [S7, S6, I1]}}
-    assert S7.validate(  %{}                                       ) == {:error, {:invalid_value, [S7, S6]}}
   end
 
   defmodule S9 do
