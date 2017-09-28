@@ -52,10 +52,6 @@ defmodule Croma.TypeGen do
         nil -> true
         v   -> Croma.Validation.call_valid1(@mod, v)
       end
-      defun validate(value :: term) :: R.t(t) do
-        nil -> {:ok, nil}
-        v   -> Croma.Validation.call_validate1(@mod, v) |> R.map_error(&R.ErrorReason.add_context(&1, __MODULE__))
-      end
 
       # Invoking `module_info/0` on `mod` automatically compiles and loads the module if necessary.
       if {:new, 1} in @mod.module_info[:exports] do
@@ -102,10 +98,6 @@ defmodule Croma.TypeGen do
         l when is_list(l) -> Enum.all?(l, &Croma.Validation.call_valid1(@mod, &1))
         _                 -> false
       end
-      defun validate(list :: term) :: R.t(t) do
-        l when is_list(l) -> Enum.map(l, &Croma.Validation.call_validate1(@mod, &1)) |> R.sequence()
-        _                 -> {:error, {:invalid_value, [__MODULE__]}}
-      end
 
       # Invoking `module_info/0` on `mod` automatically compiles and loads the module if necessary.
       if {:new, 1} in @mod.module_info[:exports] do
@@ -122,7 +114,7 @@ defmodule Croma.TypeGen do
   @doc """
   Creates a new module that represents a sum type of the given types.
 
-  The argument must be a list of modules each of which defines `@type t` and `@spec validate(term) :: Croma.Result.t(t)`.
+  The argument must be a list of modules each of which defines `@type t` and `@spec valid?(term) :: boolean`.
   """
   defmacro union(modules) do
     ms = Enum.map(modules, fn m -> Macro.expand(m, __CALLER__) end)
@@ -149,15 +141,6 @@ defmodule Croma.TypeGen do
 
       defun valid?(value :: term) :: boolean do
         Enum.any?(@modules, fn mod -> Croma.Validation.call_valid1(mod, value) end)
-      end
-      defun validate(value :: term) :: R.t(t) do
-        error_result = {:error, {:invalid_value, [__MODULE__]}}
-        Enum.find_value(@modules, error_result, fn mod ->
-          case Croma.Validation.call_validate1(mod, value) do
-            {:ok   , _} = r -> r
-            {:error, _}     -> nil
-          end
-        end)
       end
     end
   end
@@ -190,13 +173,6 @@ defmodule Croma.TypeGen do
 
       defun valid?(v :: term) :: boolean do
         v == @value
-      end
-      defun validate(v :: term) :: R.t(t) do
-        if v == @value do
-          {:ok, @value}
-        else
-          {:error, {:invalid_value, [__MODULE__]}}
-        end
       end
 
       defun default() :: t, do: @value

@@ -1,20 +1,6 @@
 defmodule Croma.SubtypeTest do
   use ExUnit.Case
 
-  defp assert_valid(mod, value) do
-    assert mod.valid?(value)
-    assert mod.validate(value) == {:ok, value}
-  end
-
-  defp refute_valid(mod, value) do
-    refute_valid(mod, value, [mod])
-  end
-  defp refute_valid(mod, value, error_modules) do
-    refute mod.valid?(value)
-    assert mod.validate(value) == {:error, {:invalid_value, error_modules}}
-  end
-
-
   defmodule I1 do
     use Croma.SubtypeOfInt, min: 1
   end
@@ -29,24 +15,24 @@ defmodule Croma.SubtypeTest do
   end
 
   test "Croma.SubtypeOfInt: valid?/1" do
-    refute_valid(I1, 0)
-    assert_valid(I1, 1)
+    refute I1.valid?(0)
+    assert I1.valid?(1)
 
-    refute_valid(I2, -1)
-    assert_valid(I2,  0)
-    assert_valid(I2, 10)
-    refute_valid(I2, 11)
+    refute I2.valid?(-1)
+    assert I2.valid?( 0)
+    assert I2.valid?(10)
+    refute I2.valid?(11)
 
-    assert_valid(I3, -1)
-    refute_valid(I3,  0)
+    assert I3.valid?(-1)
+    refute I3.valid?( 0)
 
-    refute_valid(I4, -6)
-    assert_valid(I4, -5)
-    assert_valid(I4,  5)
-    refute_valid(I4,  6)
+    refute I4.valid?(-6)
+    assert I4.valid?(-5)
+    assert I4.valid?( 5)
+    refute I4.valid?( 6)
 
-    refute_valid(I1, nil)
-    refute_valid(I1, [])
+    refute I1.valid?(nil)
+    refute I1.valid?([] )
   end
 
   test "Croma.SubtypeOfInt: default/0" do
@@ -76,19 +62,19 @@ defmodule Croma.SubtypeTest do
   end
 
   test "Croma.SubtypeOfFloat: valid?/1" do
-    refute_valid(F1, -5.1)
-    assert_valid(F1, -5.0)
+    refute F1.valid?(-5.1)
+    assert F1.valid?(-5.0)
 
-    assert_valid(F2, 10.0)
-    refute_valid(F2, 10.1)
+    assert F2.valid?(10.0)
+    refute F2.valid?(10.1)
 
-    refute_valid(F3, -0.1)
-    assert_valid(F3,  0.0)
-    assert_valid(F3,  1.5)
-    refute_valid(F3,  1.6)
+    refute F3.valid?(-0.1)
+    assert F3.valid?( 0.0)
+    assert F3.valid?( 1.5)
+    refute F3.valid?( 1.6)
 
-    refute_valid(F1, nil)
-    refute_valid(F1, [])
+    refute F1.valid?(nil)
+    refute F1.valid?([] )
   end
 
   test "Croma.SubtypeOfFloat: default/0" do
@@ -109,11 +95,11 @@ defmodule Croma.SubtypeTest do
   end
 
   test "Croma.SubtypeOfString: valid?/1" do
-    assert_valid(S1, "foo")
-    assert_valid(S1, "bar")
-    refute_valid(S1, "baz")
-    refute_valid(S1, nil)
-    refute_valid(S1, [])
+    assert S1.valid?("foo")
+    assert S1.valid?("bar")
+    refute S1.valid?("baz")
+    refute S1.valid?(nil)
+    refute S1.valid?([])
   end
 
   test "Croma.SubtypeOfString: default/0" do
@@ -126,12 +112,12 @@ defmodule Croma.SubtypeTest do
   end
 
   test "Croma.SubtypeOfAtom: valid?/1" do
-    assert_valid(A1, :a1)
-    assert_valid(A1, :a2)
-    assert_valid(A1, :a3)
-    refute_valid(A1, :a4)
-    refute_valid(A1, nil)
-    refute_valid(A1, [])
+    assert A1.valid?(:a1)
+    assert A1.valid?(:a2)
+    assert A1.valid?(:a3)
+    refute A1.valid?(:a4)
+    refute A1.valid?(nil)
+    refute A1.valid?([])
   end
 
   test "Croma.SubtypeOfAtom: new/1" do
@@ -163,24 +149,24 @@ defmodule Croma.SubtypeTest do
   end
 
   test "Croma.SubtypeOfList: valid?/1" do
-    assert_valid(L1, [])
-    assert_valid(L1, [1])
-    refute_valid(L1, [0], [L1, I1])
+    assert L1.valid?([])
+    assert L1.valid?([1])
+    refute L1.valid?([0])
 
-    assert_valid(L2, [])
-    assert_valid(L2, [1, 2, 3])
-    refute_valid(L2, [1, 2, 11], [L2, I2])
-    refute_valid(L2, [1, 2, 3, 4])
+    assert L2.valid?([])
+    assert L2.valid?([1, 2, 3])
+    refute L2.valid?([1, 2, 11])
+    refute L2.valid?([1, 2, 3, 4])
 
-    refute_valid(L3, [ 1], [L3, I3])
-    refute_valid(L3, [-1])
-    assert_valid(L3, [-1, -2])
+    refute L3.valid?([ 1])
+    refute L3.valid?([-1])
+    assert L3.valid?([-1, -2])
 
-    refute_valid(L4, [])
-    assert_valid(L4, [-5])
-    assert_valid(L4, [-5, 0, 5])
-    refute_valid(L4, [-5, 10], [L4, I4])
-    refute_valid(L4, [0, 0, 0, 0])
+    refute L4.valid?([])
+    assert L4.valid?([-5])
+    assert L4.valid?([-5, 0, 5])
+    refute L4.valid?([-5, 10])
+    refute L4.valid?([0, 0, 0, 0])
   end
 
   test "Croma.SubtypeOfList: new/1" do
@@ -220,29 +206,29 @@ defmodule Croma.SubtypeTest do
   end
 
   test "Croma.SubtypeOfMap: valid?/1" do
-    assert_valid(M1, %{})
-    assert_valid(M1, %{a1: 1})
-    assert_valid(M1, %{a1: 1, a2: 2, a3: 3})
-    refute_valid(M1, %{a: 1}, [M1, A1])
-    refute_valid(M1, %{a1: 0}, [M1, I1])
+    assert M1.valid?(%{})
+    assert M1.valid?(%{a1: 1})
+    assert M1.valid?(%{a1: 1, a2: 2, a3: 3})
+    refute M1.valid?(%{a: 1})
+    refute M1.valid?(%{a1: 0})
 
-    refute_valid(M2, %{})
-    assert_valid(M2, %{a1: 1})
-    assert_valid(M2, %{a1: 1, a2: 2, a3: 3})
-    refute_valid(M2, %{a: 1}, [M2, A1])
-    refute_valid(M2, %{a1: -1}, [M2, I2])
+    refute M2.valid?(%{})
+    assert M2.valid?(%{a1: 1})
+    assert M2.valid?(%{a1: 1, a2: 2, a3: 3})
+    refute M2.valid?(%{a: 1})
+    refute M2.valid?(%{a1: -1})
 
-    assert_valid(M3, %{})
-    assert_valid(M3, %{a1: -1})
-    refute_valid(M3, %{a1: 1, a2: 2, a3: 3})
-    refute_valid(M3, %{a: 1}, [M3, A1])
-    refute_valid(M3, %{a1: "not_int"}, [M3, I3])
+    assert M3.valid?(%{})
+    assert M3.valid?(%{a1: -1})
+    refute M3.valid?(%{a1: 1, a2: 2, a3: 3})
+    refute M3.valid?(%{a: 1})
+    refute M3.valid?(%{a1: "not_int"})
 
-    refute_valid(M4, %{})
-    assert_valid(M4, %{a1: -1})
-    refute_valid(M4, %{a1: 1, a2: 2, a3: 3})
-    refute_valid(M4, %{a: 1}, [M4, A1])
-    refute_valid(M4, %{a1: "not_int"}, [M4, I4])
+    refute M4.valid?(%{})
+    assert M4.valid?(%{a1: -1})
+    refute M4.valid?(%{a1: 1, a2: 2, a3: 3})
+    refute M4.valid?(%{a: 1})
+    refute M4.valid?(%{a1: "not_int"})
   end
 
   test "Croma.SubtypeOfMap: new/1" do
@@ -283,16 +269,16 @@ defmodule Croma.SubtypeTest do
   end
 
   test "Croma.SubtypeOfTuple: valid?/1" do
-    refute_valid(T0, nil)
-    assert_valid(T0, {})
+    refute T0.valid?(nil)
+    assert T0.valid?({})
 
-    refute_valid(T1, {})
-    refute_valid(T1, {:a}, [T1, A1])
-    assert_valid(T1, {:a1})
+    refute T1.valid?({})
+    refute T1.valid?({:a})
+    assert T1.valid?({:a1})
 
-    refute_valid(T3, {})
-    refute_valid(T3, {1, "", []}, [T3, S1])
-    assert_valid(T3, {1, "foo", []})
+    refute T3.valid?({})
+    refute T3.valid?({1, "", []})
+    assert T3.valid?({1, "foo", []})
   end
 
   test "Croma.SubtypeOfTuple: new/1" do

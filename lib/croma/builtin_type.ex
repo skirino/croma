@@ -48,14 +48,6 @@ Croma.BuiltinType.type_infos |> Enum.each(fn {mod, type_name, type_expr, guard_e
       x when unquote(guard_expr) -> true
       _                          -> false
     end
-
-    @doc """
-    Simply checks the argument's type using `#{Macro.to_string(guard_expr)}` and returns a `Croma.Result`.
-    """
-    defun validate(value :: term) :: Croma.Result.t(t) do
-      x when unquote(guard_expr) -> {:ok, x}
-      _                          -> {:error, {:invalid_value, [__MODULE__]}}
-    end
   end
 end)
 
@@ -72,13 +64,5 @@ defmodule Croma.Any do
   """
   defun valid?(_value :: term) :: boolean do
     true
-  end
-
-  @doc """
-  Wraps the argument into `{:ok, value}`.
-  Intended to be used with other parts of croma to express variables with `any` type.
-  """
-  defun validate(value :: term) :: {:ok, t} do
-    {:ok, value}
   end
 end

@@ -27,9 +27,6 @@ defmodule Croma.BuiltinTypeTest do
     |> Enum.each(fn {mod, o, e} ->
       assert mod.valid?(o)
       refute mod.valid?(e)
-
-      assert mod.validate(o) == {:ok, o}
-      assert mod.validate(e) == {:error, {:invalid_value, [mod]}}
     end)
   end
 end
