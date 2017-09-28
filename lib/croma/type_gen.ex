@@ -50,7 +50,7 @@ defmodule Croma.TypeGen do
 
       defun valid?(value :: term) :: boolean do
         nil -> true
-        v   -> Croma.Validation.call_valid1(@mod, v)
+        v   -> @mod.valid?(v)
       end
 
       # Invoking `module_info/0` on `mod` automatically compiles and loads the module if necessary.
@@ -95,7 +95,7 @@ defmodule Croma.TypeGen do
       @type t :: [unquote(@mod).t]
 
       defun valid?(list :: term) :: boolean do
-        l when is_list(l) -> Enum.all?(l, &Croma.Validation.call_valid1(@mod, &1))
+        l when is_list(l) -> Enum.all?(l, fn v -> @mod.valid?(v) end)
         _                 -> false
       end
 
@@ -140,7 +140,7 @@ defmodule Croma.TypeGen do
       @type t :: unquote(Enum.map(@modules, fn m -> quote do: unquote(m).t end) |> Croma.TypeUtil.list_to_type_union())
 
       defun valid?(value :: term) :: boolean do
-        Enum.any?(@modules, fn mod -> Croma.Validation.call_valid1(mod, value) end)
+        Enum.any?(@modules, fn mod -> mod.valid?(value) end)
       end
     end
   end

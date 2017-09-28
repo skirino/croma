@@ -285,7 +285,7 @@ defmodule Croma.SubtypeOfList do
       end
 
       defun valid?(term :: any) :: boolean do
-        l when is_list(l) -> valid_length?(length(l)) and Enum.all?(l, &Croma.Validation.call_valid1(@mod, &1))
+        l when is_list(l) -> valid_length?(length(l)) and Enum.all?(l, fn v -> @mod.valid?(v) end)
         _                 -> false
       end
 
@@ -318,7 +318,7 @@ defmodule Croma.SubtypeOfList do
 
       if default do
         @default default
-        if Enum.any?(@default, fn e -> !Croma.Validation.call_valid1(@mod, e) end), do: raise ":default must be a valid list"
+        if Enum.any?(@default, fn e -> !@mod.valid?(e) end), do: raise ":default must be a valid list"
         len = length(@default)
         if !is_nil(@min) && len < @min, do: raise ":default is shorter than the given :min_length #{Integer.to_string(@min)}"
         if !is_nil(@max) && @max < len, do: raise ":default is longer than the given :max_length #{Integer.to_string(@max)}"
@@ -379,7 +379,7 @@ defmodule Croma.SubtypeOfMap do
       end
 
       defun valid?(term :: term) :: boolean do
-        m when is_map(m) and valid_size?(map_size(m)) -> Enum.all?(m, fn {k, v} -> Croma.Validation.call_valid1(@key_module, k) and Croma.Validation.call_valid1(@value_module, v) end)
+        m when is_map(m) and valid_size?(map_size(m)) -> Enum.all?(m, fn {k, v} -> @key_module.valid?(k) and @value_module.valid?(v) end)
         _                                             -> false
       end
 
@@ -393,7 +393,7 @@ defmodule Croma.SubtypeOfMap do
             end
           else
             defp __call_new_or_validate(unquote(mod), v) do
-              Croma.Validation.call_validate1(unquote(mod), v)
+              Croma.Result.wrap_if_valid(v, unquote(mod))
             end
           end
         end)
@@ -429,9 +429,10 @@ defmodule Croma.SubtypeOfMap do
         size = map_size(@default)
         if !is_nil(@min) && size < @min, do: raise "items in :default is less than the given :min_size #{Integer.to_string(@min)}"
         if !is_nil(@max) && @max < size, do: raise "items in :default is more than the given :max_size #{Integer.to_string(@max)}"
-        any_kv_invalid? = Enum.any?(@default, fn {k, v} ->
-          !Croma.Validation.call_valid1(@key_module, k) or !Croma.Validation.call_valid1(@value_module, v)
-        end)
+        any_kv_invalid? =
+          !Enum.all?(@default, fn {k, v} ->
+            @key_module.valid?(k) and @value_module.valid?(v)
+          end)
         if any_kv_invalid?, do: raise ":default must be a valid value of #{inspect(__MODULE__)}"
         defun default() :: t, do: @default
       end
@@ -467,7 +468,7 @@ defmodule Croma.SubtypeOfTuple do
       @type t :: {unquote_splicing(Enum.map(@elem_modules, fn m -> (quote do: unquote(m).t) end))}
 
       defun valid?(term :: any) :: boolean do
-        t when is_tuple(t) and tuple_size(t) == @size -> Enum.zip(Tuple.to_list(t), @elem_modules) |> Enum.all?(fn {elem, mod} -> Croma.Validation.call_valid1(mod, elem) end)
+        t when is_tuple(t) and tuple_size(t) == @size -> Enum.zip(Tuple.to_list(t), @elem_modules) |> Enum.all?(fn {elem, mod} -> mod.valid?(elem) end)
         _                                             -> false
       end
 
@@ -481,7 +482,7 @@ defmodule Croma.SubtypeOfTuple do
             end
           else
             defp __call_new_or_validate(unquote(mod), v) do
-              Croma.Validation.call_validate1(unquote(mod), v)
+              Croma.Result.wrap_if_valid(v, unquote(mod))
             end
           end
         end)

@@ -163,8 +163,8 @@ defmodule Croma.Struct do
     end
   end
 
-  defp evaluate_existing_field(mod, value, false), do: Croma.Validation.call_validate1(mod, value)
-  defp evaluate_existing_field(mod, value, true ), do: Croma.Validation.call_validate1(mod, value) |> R.or_else(try_new1_with_given_value(mod, value))
+  defp evaluate_existing_field(mod, value, false), do: R.wrap_if_valid(value, mod)
+  defp evaluate_existing_field(mod, value, true ), do: R.wrap_if_valid(value, mod) |> R.or_else(try_new1_with_given_value(mod, value))
 
   defp evaluate_non_existing_field(mod, false), do: try_default(mod)
   defp evaluate_non_existing_field(mod, true ), do: try_default(mod) |> R.or_else(try_new1_from_scratch(mod))
@@ -205,7 +205,7 @@ defmodule Croma.Struct do
           {:ok, v} -> v
           :error   -> nil
         end
-      Croma.Validation.call_validate1(mod, v) |> R.map(&{field, &1})
+      R.wrap_if_valid(v, mod) |> R.map(&{field, &1})
     end)
     |> R.sequence()
     |> case do
@@ -219,7 +219,7 @@ defmodule Croma.Struct do
   def update_impl(s, mod, struct_fields, dict) when is_list(dict) or is_map(dict) do
     Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
       case dict_fetch2(dict, fields_to_fetch) do
-        {:ok, v} -> Croma.Validation.call_validate1(mod, v) |> R.map(&{field, &1})
+        {:ok, v} -> R.wrap_if_valid(v, mod) |> R.map(&{field, &1})
         :error   -> nil
       end
     end)
@@ -325,7 +325,7 @@ defmodule Croma.Struct do
       defun valid?(value :: term) :: boolean do
         %__MODULE__{} = s ->
           Enum.all?(@croma_struct_fields, fn {field, _fields_to_fetch, mod} ->
-            Croma.Validation.call_valid1(mod, Map.get(s, field))
+            mod.valid?(Map.fetch!(s, field))
           end)
         _ -> false
       end
