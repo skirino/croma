@@ -199,6 +199,7 @@ Elixir macro utilities to make type-based programming easier.
 
 ## Notes on backward compatibility
 
-- In `0.7.0` we separate responsibility of `validate/1` into `valid?/1` and `new/1`.
-  Although older type module implementations that define `validate/1` should work as before,
-  please migrate to the newer interface by replacing `validate/1` with `valid?/1` and optionally `new/1`.
+- In `0.7.0` we separated responsibility of `validate/1` into `valid?/1` and `new/1`.
+    - Although older type module implementations that define `validate/1` should work as before,
+      please migrate to the newer interface by replacing `validate/1` with `valid?/1` and optionally `new/1`.
+    - In `0.8.0` we removed support of `validate/1`.
