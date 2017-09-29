@@ -28,8 +28,8 @@ defmodule Croma.Struct do
   This module also generates the following functions.
 
   - `@spec valid?(term) :: boolean`
-  - `@spec new(Dict.t) :: Croma.Result.t(t)`
-  - `@spec new!(Dict.t) :: t`
+  - `@spec new(term) :: Croma.Result.t(t)`
+  - `@spec new!(term) :: t`
   - `@spec update(t, Dict.t) :: Croma.Result.t(t)`
   - `@spec update!(t, Dict.t) :: t`
 
@@ -148,7 +148,7 @@ defmodule Croma.Struct do
   end
 
   @doc false
-  def new_impl(mod, struct_fields, dict, recursive?) do
+  def new_impl(mod, struct_fields, dict, recursive?) when is_list(dict) or is_map(dict) do
     Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
       case dict_fetch2(dict, fields_to_fetch) do
         {:ok, v} -> evaluate_existing_field(mod, v, recursive?)
@@ -161,6 +161,9 @@ defmodule Croma.Struct do
       {:ok   , kvs   } -> {:ok, struct(mod, kvs)}
       {:error, reason} -> {:error, R.ErrorReason.add_context(reason, mod)}
     end
+  end
+  def new_impl(mod, _struct_fields, _not_a_dict, _recursive?) do
+    {:error, {:invalid_value, [mod]}}
   end
 
   defp evaluate_existing_field(mod, value, false), do: R.wrap_if_valid(value, mod)
@@ -275,7 +278,7 @@ defmodule Croma.Struct do
         - `default/0` of each field type
         - `new/1` of each field type, with empty map as input
         """
-        defun new(dict :: Dict.t) :: R.t(t) do
+        defun new(dict :: term) :: R.t(t) do
           Croma.Struct.new_impl(__MODULE__, @croma_struct_fields, dict, true)
         end
       else
@@ -287,7 +290,7 @@ defmodule Croma.Struct do
         Returns `{:ok, valid_struct}` or `{:error, reason}`.
         The values in the `dict` are validated by each field's `valid?/1` function.
         """
-        defun new(dict :: Dict.t) :: R.t(t) do
+        defun new(dict :: term) :: R.t(t) do
           Croma.Struct.new_impl(__MODULE__, @croma_struct_fields, dict, false)
         end
       end
@@ -297,7 +300,7 @@ defmodule Croma.Struct do
 
       In other words, `new/1` followed by `Croma.Result.get!/1`.
       """
-      defun new!(dict :: Dict.t) :: t do
+      defun new!(dict :: term) :: t do
         new(dict) |> R.get!()
       end
 

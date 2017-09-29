@@ -18,6 +18,8 @@ defmodule Croma.StructTest do
   end
 
   test "Croma.Struct: new/1" do
+    assert S1.new(nil) == {:error, {:invalid_value, [S1]}}
+
     assert S1.new( []                             ) == {:error, {:value_missing, [S1, Croma.Boolean]}}
     assert S1.new(%{}                             ) == {:error, {:value_missing, [S1, Croma.Boolean]}}
     assert S1.new( [ field1:    2]                ) == {:error, {:value_missing, [S1, Croma.Boolean]}}
