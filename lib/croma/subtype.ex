@@ -188,6 +188,7 @@ defmodule Croma.SubtypeOfAtom do
   - `@type t`
   - `@spec valid?(term) :: boolean`
   - `@spec new(term) :: Croma.Result.t(t)`
+  - `@spec new!(term) :: t`
 
   Options:
   - `:values` - List of atoms of possible values.
@@ -230,6 +231,10 @@ defmodule Croma.SubtypeOfAtom do
         _ -> {:error, {:invalid_value, [__MODULE__]}}
       end
 
+      defun new!(term :: any) :: t do
+        new(term) |> R.get!()
+      end
+
       if default do
         @default default
         if !Enum.member?(@values, @default), do: raise ":default must be a valid atom"
@@ -246,7 +251,9 @@ defmodule Croma.SubtypeOfList do
 
   - `@type t`
   - `@spec valid?(term) :: boolean`
-  - `@spec new(term) :: Croma.Result.t(t)`
+  - If `elem_module` exports `new/1`,
+      - `@spec new(term) :: Croma.Result.t(t)`
+      - `@spec new!(term) :: t`
 
   Options:
   - `:elem_module` - A type module for elements.
@@ -307,6 +314,10 @@ defmodule Croma.SubtypeOfList do
             end
           _ -> {:error, {:invalid_value, [__MODULE__]}}
         end
+
+        defun new!(term :: any) :: t do
+          new(term) |> R.get!()
+        end
       end
 
       if !is_nil(@min) do
@@ -335,7 +346,9 @@ defmodule Croma.SubtypeOfMap do
 
   - `@type t`
   - `@spec valid?(term) :: boolean`
-  - `@spec new(term) :: Croma.Result.t(t)`
+  - If `key_module` and/or `value_module` exports `new/1`,
+      - `@spec new(term) :: Croma.Result.t(t)`
+      - `@spec new!(term) :: t`
 
   Options:
   - `:key_module` - A type module for keys.
@@ -414,6 +427,10 @@ defmodule Croma.SubtypeOfMap do
             end
           _ -> {:error, {:invalid_value, [__MODULE__]}}
         end
+
+        defun new!(term :: any) :: t do
+          new(term) |> R.get!()
+        end
       end
 
       if !is_nil(@min) do
@@ -447,7 +464,9 @@ defmodule Croma.SubtypeOfTuple do
 
   - `@type t`
   - `@spec valid?(term) :: boolean`
-  - `@spec new(term) :: Croma.Result.t(t)`
+  - If any of `:elem_modules` exports `new/1`,
+      - `@spec new(term) :: Croma.Result.t(t)`
+      - `@spec new!(term) :: t`
 
   Options:
   - `:elem_modules` - A list of type modules for tuple elements.
@@ -497,6 +516,10 @@ defmodule Croma.SubtypeOfTuple do
               {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
             end
           _ -> {:error, {:invalid_value, [__MODULE__]}}
+        end
+
+        defun new!(term :: any) :: t do
+          new(term) |> R.get!()
         end
       end
 

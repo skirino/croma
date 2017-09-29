@@ -125,6 +125,11 @@ defmodule Croma.SubtypeTest do
     assert A1.new("a2") == {:ok, :a2}
     assert A1.new("a3") == {:ok, :a3}
     assert A1.new("a4") == {:error, {:invalid_value, [A1]}}
+
+    assert      A1.new!("a1") == :a1
+    assert      A1.new!("a2") == :a2
+    assert      A1.new!("a3") == :a3
+    catch_error A1.new!("a4")
   end
 
   test "Croma.SubtypeOfAtom: default/0" do
@@ -174,6 +179,11 @@ defmodule Croma.SubtypeTest do
     assert L5.new([:a1, :a2])  == {:ok, [:a1, :a2]}
     assert L5.new([:a1, "a3"]) == {:ok, [:a1, :a3]}
     assert L5.new([:a1, :a4])  == {:error, {:invalid_value, [L5, A1]}}
+
+    catch_error L5.new!([])
+    assert      L5.new!([:a1, :a2])  == [:a1, :a2]
+    assert      L5.new!([:a1, "a3"]) == [:a1, :a3]
+    catch_error L5.new!([:a1, :a4])
   end
 
   test "Croma.SubtypeOfList: default/0" do
@@ -240,6 +250,15 @@ defmodule Croma.SubtypeTest do
     assert M3.new(%{a1: "not_int"}) == {:error, {:invalid_value, [M3, I3]}}
     assert M4.new(%{"a1" => -1})    == {:ok, %{a1: -1}}
     assert M4.new(%{a4: "not_int"}) == {:error, {:invalid_value, [M4, A1]}}
+
+    assert      M1.new!(%{"a1" =>  1}) == %{a1:  1}
+    catch_error M1.new!(%{a1: 0})
+    assert      M2.new!(%{"a1" =>  1}) == %{a1:  1}
+    catch_error M2.new!(%{"a4" => -1})
+    assert      M3.new!(%{"a1" => -1}) == %{a1: -1}
+    catch_error M3.new!(%{a1: "not_int"})
+    assert      M4.new!(%{"a1" => -1}) == %{a1: -1}
+    catch_error M4.new!(%{a4: "not_int"})
   end
 
   test "Croma.SubtypeOfMap: default/0" do
@@ -285,6 +304,10 @@ defmodule Croma.SubtypeTest do
     assert T1.new({:a1})  == {:ok, {:a1}}
     assert T1.new({"a1"}) == {:ok, {:a1}}
     assert T1.new({"a4"}) == {:error, {:invalid_value, [T1, A1]}}
+
+    assert      T1.new!({:a1})  == {:a1}
+    assert      T1.new!({"a1"}) == {:a1}
+    catch_error T1.new!({"a4"})
   end
 
   test "Croma.SubtypeOfTuple: default/0" do

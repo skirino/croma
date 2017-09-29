@@ -13,7 +13,9 @@ defmodule Croma.TypeGen do
 
   - `@type t :: nil | module.t`
   - `@spec valid?(term) :: boolean`
-  - (If the given module exports `new/1`) `@spec new(term) :: Croma.Result.t(t)`
+  - If the given module exports `new/1`
+      - `@spec new(term) :: Croma.Result.t(t)`
+      - `@spec new!(term) :: t`
 
   This is useful in defining a struct with nilable fields using `Croma.Struct`.
 
@@ -63,6 +65,10 @@ defmodule Croma.TypeGen do
               {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
             end
         end
+
+        defun new!(term :: term) :: t do
+          new(term) |> R.get!()
+        end
       end
 
       defun default() :: t, do: nil
@@ -104,6 +110,10 @@ defmodule Croma.TypeGen do
         defun new(list :: term) :: R.t(t) do
           l when is_list(l) -> Enum.map(l, &@mod.new/1) |> R.sequence()
           _                 -> {:error, {:invalid_value, [__MODULE__]}}
+        end
+
+        defun new!(term :: term) :: t do
+          new(term) |> R.get!()
         end
       end
 
