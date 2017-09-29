@@ -25,7 +25,7 @@ defmodule Croma.Struct do
 
   Then the above code is converted to `defstruct` along with `@type t`.
 
-  This module also generates the following functions.
+  This module also generates the following functions (they are all overridable):
 
   - `@spec valid?(term) :: boolean`
   - `@spec new(term) :: Croma.Result.t(t)`
@@ -349,6 +349,8 @@ defmodule Croma.Struct do
       defun update!(s :: t, dict :: Dict.t) :: t do
         update(s, dict) |> R.get!()
       end
+
+      defoverridable [valid?: 1, new: 1, new!: 1, update: 2, update!: 2]
     end
   end
 end
