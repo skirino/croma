@@ -41,7 +41,7 @@ defmodule Croma.TestCase do
 
   defmacro __using__(opts) do
     %Macro.Env{module: current_module} = __CALLER__
-    target_module = Atom.to_string(current_module) |> String.replace(~r/Test$/, "") |> List.wrap |> Module.safe_concat
+    target_module = Atom.to_string(current_module) |> String.replace(~r/Test$/, "") |> List.wrap() |> Module.safe_concat()
     alias_opts =
       case opts[:alias_as] do
         nil  -> []
