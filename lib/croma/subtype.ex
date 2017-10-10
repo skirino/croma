@@ -187,7 +187,7 @@ defmodule Croma.SubtypeOfAtom do
 
   - `@type t`
   - `@spec valid?(term) :: boolean`
-  - `@spec new(term) :: Croma.Result.t(t)`
+  - `@spec new(term) :: Croma.Result.t(t)` (tries to convert `String.t` to the given set of atoms)
   - `@spec new!(term) :: t`
 
   Options:
