@@ -3,11 +3,12 @@ defmodule Croma.Struct do
   Utility module to define structs and some helper functions.
 
   Using this module requires to prepare modules that represent each struct field.
-  Each of per-field module must provide the following members:
+  Each of per-field module is expected to provide the following members:
 
   - required: `@type t`
   - required: `@spec valid?(term) :: boolean`
   - optional: `@spec default() :: t`
+  - optional: `@spec new(term) :: Croma.Result.t(t)`
 
   Some helpers for defining such per-field type modules are available.
 
@@ -25,13 +26,16 @@ defmodule Croma.Struct do
 
   Then the above code is converted to `defstruct` along with `@type t`.
 
-  This module also generates the following functions (they are all overridable):
+  This module also generates the following functions:
 
   - `@spec valid?(term) :: boolean`
   - `@spec new(term) :: Croma.Result.t(t)`
   - `@spec new!(term) :: t`
   - `@spec update(t, Dict.t) :: Croma.Result.t(t)`
   - `@spec update!(t, Dict.t) :: t`
+
+  The functions listed above are all overridable, so you can
+  for example implement your own validation rule that spans multiple fields.
 
   ## Examples
       iex> defmodule I do
@@ -96,15 +100,9 @@ defmodule Croma.Struct do
       {:ok, %Root{b: %Branch{l: %Leaf{ns: nil}}}}
 
   Note that if a field is missing, complementary functions will be called in order of
-  `default/0` then `new/1` (with empty map as input).
+  `default/0` then `new/1` (with `nil` as input).
 
   Also, if a field has an invalid value, `new/1` will be called with that value as input.
-
-  ## Limitation
-
-  - If you want to validate your struct with a rule that spans multiple fields
-    (e.g. `f1` and `f2` must be "both `nil`" or "both `integer`"),
-    you have to manually define `@type t`, `valid?/1`, etc.
   """
 
   import Croma.Defun
