@@ -13,6 +13,7 @@ defmodule Croma.TypeGen do
 
   - `@type t :: nil | module.t`
   - `@spec valid?(term) :: boolean`
+  - `@spec default() :: nil`
   - If the given module exports `new/1`
       - `@spec new(term) :: Croma.Result.t(t)`
       - `@spec new!(term) :: t`
@@ -30,8 +31,8 @@ defmodule Croma.TypeGen do
       ...> S.new(%{not_nilable_int: 0, nilable_int: nil})
       %S{nilable_int: nil, not_nilable_int: 0}
   """
-  defmacro nilable(mod) do
-    nilable_impl(Macro.expand(mod, __CALLER__), Macro.Env.location(__CALLER__))
+  defmacro nilable(module) do
+    nilable_impl(Macro.expand(module, __CALLER__), Macro.Env.location(__CALLER__))
   end
 
   defp nilable_impl(mod, location) do
@@ -77,11 +78,12 @@ defmodule Croma.TypeGen do
 
   @doc """
   An ad-hoc version of `Croma.SubtypeOfList`.
+
   Options for `Croma.SubtypeOfList` are not available in `list_of/1`.
   Usage of `list_of/1` macro is the same as `nilable/1`.
   """
-  defmacro list_of(mod) do
-    list_of_impl(Macro.expand(mod, __CALLER__), Macro.Env.location(__CALLER__))
+  defmacro list_of(module) do
+    list_of_impl(Macro.expand(module, __CALLER__), Macro.Env.location(__CALLER__))
   end
 
   defp list_of_impl(mod, location) do
@@ -124,7 +126,7 @@ defmodule Croma.TypeGen do
   @doc """
   Creates a new module that represents a sum type of the given types.
 
-  The argument must be a list of modules each of which defines `@type t` and `@spec valid?(term) :: boolean`.
+  The argument must be a list of type modules.
   """
   defmacro union(modules) do
     ms = Enum.map(modules, fn m -> Macro.expand(m, __CALLER__) end)
