@@ -99,7 +99,7 @@ defmodule Croma.TypeGen do
       @type t :: [unquote(@mod).t]
 
       defun valid?(list :: term) :: boolean do
-        l when is_list(l) -> Enum.all?(l, fn v -> @mod.valid?(v) end)
+        l when is_list(l) -> Enum.all?(l, &@mod.valid?/1)
         _                 -> false
       end
 
