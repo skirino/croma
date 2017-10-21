@@ -296,8 +296,8 @@ defmodule Croma.SubtypeOfList do
         _                 -> false
       end
 
-      # Invoking `module_info/0` on `mod` automatically compiles and loads the module if necessary.
-      if {:new, 1} in @mod.module_info[:exports] do
+      # Invoking `module_info/1` on `mod` automatically compiles and loads the module if necessary.
+      if {:new, 1} in @mod.module_info(:exports) do
         defun new(term :: any) :: R.t(t) do
           l when is_list(l) ->
             valid_length? = valid_length?(length(l))
@@ -396,8 +396,8 @@ defmodule Croma.SubtypeOfMap do
         _                                             -> false
       end
 
-      # Invoking `module_info/0` automatically compiles and loads the module if necessary.
-      module_flag_pairs = Enum.map([@key_module, @value_module], fn m -> {m, {:new, 1} in m.module_info[:exports]} end)
+      # Invoking `module_info/1` automatically compiles and loads the module if necessary.
+      module_flag_pairs = Enum.map([@key_module, @value_module], fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
       if Enum.any?(module_flag_pairs, fn {_, has_new1} -> has_new1 end) do
         Enum.each(module_flag_pairs, fn {mod, has_new1} ->
           if has_new1 do
@@ -491,8 +491,8 @@ defmodule Croma.SubtypeOfTuple do
         _                                             -> false
       end
 
-      # Invoking `module_info/0` automatically compiles and loads the module if necessary.
-      module_flag_pairs = Enum.map(@elem_modules, fn m -> {m, {:new, 1} in m.module_info[:exports]} end)
+      # Invoking `module_info/1` automatically compiles and loads the module if necessary.
+      module_flag_pairs = Enum.map(@elem_modules, fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
       if Enum.any?(module_flag_pairs, fn {_, has_new1} -> has_new1 end) do
         Enum.each(module_flag_pairs, fn {mod, has_new1} ->
           if has_new1 do
