@@ -60,11 +60,7 @@ defmodule Croma.TypeGen do
       if {:new, 1} in @mod.module_info(:exports) do
         defun new(value :: term) :: R.t(t) do
           nil -> {:ok, nil}
-          v   ->
-            case @mod.new(v) do
-              {:ok   , _     } = r -> r
-              {:error, reason}     -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
-            end
+          v   -> @mod.new(v) |> R.map_error(fn reason -> R.ErrorReason.add_context(reason, __MODULE__) end)
         end
 
         defun new!(term :: term) :: t do
