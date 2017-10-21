@@ -36,6 +36,17 @@ defmodule Croma.TypeGenTest do
     refute u2.valid?(-1  )
     refute u2.valid?(%{} )
     refute u2.valid?([-1])
+
+    assert u1.new(0  ) == {:ok, 0}
+    assert u1.new(nil) == {:error, {:invalid_value, [u1]}}
+    assert u1.new(-1 ) == {:error, {:invalid_value, [u1]}}
+
+    assert u2.new(nil ) == {:ok, nil}
+    assert u2.new(0   ) == {:ok, 0}
+    assert u2.new([]  ) == {:ok, []}
+    assert u2.new(-1  ) == {:error, {:invalid_value, [u2]}}
+    assert u2.new(%{} ) == {:error, {:invalid_value, [u2]}}
+    assert u2.new([-1]) == {:error, {:invalid_value, [u2]}}
   end
 
   test "Croma.TypeGen.fixed" do

@@ -154,6 +154,35 @@ defmodule Croma.TypeGen do
       defun valid?(value :: term) :: boolean do
         Enum.any?(@modules, fn mod -> mod.valid?(value) end)
       end
+
+      module_flag_pairs = Enum.map(@modules, fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
+      Enum.each(module_flag_pairs, fn {mod, has_new1} ->
+        if has_new1 do
+          defp call_new_or_validate(unquote(mod), v) do
+            unquote(mod).new(v)
+          end
+        else
+          defp call_new_or_validate(unquote(mod), v) do
+            Croma.Result.wrap_if_valid(v, unquote(mod))
+          end
+        end
+      end)
+
+      defun new(v :: term) :: R.t(t) do
+        new_impl(v, @modules) |> R.map_error(fn _ -> {:invalid_value, [__MODULE__]} end)
+      end
+
+      defp new_impl(v, [m]) do
+        call_new_or_validate(m, v)
+      end
+      defp new_impl(v, [m | ms]) do
+        require R
+        call_new_or_validate(m, v) |> R.or_else(new_impl(v, ms))
+      end
+
+      defun new!(term :: term) :: t do
+        new(term) |> R.get!()
+      end
     end
   end
 
