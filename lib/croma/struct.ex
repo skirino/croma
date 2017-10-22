@@ -199,24 +199,6 @@ defmodule Croma.Struct do
   end
 
   @doc false
-  def validate_impl(mod, struct_fields, dict) when is_list(dict) or is_map(dict) do
-    Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
-      case dict_fetch2(dict, fields_to_fetch) do
-        {:ok, v} -> v
-        :error   -> nil
-      end
-      |> R.wrap_if_valid(mod)
-      |> R.map(&{field, &1})
-    end)
-    |> R.sequence()
-    |> case do
-      {:ok   , kvs   } -> {:ok, struct(mod, kvs)}
-      {:error, reason} -> {:error, R.ErrorReason.add_context(reason, mod)}
-    end
-  end
-  def validate_impl(mod, _, _), do: {:error, {:invalid_value, [mod]}}
-
-  @doc false
   def update_impl(s, mod, struct_fields, dict) when is_list(dict) or is_map(dict) do
     Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
       case dict_fetch2(dict, fields_to_fetch) do
