@@ -149,8 +149,13 @@ defmodule Croma.Struct do
   def new_impl(mod, struct_fields, dict, recursive?) when is_list(dict) or is_map(dict) do
     Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
       case dict_fetch2(dict, fields_to_fetch) do
-        {:ok, v} -> evaluate_existing_field(mod, v, recursive?)
-        :error   -> try_default(mod)
+        :error   -> try_default(mod, field)
+        {:ok, v} ->
+          evaluate_existing_field(mod, v, field, recursive?)
+          |> R.map_error(fn
+            {reason, [^mod | mods]} -> {reason, [{mod, field} | mods]}
+            reason                  -> reason
+          end)
       end
       |> R.map(&{field, &1})
     end)
@@ -164,22 +169,29 @@ defmodule Croma.Struct do
     {:error, {:invalid_value, [mod]}}
   end
 
-  defp evaluate_existing_field(mod, value, false), do: R.wrap_if_valid(value, mod)
-  defp evaluate_existing_field(mod, value, true ), do: R.wrap_if_valid(value, mod) |> R.or_else(try_new1_with_given_value(mod, value))
+  defp evaluate_existing_field(mod, value, field, false), do: wrap_if_valid(value, mod, field)
+  defp evaluate_existing_field(mod, value, field, true ), do: wrap_if_valid(value, mod, field) |> R.or_else(try_new1_with_given_value(value, mod, field))
 
-  defp try_new1_with_given_value(mod, value) do
-    try do
-      mod.new(value)
-    rescue
-      _ -> {:error, {:invalid_value, [mod]}}
+  defp wrap_if_valid(value, mod, field) do
+    case mod.valid?(value) do
+      true  -> {:ok, value}
+      false -> {:error, {:invalid_value, [{mod, field}]}}
     end
   end
 
-  defp try_default(mod) do
+  defp try_new1_with_given_value(value, mod, field) do
+    try do
+      mod.new(value)
+    rescue
+      _ -> {:error, {:invalid_value, [{mod, field}]}}
+    end
+  end
+
+  defp try_default(mod, field) do
     try do
       {:ok, mod.default()}
     rescue
-      _ -> {:error, {:value_missing, [mod]}}
+      _ -> {:error, {:value_missing, [{mod, field}]}}
     end
   end
 
@@ -187,7 +199,7 @@ defmodule Croma.Struct do
   def update_impl(s, mod, struct_fields, dict) when is_list(dict) or is_map(dict) do
     Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
       case dict_fetch2(dict, fields_to_fetch) do
-        {:ok, v} -> R.wrap_if_valid(v, mod) |> R.map(&{field, &1})
+        {:ok, v} -> wrap_if_valid(v, mod, field) |> R.map(&{field, &1})
         :error   -> nil
       end
     end)

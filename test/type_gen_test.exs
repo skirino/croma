@@ -70,16 +70,16 @@ defmodule Croma.TypeGenTest do
     s = S.new!([i: 0, l: []])
     assert s == %S{i: 0, l: []}
     assert S.new(%{                     }) == {:ok, %S{i: nil, l: []}}
-    assert S.new(%{"i" => -1            }) == {:error, {:invalid_value, [S, nilable(I)]}}
+    assert S.new(%{"i" => -1            }) == {:error, {:invalid_value, [S, {nilable(I), :i}]}}
     assert S.new(%{           "l" => [] }) == {:ok, %S{i: nil, l: []}}
-    assert S.new(%{"i" => -1, "l" => [] }) == {:error, {:invalid_value, [S, nilable(I)]}}
-    assert S.new(%{"i" =>  1, "l" => nil}) == {:error, {:invalid_value, [S, list_of(I)]}}
+    assert S.new(%{"i" => -1, "l" => [] }) == {:error, {:invalid_value, [S, {nilable(I), :i}]}}
+    assert S.new(%{"i" =>  1, "l" => nil}) == {:error, {:invalid_value, [S, {list_of(I), :l}]}}
 
     assert S.new(%{i: 10, l: []})         == S.update(s, [i: 10])
     assert S.new(%{i: 0 , l: [0, 1, 2]})  == S.update(s, [l: [0, 1, 2]])
-    assert S.new(%{"i" => -1, "l" => []}) == {:error, {:invalid_value, [S, nilable(I)]}}
-    assert S.update(s, %{i: -1})          == {:error, {:invalid_value, [S, nilable(I)]}}
-    assert S.update(s, %{l: [-1]})        == {:error, {:invalid_value, [S, list_of(I)]}}
+    assert S.new(%{"i" => -1, "l" => []}) == {:error, {:invalid_value, [S, {nilable(I), :i}]}}
+    assert S.update(s, %{i: -1})          == {:error, {:invalid_value, [S, {nilable(I), :i}]}}
+    assert S.update(s, %{l: [-1]})        == {:error, {:invalid_value, [S, {list_of(I), :l}]}}
   end
 
   test "Croma.TypeGen.nilable/1 and Croma.TypeGen.list_of/1 with underlying new/1" do
