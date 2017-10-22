@@ -150,7 +150,7 @@ defmodule Croma.Struct do
     Enum.map(struct_fields, fn {field, fields_to_fetch, mod} ->
       case dict_fetch2(dict, fields_to_fetch) do
         {:ok, v} -> evaluate_existing_field(mod, v, recursive?)
-        :error   -> evaluate_non_existing_field(mod, recursive?)
+        :error   -> try_default(mod)
       end
       |> R.map(&{field, &1})
     end)
@@ -167,26 +167,11 @@ defmodule Croma.Struct do
   defp evaluate_existing_field(mod, value, false), do: R.wrap_if_valid(value, mod)
   defp evaluate_existing_field(mod, value, true ), do: R.wrap_if_valid(value, mod) |> R.or_else(try_new1_with_given_value(mod, value))
 
-  defp evaluate_non_existing_field(mod, false), do: try_default(mod)
-  defp evaluate_non_existing_field(mod, true ), do: try_default(mod) |> R.or_else(try_new1_from_scratch(mod))
-
   defp try_new1_with_given_value(mod, value) do
     try do
       mod.new(value)
     rescue
       _ -> {:error, {:invalid_value, [mod]}}
-    end
-  end
-
-  defp try_new1_from_scratch(mod) do
-    try do
-      mod.new(nil)
-      |> R.map_error(fn
-        {:invalid_value, modules} -> {:value_missing, modules} # error is due to the missing value, not due to `nil`
-        other_reason              -> other_reason
-      end)
-    rescue
-      _ -> {:error, {:value_missing, [mod]}}
     end
   end
 
