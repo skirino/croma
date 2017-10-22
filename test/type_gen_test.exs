@@ -15,12 +15,19 @@ defmodule Croma.TypeGenTest do
   end
 
   test "Croma.TypeGen.list_of" do
-    li = list_of(I)
-    assert li.valid?([])
-    assert li.valid?([0, 1, 2])
-    refute li.valid?([0, -1, 2])
-    refute li.valid?(nil)
-    assert li.default() == []
+    l1 = list_of(I)
+    assert l1.valid?([])
+    assert l1.valid?([0, 1, 2])
+    refute l1.valid?([0, -1, 2])
+    refute l1.valid?(nil)
+    assert l1.default() == []
+
+    l2 = list_of(I, [define_default0?: false])
+    assert l2.valid?([])
+    assert l2.valid?([0, 1, 2])
+    refute l2.valid?([0, -1, 2])
+    refute l2.valid?(nil)
+    catch_error l2.default()
   end
 
   test "Croma.TypeGen.union" do

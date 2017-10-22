@@ -75,24 +75,25 @@ defmodule Croma.TypeGen do
   @doc """
   An ad-hoc version of `Croma.SubtypeOfList`.
 
-  Options for `Croma.SubtypeOfList` are not available in `list_of/1`.
-  Usage of `list_of/1` macro is the same as `nilable/1`.
+  Options:
+  - `:define_default0?` - Boolean value that indicates whether to define `default/0` (which simply returns `[]`). Defaults to `true`.
   """
-  defmacro list_of(module) do
-    list_of_impl(Macro.expand(module, __CALLER__), Macro.Env.location(__CALLER__))
+  defmacro list_of(module, options \\ []) do
+    list_of_impl(Macro.expand(module, __CALLER__), Macro.Env.location(__CALLER__), options)
   end
 
-  defp list_of_impl(mod, location) do
-    module_body = Macro.escape(list_of_module_body(mod))
-    quote bind_quoted: [mod: mod, module_body: module_body, location: location] do
-      name = Module.concat(Croma.TypeGen.ListOf, mod)
+  defp list_of_impl(mod, location, options) do
+    module_body = Macro.escape(list_of_module_body(mod, options))
+    quote bind_quoted: [mod: mod, module_body: module_body, location: location, options: options] do
+      prefix = if Keyword.get(options, :define_default0?, true), do: Croma.TypeGen.ListOf, else: Croma.TypeGen.ListOfNoDefault0
+      name = Module.concat(prefix, mod)
       Croma.TypeGen.ensure_module_defined(name, module_body, location)
       name
     end
   end
 
-  defp list_of_module_body(mod) do
-    quote bind_quoted: [mod: mod] do
+  defp list_of_module_body(mod, options) do
+    quote bind_quoted: [mod: mod, options: options] do
       @moduledoc false
 
       @mod mod
@@ -115,7 +116,9 @@ defmodule Croma.TypeGen do
         end
       end
 
-      defun default() :: t, do: []
+      if Keyword.get(options, :define_default0?, true) do
+        defun default() :: t, do: []
+      end
     end
   end
 
@@ -234,9 +237,11 @@ defmodule Croma.TypeGen do
   def define_nilable_and_list_of(mod) do
     location = Macro.Env.location(__ENV__)
     q1 = nilable_impl(mod, location)
-    q2 = list_of_impl(mod, location)
+    q2 = list_of_impl(mod, location, [define_default0?: true ])
+    q3 = list_of_impl(mod, location, [define_default0?: false])
     Code.eval_quoted(q1, [], __ENV__)
     Code.eval_quoted(q2, [], __ENV__)
+    Code.eval_quoted(q3, [], __ENV__)
   end
 end
 
