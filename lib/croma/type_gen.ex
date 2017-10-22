@@ -126,6 +126,8 @@ defmodule Croma.TypeGen do
   Creates a new module that represents a sum type of the given types.
 
   The argument must be a list of type modules.
+  Note that the specified types should be mutually disjoint;
+  otherwise `new/1` can return unexpected results depending on the order of the type modules.
   """
   defmacro union(modules) do
     ms = Enum.map(modules, fn m -> Macro.expand(m, __CALLER__) end)
