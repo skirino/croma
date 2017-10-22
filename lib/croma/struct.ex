@@ -161,7 +161,7 @@ defmodule Croma.Struct do
     end)
     |> R.sequence()
     |> case do
-      {:ok   , kvs   } -> {:ok, struct(mod, kvs)}
+      {:ok   , kvs   } -> {:ok, mod.__struct__(kvs)}
       {:error, reason} -> {:error, R.ErrorReason.add_context(reason, mod)}
     end
   end
