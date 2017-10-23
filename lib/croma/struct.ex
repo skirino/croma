@@ -328,6 +328,7 @@ defmodule Croma.Struct do
       @croma_struct_fields               Croma.Struct.fields_with_accept_case(@croma_struct_field_mod_pairs, opts[:accept_case])
       @croma_struct_fields_with_defaults Enum.zip(@croma_struct_fields, field_default_pairs) |> Enum.map(fn {{f, fs, m}, {f, d}} -> {f, fs, m, d} end)
 
+      @enforce_keys Enum.filter(field_default_pairs, &match?({_, :error}, &1)) |> Enum.map(fn {f, _} -> f end)
       defstruct (
         Enum.map(field_default_pairs, fn
           {f, {:ok, d}} -> {f, d}

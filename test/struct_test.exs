@@ -191,12 +191,32 @@ defmodule Croma.StructTest do
   test "Croma.Struct with `recursive_new?: true` and `field module with new/1` and value_missing" do
     assert S9.new([]) == {:error, {:value_missing, [S9, {S9.A, :f}]}}
   end
+
+  defmodule S10 do
+    defmodule I do
+      use Croma.SubtypeOfInt, min: 0, default: 2
+    end
+    use Croma.Struct, fields: [
+      a: Croma.Integer,
+      b: {Croma.Integer, [default: 1]},
+      c: I,
+      d: {I, [default: 3]},
+    ]
+  end
+
+  test "Croma.Struct should correctly use the given default value" do
+    s10 = %S10{a: 0}
+    assert s10              == %S10{a: 0, b: 1, c: 2, d: 3}
+    assert S10.new(%{a: 0}) == {:ok, s10}
+
+    catch_error S10.__struct__([]) # `:a` must be given
+  end
+
+  test "Croma.Struct should validate the given default value" do
+    catch_error (
+      defmodule S11 do
+        use Croma.Struct, fields: [i: {Croma.Integer, [default: nil]}]
+      end
+    )
+  end
 end
-
-
-
-
-
-
-
-
