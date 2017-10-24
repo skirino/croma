@@ -80,28 +80,31 @@ defmodule Croma.Struct do
 
   You can specify default value of each struct field by
 
-  1. giving `:default` option in per-field option
-  2. defining `default/0` in the field's type module (evaluated at compile-time)
+  1. giving `:default` option in per-field options
+  2. defining `default/0` in the field's type module (which is evaluated at compile-time)
 
   If you specify both, (1) takes precedence over (2).
-  If neither of the above given for a field, then the field must be explicitly filled when constructing a new struct.
+  Additionally, you can tell `Croma.Struct` not to use `default/0` by specifying `no_default?: true`.
+  If no default value is provided for a field, then the field must be explicitly filled when constructing a new struct.
 
   As an example, suppose you have the following modules.
       defmodule I do
-        use Croma.SubtypeOfInt, min: 0, default: 2
+        use Croma.SubtypeOfInt, min: 0, default: 1
       end
       defmodule S do
         use Croma.Struct, fields: [
           a: Croma.Integer,
-          b: {Croma.Integer, [default: 1]},
-          c: I,
-          d: {I, [default: 3]},
+          b: I,
+          c: {Croma.Integer, [default: 2]},
+          d: {I            , [default: 3]},
+          e: {Croma.Integer, [no_default?: true]},
+          f: {I            , [no_default?: true]},
         ]
       end
 
   Note that `I` has `default/0` whereas `Croma.Integer` does not export `define/0`.
   Then,
-  - `a` has no default
+  - `a`, `e` and `f` have no default values
   - Default value of `b` is `1`
   - Default value of `c` is `2`
   - Default value of `d` is `3`
@@ -141,20 +144,24 @@ defmodule Croma.Struct do
   @doc false
   def field_default_value_pairs(fields) do
     Enum.map(fields, fn {f, {mod, field_opts}} ->
-      default =
-        case Keyword.fetch(field_opts, :default) do
-          {:ok, d} ->
-            if !mod.valid?(d), do: raise "Invalid default value is given to field '#{f}' with type #{inspect(mod)} : #{inspect(d)}"
-            {:ok, d}
-          :error   ->
-            try do
-              {:ok, mod.default()}
-            rescue
-              UndefinedFunctionError -> :error
-            end
-        end
-      {f, default}
+      {f, compute_default_value(f, mod, field_opts)}
     end)
+  end
+
+  defp compute_default_value(field, mod, field_opts) do
+    case {Keyword.get(field_opts, :no_default?, false), Keyword.fetch(field_opts, :default)} do
+      {true , {:ok, _}} -> raise "no_default?: true but :default option is also given for field '#{field}'"
+      {true , :error  } -> :error
+      {false, {:ok, d}} ->
+        if !mod.valid?(d), do: raise "invalid default value is given to field '#{field}' with type #{inspect(mod)} : #{inspect(d)}"
+        {:ok, d}
+      {false, :error  } ->
+        try do
+          {:ok, mod.default()}
+        rescue
+          UndefinedFunctionError -> :error
+        end
+    end
   end
 
   @doc false

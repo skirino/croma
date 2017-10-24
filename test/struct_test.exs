@@ -194,28 +194,41 @@ defmodule Croma.StructTest do
 
   defmodule S10 do
     defmodule I do
-      use Croma.SubtypeOfInt, min: 0, default: 2
+      use Croma.SubtypeOfInt, min: 0, default: 1
     end
     use Croma.Struct, fields: [
       a: Croma.Integer,
-      b: {Croma.Integer, [default: 1]},
-      c: I,
-      d: {I, [default: 3]},
+      b: I,
+      c: {Croma.Integer, [default: 2]},
+      d: {I            , [default: 3]},
+      e: {Croma.Integer, [no_default?: true]},
+      f: {I            , [no_default?: true]},
     ]
   end
 
   test "Croma.Struct should correctly use the given default value" do
-    s10 = %S10{a: 0}
-    assert s10              == %S10{a: 0, b: 1, c: 2, d: 3}
-    assert S10.new(%{a: 0}) == {:ok, s10}
+    s10 = %S10{a: 0, b: 1, c: 2, d: 3, e: 4, f: 5}
+    assert %S10{a: 0, e: 4, f: 5}       == s10
+    assert S10.new(%{a: 0, e: 4, f: 5}) == {:ok, s10}
 
-    catch_error S10.__struct__([]) # `:a` must be given
+    catch_error S10.__struct__([])
+    catch_error S10.__struct__([a: 0, e: 4      ])
+    catch_error S10.__struct__([a: 0,       f: 5])
+    catch_error S10.__struct__([      e: 4, f: 5])
   end
 
-  test "Croma.Struct should validate the given default value" do
+  test "Croma.Struct should reject invalid default value" do
     catch_error (
       defmodule S11 do
         use Croma.Struct, fields: [i: {Croma.Integer, [default: nil]}]
+      end
+    )
+  end
+
+  test "Croma.Struct should reject field having both :default and :no_default?" do
+    catch_error (
+      defmodule S12 do
+        use Croma.Struct, fields: [i: {Croma.Integer, [default: 0, no_default?: true]}]
       end
     )
   end
