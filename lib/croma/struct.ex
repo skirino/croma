@@ -102,7 +102,7 @@ defmodule Croma.Struct do
         ]
       end
 
-  Note that `I` has `default/0` whereas `Croma.Integer` does not export `define/0`.
+  Note that `I` has `default/0` whereas `Croma.Integer` does not export `default/0`.
   Then,
   - `a`, `e` and `f` have no default values
   - Default value of `b` is `1`
