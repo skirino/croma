@@ -92,6 +92,7 @@ defmodule Croma.Monad do
       """
       defmacro m(do: block) do
         case block do
+          {:__block__, _, []       } -> nil # empty do-end
           {:__block__, _, unwrapped} -> Croma.Monad.DoImpl.do_expr(__MODULE__, unwrapped)
           _                          -> Croma.Monad.DoImpl.do_expr(__MODULE__, [block])
         end
