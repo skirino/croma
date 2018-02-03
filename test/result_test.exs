@@ -1,6 +1,6 @@
 defmodule Croma.ResultTest do
   use Croma.TestCase, alias_as: R
-  use ExCheck
+  use ExUnitProperties
   require R
 
   defp int2result(i) do
@@ -57,13 +57,13 @@ defmodule Croma.ResultTest do
     assert r == re
   end
 
-  property :sequence do
-    for_all l in list(int()) do
+  property "sequence" do
+    check all l <- list_of(integer()) do
       result = Enum.map(l, &int2result/1) |> R.sequence()
       if Enum.all?(l, &(rem(&1, 2) == 0)) do
-        result == {:ok, l}
+        assert result == {:ok, l}
       else
-        result |> elem(0) == :error
+        assert {:error, _} = result
       end
     end
   end

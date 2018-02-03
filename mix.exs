@@ -25,13 +25,12 @@ defmodule Croma.Mixfile do
 
   defp deps() do
     [
-      {:excheck, "~> 0.5" , only: :test},
-      {:triq   , "~> 1.0" , only: :test},
-      {:coverex, "~> 1.4" , only: :test},
-      {:dialyze, "~> 0.2" , only: :dev},
-      {:earmark, "~> 1.2" , only: :dev},
-      {:ex_doc , "~> 0.16", only: :dev},
-      {:inch_ex, "~> 0.5" , only: :docs},
+      {:stream_data, "~> 0.4" , only: :test},
+      {:coverex    , "~> 1.4" , only: :test},
+      {:dialyze    , "~> 0.2" , only: :dev},
+      {:earmark    , "~> 1.2" , only: :dev},
+      {:ex_doc     , "~> 0.16", only: :dev},
+      {:inch_ex    , "~> 0.5" , only: :docs},
     ]
   end
 
