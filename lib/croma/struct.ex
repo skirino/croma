@@ -2,8 +2,8 @@ defmodule Croma.Struct do
   @moduledoc """
   Utility module to define structs and some helper functions.
 
-  Using this module requires to prepare modules that represent each struct field.
-  Each of per-field module is expected to provide the following members:
+  Using this module requires to prepare type modules for all struct fields.
+  Each of per-field type module is expected to provide the following members:
 
   - required: `@type t`
   - required: `@spec valid?(term) :: boolean`
@@ -18,7 +18,7 @@ defmodule Croma.Struct do
   - This module, `Croma.Struct` itself for nested structs.
       - `:recursive_new?` option may come in handy when constructing a nested struct. See the section below.
 
-  To define a struct, `use` this module with a keyword list:
+  To define a struct, `use` this module with a keyword list where keys are field names and values are type modules:
 
       defmodule S do
         use Croma.Struct, fields: [field1_name: Field1Module, field2_name: Field2Module]
@@ -67,8 +67,8 @@ defmodule Croma.Struct do
 
   When working with structured data (e.g. JSON) from systems with different naming conventions,
   it's convenient to adjust the names to your favorite convention in this layer.
-  You can specify the acceptable naming schemes of data structures to be validated
-  by `:accept_case` option of `use Croma.Struct`.
+  You can specify the acceptable naming schemes of data structures to be converted
+  by `new/1` and `new!/1` using `:accept_case` option of `use Croma.Struct`.
 
   - `nil` (default): Accepts only the given field names.
   - `:lower_camel`: Accepts both the given field names and their lower camel variants.
