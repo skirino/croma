@@ -397,7 +397,7 @@ defmodule Croma.SubtypeOfMap do
       end
 
       # Invoking `module_info/1` automatically compiles and loads the module if necessary.
-      module_flag_pairs = Enum.map([@key_module, @value_module], fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
+      module_flag_pairs = Enum.uniq([@key_module, @value_module]) |> Enum.map(fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
       if Enum.any?(module_flag_pairs, fn {_, has_new1} -> has_new1 end) do
         Enum.each(module_flag_pairs, fn {mod, has_new1} ->
           if has_new1 do
@@ -492,7 +492,7 @@ defmodule Croma.SubtypeOfTuple do
       end
 
       # Invoking `module_info/1` automatically compiles and loads the module if necessary.
-      module_flag_pairs = Enum.map(@elem_modules, fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
+      module_flag_pairs = Enum.uniq(@elem_modules) |> Enum.map(fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
       if Enum.any?(module_flag_pairs, fn {_, has_new1} -> has_new1 end) do
         Enum.each(module_flag_pairs, fn {mod, has_new1} ->
           if has_new1 do
