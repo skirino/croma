@@ -6,7 +6,7 @@ defmodule Croma.Mixfile do
   def project() do
     [
       app:             :croma,
-      version:         "0.9.2",
+      version:         "0.9.3",
       elixir:          "~> 1.4",
       build_embedded:  Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
@@ -29,7 +29,7 @@ defmodule Croma.Mixfile do
       {:coverex    , "~> 1.4" , only: :test},
       {:dialyze    , "~> 0.2" , only: :dev},
       {:earmark    , "~> 1.2" , only: :dev},
-      {:ex_doc     , "~> 0.16", only: :dev},
+      {:ex_doc     , "~> 0.18", only: :dev},
       {:inch_ex    , "~> 0.5" , only: :docs},
     ]
   end
