@@ -7,7 +7,7 @@ defmodule Croma.Mixfile do
     [
       app:             :croma,
       version:         "0.9.3",
-      elixir:          "~> 1.4",
+      elixir:          "~> 1.6",
       build_embedded:  Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       deps:            deps(),
@@ -25,12 +25,12 @@ defmodule Croma.Mixfile do
 
   defp deps() do
     [
-      {:stream_data, "~> 0.4" , only: :test},
-      {:coverex    , "~> 1.4" , only: :test},
-      {:dialyze    , "~> 0.2" , only: :dev},
-      {:earmark    , "~> 1.2" , only: :dev},
-      {:ex_doc     , "~> 0.18", only: :dev},
-      {:inch_ex    , "~> 0.5" , only: :docs},
+      {:stream_data, "~> 0.4"   , only: :test},
+      {:coverex    , "~> 1.4"   , only: :test},
+      {:dialyxir   , "~> 0.5"   , only: :dev},
+      {:earmark    , "~> 1.2"   , only: :dev},
+      {:ex_doc     , "~> 0.18.0", only: :dev},
+      {:inch_ex    , "~> 0.5"   , only: :docs},
     ]
   end
 
