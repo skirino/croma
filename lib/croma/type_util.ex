@@ -3,8 +3,6 @@ defmodule Croma.TypeUtil do
   Utilities to work with internal representation of types.
   """
 
-  alias Kernel.Typespec
-
   @primitive_types [
     :pid,
     :port,
@@ -29,11 +27,11 @@ defmodule Croma.TypeUtil do
 
   @spec resolve_primitive(module, atom, Macro.Env.t) :: {:ok, atom} | :error
   def resolve_primitive(module, name, env) do
-    case Typespec.beam_types(module) do
-      nil -> # No beam file is available
+    case fetch_types(module) do
+      :error -> # No beam file is available
         try do
           [:type, :typep, :opaque]
-          |> Enum.flat_map(&Module.get_attribute(module, &1))
+          |> Enum.flat_map(&fetch_type_info_at_compile_time(module, &1))
           |> Enum.find(&match?({_, {:::, _, [{^name, _, _}, _ast]}, _}, &1))
           |> case do
             nil              -> :error
@@ -42,10 +40,10 @@ defmodule Croma.TypeUtil do
         rescue
           _ -> :error
         end
-      types ->
+      {:ok, types} ->
         case Enum.find(types, &match?({_, {^name, _, _}}, &1)) do
           nil            -> :error
-          {_, type_expr} -> destructure_type_expr(module, Typespec.type_to_ast(type_expr), env)
+          {_, type_expr} -> destructure_type_expr(module, type_to_quoted(type_expr), env)
         end
     end
   end
@@ -73,4 +71,60 @@ defmodule Croma.TypeUtil do
 
   def list_to_type_union([v    ]), do: v
   def list_to_type_union([h | t]), do: {:|, [], [h, list_to_type_union(t)]}
+
+  #
+  # Absorb differences due to Elixir versions
+  #
+  elixir_version    = Version.parse!(System.version())
+  threshold_version = Version.parse!("1.7.0")
+  @use_module_attr_to_store_typespec? Version.compare(elixir_version, threshold_version) == :lt
+
+  if @use_module_attr_to_store_typespec? do
+    defp fetch_types(module) do
+      case Kernel.Typespec.beam_types(module) do
+        nil   -> :error
+        types -> {:ok, types}
+      end
+    end
+  else
+    defp fetch_types(module) do
+      Code.Typespec.fetch_types(module)
+    end
+  end
+
+  if @use_module_attr_to_store_typespec? do
+    defp type_to_quoted(type_expr) do
+      Kernel.Typespec.type_to_ast(type_expr)
+    end
+  else
+    defp type_to_quoted(type_expr) do
+      Code.Typespec.type_to_quoted(type_expr)
+    end
+  end
+
+  if @use_module_attr_to_store_typespec? do
+    def fetch_spec_info_at_compile_time(module) do
+      Module.get_attribute(module, :spec)
+      |> Enum.map(fn {:spec, x, _} -> x end)
+    end
+  else
+    def fetch_spec_info_at_compile_time(module) do
+      {_set, bag} = :elixir_module.data_tables(module)
+      :ets.lookup(bag, :spec)
+      |> Enum.map(fn {:spec, {x, _}} -> x end)
+    end
+  end
+
+  if @use_module_attr_to_store_typespec? do
+    def fetch_type_info_at_compile_time(module, kind) do
+      Module.get_attribute(module, kind)
+    end
+  else
+    def fetch_type_info_at_compile_time(module, kind) do
+      {_set, bag} = :elixir_module.data_tables(module)
+      :ets.lookup(bag, :type)
+      |> Enum.map(fn {:type, x} -> x end)
+      |> Enum.filter(&match?({^kind, _, _}, &1))
+    end
+  end
 end

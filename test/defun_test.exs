@@ -80,8 +80,8 @@ defmodule Croma.DefunTest do
     end
 
     # getter for compile-time typespec information
-    spec = Module.get_attribute(__MODULE__, :spec) |> Macro.escape
-    def typespecs, do: unquote(spec)
+    spec = Croma.TypeUtil.fetch_spec_info_at_compile_time(__MODULE__) |> Macro.escape()
+    def typespecs(), do: unquote(spec)
   end
 
   test "should define function" do
@@ -119,8 +119,7 @@ defmodule Croma.DefunTest do
   end
 
   test "should add typespec" do
-    typespec_codes = M.typespecs
-    |> Enum.map(fn {:spec, expr, _env} -> Macro.to_string(expr) end)
+    typespec_codes = M.typespecs() |> Enum.map(&Macro.to_string/1)
 
     assert "a1() :: String.t()"                                        in typespec_codes
     assert "a2() :: String.t()"                                        in typespec_codes

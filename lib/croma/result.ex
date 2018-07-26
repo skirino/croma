@@ -209,7 +209,7 @@ defmodule Croma.Result do
   """
   defmacro define_bang_version_of(name_arity_pairs) do
     quote bind_quoted: [name_arity_pairs: name_arity_pairs, caller: Macro.escape(__CALLER__)] do
-      specs = Module.get_attribute(__MODULE__, :spec)
+      specs = Croma.TypeUtil.fetch_spec_info_at_compile_time(__MODULE__)
       Enum.each(name_arity_pairs, fn {name, arity} ->
         spec = Enum.find_value(specs, &Croma.Result.Impl.match_and_convert_spec(name, arity, &1, caller))
         if spec do
@@ -228,19 +228,24 @@ defmodule Croma.Result do
 
     def match_and_convert_spec(name, arity, spec, caller_env) do
       case spec do
-        {:spec, {:::, meta1, [{^name, meta2, args}, ret_type]}, _} when length(args) == arity ->
-          make_spec_fun = fn r -> {:::, meta1, [{:"#{name}!", meta2, args}, r]} end
-          case ret_type do
+        {:::, meta1, [{^name, meta2, args}, ret_type]} when length(args) == arity ->
+          convert(name, meta1, meta2, args, ret_type, caller_env)
+        _ ->
+          nil
+      end
+    end
+
+    defp convert(name, meta1, meta2, args, ret_type, caller_env) do
+      make_spec_fun = fn r -> {:::, meta1, [{:"#{name}!", meta2, args}, r]} end
+      case ret_type do
+        {:ok, r} -> make_spec_fun.(r)
+        {:|, _, types} ->
+          Enum.find_value(types, fn
             {:ok, r} -> make_spec_fun.(r)
-            {:|, _, types} ->
-              Enum.find_value(types, fn
-                {:ok, r} -> make_spec_fun.(r)
-                _        -> nil
-              end)
-            {{:., _, [mod_alias, :t]}, _, r} ->
-              if Macro.expand(mod_alias, caller_env) == Croma.Result, do: make_spec_fun.(hd(r)), else: nil
-            _ -> nil
-          end
+            _        -> nil
+          end)
+        {{:., _, [mod_alias, :t]}, _, r} ->
+          if Macro.expand(mod_alias, caller_env) == Croma.Result, do: make_spec_fun.(hd(r)), else: nil
         _ -> nil
       end
     end

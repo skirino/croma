@@ -27,7 +27,7 @@ if Mix.env() == :test do
     @type u :: :a | :b | :c
 
     [:type, :typep, :opaque]
-    |> Enum.flat_map(fn t -> Module.get_attribute(__MODULE__, t) end)
+    |> Enum.flat_map(fn t -> Croma.TypeUtil.fetch_type_info_at_compile_time(__MODULE__, t) end)
     |> Enum.each(fn {_, {:::, _, [{name, _, _} | _]}, _} ->
       t = Croma.TypeUtil.resolve_primitive(__MODULE__, name, __ENV__)
       def unquote(name)(), do: unquote(t)
