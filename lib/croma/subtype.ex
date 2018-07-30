@@ -24,10 +24,10 @@ defmodule Croma.SubtypeOfInt do
     quote bind_quoted: [min: opts[:min], max: opts[:max], default: opts[:default]] do
       @min min
       @max max
-      if !is_nil(@min) && !is_integer(@min), do: raise ":min must be either nil or integer"
-      if !is_nil(@max) && !is_integer(@max), do: raise ":max must be either nil or integer"
-      if is_nil(@min) && is_nil(@max)      , do: raise ":min and/or :max must be given"
-      if @min && @max && @max < @min       , do: raise ":min must be smaller than :max"
+      if !is_nil(@min) and !is_integer(@min), do: raise ":min must be either nil or integer"
+      if !is_nil(@max) and !is_integer(@max), do: raise ":max must be either nil or integer"
+      if is_nil(@min) and is_nil(@max)      , do: raise ":min and/or :max must be given"
+      if @min && @max && @max < @min        , do: raise ":min must be smaller than :max"
 
       cond do
         is_nil(@min) ->
@@ -66,9 +66,9 @@ defmodule Croma.SubtypeOfInt do
 
       if default do
         @default default
-        if !is_integer(@default)           , do: raise ":default must be an integer"
-        if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
-        if !is_nil(@max) && @max < @default, do: raise ":default must be a valid value"
+        if !is_integer(@default)            , do: raise ":default must be an integer"
+        if !is_nil(@min) and @default < @min, do: raise ":default must be a valid value"
+        if !is_nil(@max) and @max < @default, do: raise ":default must be a valid value"
         defun default() :: t, do: @default
       end
     end
@@ -98,10 +98,10 @@ defmodule Croma.SubtypeOfFloat do
     quote bind_quoted: [min: opts[:min], max: opts[:max], default: opts[:default]] do
       @min min
       @max max
-      if !is_nil(@min) && !is_float(@min), do: raise ":min must be either nil or float"
-      if !is_nil(@max) && !is_float(@max), do: raise ":max must be either nil or float"
-      if is_nil(@min) && is_nil(@max)    , do: raise ":min and/or :max must be given"
-      if @min && @max && @max < @min     , do: raise ":min must be smaller than :max"
+      if !is_nil(@min) and !is_float(@min), do: raise ":min must be either nil or float"
+      if !is_nil(@max) and !is_float(@max), do: raise ":max must be either nil or float"
+      if is_nil(@min) and is_nil(@max)    , do: raise ":min and/or :max must be given"
+      if @min && @max && @max < @min      , do: raise ":min must be smaller than :max"
 
       @type t :: float
       cond do
@@ -131,9 +131,9 @@ defmodule Croma.SubtypeOfFloat do
 
       if default do
         @default default
-        if !is_float(@default)             , do: raise ":default must be a float"
-        if !is_nil(@min) && @default < @min, do: raise ":default must be a valid value"
-        if !is_nil(@max) && @max < @default, do: raise ":default must be a valid value"
+        if !is_float(@default)              , do: raise ":default must be a float"
+        if !is_nil(@min) and @default < @min, do: raise ":default must be a valid value"
+        if !is_nil(@max) and @max < @default, do: raise ":default must be a valid value"
         defun default() :: t, do: @default
       end
     end
@@ -275,7 +275,7 @@ defmodule Croma.SubtypeOfList do
       @min min
       @max max
       cond do
-        is_nil(@min) && is_nil(@max) ->
+        is_nil(@min) and is_nil(@max) ->
           defmacrop valid_length?(_), do: true
         is_nil(@min) ->
           defmacrop valid_length?(len) do
@@ -287,30 +287,23 @@ defmodule Croma.SubtypeOfList do
           end
         true ->
           defmacrop valid_length?(len) do
-            quote do: @min <= unquote(len) && unquote(len) <= @max
+            quote do: @min <= unquote(len) and unquote(len) <= @max
           end
       end
 
       defun valid?(term :: any) :: boolean do
-        l when is_list(l) -> valid_length?(length(l)) and Enum.all?(l, fn v -> @mod.valid?(v) end)
-        _                 -> false
+        l when is_list(l) and valid_length?(length(l)) -> Enum.all?(l, fn v -> @mod.valid?(v) end)
+        _                                              -> false
       end
 
       # Invoking `module_info/1` on `mod` automatically compiles and loads the module if necessary.
       if {:new, 1} in @mod.module_info(:exports) do
         defun new(term :: any) :: R.t(t) do
-          l when is_list(l) ->
-            valid_length? = valid_length?(length(l))
+          l when is_list(l) and valid_length?(length(l)) ->
             result = Enum.map(l, &@mod.new/1) |> R.sequence()
             case result do
-              {:ok, _} when valid_length? -> result
-              _ ->
-                # suppress warning on unmatched case clause when both @min and @max are nil (`valid_length?` is always true)
-                # by separating case expressions
-                case result do
-                  {:ok   , _}      -> {:error, {:invalid_value, [__MODULE__]}}
-                  {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
-                end
+              {:ok, _}         -> result
+              {:error, reason} -> {:error, R.ErrorReason.add_context(reason, __MODULE__)}
             end
           _ -> {:error, {:invalid_value, [__MODULE__]}}
         end
@@ -331,8 +324,8 @@ defmodule Croma.SubtypeOfList do
         @default default
         if Enum.any?(@default, fn e -> !@mod.valid?(e) end), do: raise ":default must be a valid list"
         len = length(@default)
-        if !is_nil(@min) && len < @min, do: raise ":default is shorter than the given :min_length #{Integer.to_string(@min)}"
-        if !is_nil(@max) && @max < len, do: raise ":default is longer than the given :max_length #{Integer.to_string(@max)}"
+        if !is_nil(@min) and len < @min, do: raise ":default is shorter than the given :min_length #{Integer.to_string(@min)}"
+        if !is_nil(@max) and @max < len, do: raise ":default is longer than the given :max_length #{Integer.to_string(@max)}"
         defun default() :: t, do: @default
       end
     end
@@ -375,7 +368,7 @@ defmodule Croma.SubtypeOfMap do
       @min min_size
       @max max_size
       cond do
-        is_nil(@min) && is_nil(@max) ->
+        is_nil(@min) and is_nil(@max) ->
           defmacrop valid_size?(_), do: true
         is_nil(@min) ->
           defmacrop valid_size?(size) do
@@ -444,8 +437,8 @@ defmodule Croma.SubtypeOfMap do
         @default default
         if !is_map(@default), do: raise ":default must be a map"
         size = map_size(@default)
-        if !is_nil(@min) && size < @min, do: raise "items in :default is less than the given :min_size #{Integer.to_string(@min)}"
-        if !is_nil(@max) && @max < size, do: raise "items in :default is more than the given :max_size #{Integer.to_string(@max)}"
+        if !is_nil(@min) and size < @min, do: raise "items in :default is less than the given :min_size #{Integer.to_string(@min)}"
+        if !is_nil(@max) and @max < size, do: raise "items in :default is more than the given :max_size #{Integer.to_string(@max)}"
         any_kv_invalid? =
           !Enum.all?(@default, fn {k, v} ->
             @key_module.valid?(k) and @value_module.valid?(v)
