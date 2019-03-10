@@ -39,6 +39,23 @@ defmodule Croma.Result do
 
   @type t(a, b) :: {:ok, a} | {:error, b}
   @type t(a)    :: t(a, any)
+  @type t       :: t(any)
+
+  @doc """
+  Simply checks if the given term is ok- or error-tuple.
+
+  Using this function you can write e.g.
+  `r :: v[Croma.Result.t(integer)]`
+  in your parameter list of `defun` macro to validate `r` is of type `t:t/0`.
+  However note that this function only checks the outmost structure of an argument;
+  2nd value in the 2-tuple won't be validated for the given type parameter
+  (in the above example it won't verify whether `r` contains an `integer` or not).
+  """
+  defun valid?(t :: any) :: boolean do
+    {:ok   , _} -> true
+    {:error, _} -> true
+    _           -> false
+  end
 
   @doc """
   Implementation of `pure` operation of Monad (or Applicative).

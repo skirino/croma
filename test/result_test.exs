@@ -3,6 +3,19 @@ defmodule Croma.ResultTest do
   use ExUnitProperties
   require R
 
+  defmodule V do
+    use Croma
+    defun f(r :: v[R.t(integer)]) :: integer do
+      R.get(r, 0)
+    end
+  end
+
+  test "valid?/1: argument validation in defun" do
+    assert      V.f({:ok, 1}) == 1
+    assert      V.f({:error, :some_reason}) == 0
+    catch_error V.f(:not_a_result)
+  end
+
   defp int2result(i) do
     if rem(i, 2) == 0, do: {:ok, i}, else: {:error, i}
   end
