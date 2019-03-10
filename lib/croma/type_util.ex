@@ -75,40 +75,41 @@ defmodule Croma.TypeUtil do
   #
   # Absorb differences due to Elixir versions
   #
-  @min_version_not_using_module_attr  Version.parse!("1.7.0")
-  @min_version_ets_key_changed        Version.parse!("1.7.4")
-  @elixir_version                     Version.parse!(System.version())
-  @use_module_attr_to_store_typespec? Version.compare(@elixir_version, @min_version_not_using_module_attr) == :lt
+  @elixir_version                      Version.parse!(System.version())
+  min_version_not_using_module_attr  = Version.parse!("1.7.0")
+  use_module_attr_to_store_typespec? = Version.compare(@elixir_version, min_version_not_using_module_attr) == :lt
 
-  if @use_module_attr_to_store_typespec? do
+  if use_module_attr_to_store_typespec? do
     defp fetch_types(module) do
       case Kernel.Typespec.beam_types(module) do
         nil   -> :error
         types -> {:ok, types}
       end
     end
-  else
-    defp fetch_types(module) do
-      Code.Typespec.fetch_types(module)
-    end
-  end
 
-  if @use_module_attr_to_store_typespec? do
     defp type_to_quoted(type_expr) do
       Kernel.Typespec.type_to_ast(type_expr)
     end
-  else
-    defp type_to_quoted(type_expr) do
-      Code.Typespec.type_to_quoted(type_expr)
-    end
-  end
 
-  if @use_module_attr_to_store_typespec? do
     def fetch_spec_info_at_compile_time(module) do
       Module.get_attribute(module, :spec)
       |> Enum.map(fn {:spec, x, _} -> x end)
     end
+
+    def fetch_type_info_at_compile_time(module, kind) do
+      Module.get_attribute(module, kind)
+    end
   else
+    defp fetch_types(module) do
+      Code.Typespec.fetch_types(module)
+    end
+
+    defp type_to_quoted(type_expr) do
+      Code.Typespec.type_to_quoted(type_expr)
+    end
+
+    @min_version_ets_key_changed Version.parse!("1.7.4")
+
     def fetch_spec_info_at_compile_time(module) do
       {_set, bag} = :elixir_module.data_tables(module)
       if Version.compare(@elixir_version, @min_version_ets_key_changed) == :lt do
@@ -120,13 +121,7 @@ defmodule Croma.TypeUtil do
         |> Enum.map(fn {^ets_key, {:spec, x, _}} -> x end)
       end
     end
-  end
 
-  if @use_module_attr_to_store_typespec? do
-    def fetch_type_info_at_compile_time(module, kind) do
-      Module.get_attribute(module, kind)
-    end
-  else
     def fetch_type_info_at_compile_time(module, kind) do
       {_set, bag} = :elixir_module.data_tables(module)
       ets_key =
