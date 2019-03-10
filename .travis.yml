@@ -1,10 +1,20 @@
 language: elixir
-elixir:
-  - 1.6.6
-  - 1.7.3
-otp_release:
-  - 20.3.8.5
-  - 21.1.4
+matrix:
+  include:
+    - elixir: 1.6.6
+      otp_release:
+        - 20.3.8.5
+        - 21.1.4
+    - elixir: 1.7.3
+      otp_release:
+        - 20.3.8.5
+        - 21.1.4
+    - elixir: 1.7.4
+      otp_release: 21.1.4
+    - elixir: 1.8.1
+      otp_release: 21.1.4
+before_script:
+  - kerl list installations
 after_script:
   - MIX_ENV=docs mix deps.get
 script: "MIX_ENV=test mix do deps.get, deps.compile, test --cover"
