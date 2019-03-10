@@ -158,19 +158,19 @@ defmodule Croma.Defun do
 
   defmodule Arg do
     @moduledoc false
-    defstruct [:arg_expr, :type, :default, :guard?, :validate?]
+    defstruct [:arg_expr, :type, :default, :guard?, :validate?, :index]
 
-    def new({:\\, _, [inner_expr, default]}) do
-      %__MODULE__{new(inner_expr) | default: {:some, default}}
+    def new({:\\, _, [inner_expr, default]}, index) do
+      %__MODULE__{new(inner_expr, index) | default: {:some, default}}
     end
-    def new({:::, _, [arg_expr, type_expr]}) do
+    def new({:::, _, [arg_expr, type_expr]}, index) do
       {type_expr2, g_used?, v_used?} = extract_guard_and_validate(type_expr)
       guard?    = g_used? and Application.get_env(:croma, :defun_generate_guard     , true)
       validate? = v_used? and Application.get_env(:croma, :defun_generate_validation, true)
-      %__MODULE__{arg_expr: arg_expr, type: type_expr2, default: :none, guard?: guard?, validate?: validate?}
+      %__MODULE__{arg_expr: arg_expr, type: type_expr2, default: :none, guard?: guard?, validate?: validate?, index: index}
     end
-    def new(arg_expr) do
-      %__MODULE__{arg_expr: arg_expr, type: infer_type(arg_expr), default: :none, guard?: false, validate?: false}
+    def new(arg_expr, index) do
+      %__MODULE__{arg_expr: arg_expr, type: infer_type(arg_expr), default: :none, guard?: false, validate?: false, index: index}
     end
 
     defp extract_guard_and_validate({{:., _, [Access, :get]}, _, [{:g, _, _}, inner_expr]}), do: {inner_expr, true , false}
@@ -195,26 +195,73 @@ defmodule Croma.Defun do
       end
     end
 
-    def as_var(%Arg{arg_expr: arg_expr}) do
+    defp var_name(arg_expr) do
       case arg_expr do
-        {name, _, context}               when is_atom(context) -> Macro.var(name, nil)
-        {:=, _, [{name, _, context}, _]} when is_atom(context) -> Macro.var(name, nil)
-        {:=, _, [_, {name, _, context}]} when is_atom(context) -> Macro.var(name, nil)
-        _ -> nil
+        {name, _, context}               when is_atom(context) -> name
+        {:=, _, [{name, _, context}, _]} when is_atom(context) -> name
+        {:=, _, [_, {name, _, context}]} when is_atom(context) -> name
+        _                                                      -> nil
       end
     end
-    defp as_var!(%Arg{arg_expr: arg_expr} = arg) do
+
+    def as_var(%__MODULE__{arg_expr: arg_expr}) do
+      case var_name(arg_expr) do
+        nil  -> nil
+        name -> Macro.var(name, nil)
+      end
+    end
+    defp as_var!(%__MODULE__{arg_expr: arg_expr} = arg) do
       as_var(arg) || raise "parameter `#{Macro.to_string(arg_expr)}` is not a var"
     end
 
-    def guard_expr(%Arg{guard?: false}, _), do: nil
-    def guard_expr(%Arg{guard?: true, type: type} = arg, caller) do
-      Croma.Guard.make(type, as_var!(arg), caller)
+    def make_arg_expr(%__MODULE__{arg_expr: arg_expr, guard?: g?, validate?: v?, index: index}) do
+      case var_name(arg_expr) |> Atom.to_string() do
+        "_" <> _ when g? or v? ->
+          var2 = Macro.var(:"croma_arg#{index}", nil)
+          quote do
+            unquote(arg_expr) = unquote(var2)
+          end
+        _ ->
+          arg_expr
+      end
     end
 
-    def validation_expr(%Arg{validate?: false}, _), do: nil
-    def validation_expr(%Arg{validate?: true, type: type} = arg, caller) do
-      Croma.Validation.make(type, as_var!(arg), caller)
+    def reassignment_expr(%__MODULE__{guard?: g?, validate?: v?} = arg) do
+      # To enable compiler warning about unused function parameter,
+      # we re-assign the variable to the same name after guard/validation check.
+      if g? or v? do
+        case as_var(arg) do
+          nil                    -> nil
+          {var_name, _, _} = var ->
+            if Atom.to_string(var_name) |> String.starts_with?("_") do
+              nil
+            else
+              quote do
+                unquote(var) = unquote(var)
+              end
+            end
+        end
+      else
+        nil
+      end
+    end
+
+    def guard_expr(%__MODULE__{guard?: false}, _), do: nil
+    def guard_expr(%__MODULE__{guard?: true, type: type, index: index} = arg, caller) do
+      {var_name, _, _} = var = as_var!(arg)
+      case Atom.to_string(var_name) do
+        "_" <> _ -> Croma.Guard.make(type, Macro.var(:"croma_arg#{index}", nil), caller)
+        _        -> Croma.Guard.make(type, var, caller)
+      end
+    end
+
+    def validation_expr(%__MODULE__{validate?: false}, _), do: nil
+    def validation_expr(%__MODULE__{validate?: true, type: type, index: index} = arg, caller) do
+      {var_name, _, _} = var = as_var!(arg)
+      case Atom.to_string(var_name) do
+        "_" <> _ -> Croma.Validation.make(type, Macro.var(:"croma_arg#{index}", nil), caller)
+        _        -> Croma.Validation.make(type, var, caller)
+      end
     end
   end
 
@@ -263,7 +310,7 @@ defmodule Croma.Defun do
   defp defun_impl(def_or_defp, {fname, env, args0}, ret0, type_params, block, caller) do
     args = case args0 do
       context when is_atom(context) -> [] # function definition without parameter list
-      _ -> Enum.map(args0, &Arg.new/1)
+      _ -> Enum.with_index(args0) |> Enum.map(fn {arg, i} -> Arg.new(arg, i) end)
     end
     ret = Ret.new(ret0)
     {:__block__, [], [
@@ -287,7 +334,7 @@ defmodule Croma.Defun do
 
   defp bodyless_function(def_or_defp, fname, env, args) do
     arg_exprs = Enum.with_index(args) |> Enum.map(fn {%Arg{default: default} = arg, index} ->
-      var = Arg.as_var(arg) || Macro.var(:"a#{Integer.to_string(index)}", nil)
+      var = Arg.as_var(arg) || Macro.var(:"arg#{Integer.to_string(index)}", nil)
       case default do
         :none            -> var
         {:some, default} -> {:\\, [], [var, default]}
@@ -330,7 +377,7 @@ defmodule Croma.Defun do
   end
 
   defp call_expr_with_guard(fname, env, args, caller) do
-    arg_exprs = Enum.map(args, &(&1.arg_expr)) |> reset_hygienic_counter()
+    arg_exprs = Enum.map(args, &Arg.make_arg_expr/1) |> reset_hygienic_counter()
     guard_exprs = Enum.map(args, &Arg.guard_expr(&1, caller)) |> Enum.reject(&is_nil/1)
     if Enum.empty?(guard_exprs) do
       {fname, env, arg_exprs}
@@ -341,13 +388,15 @@ defmodule Croma.Defun do
   end
 
   defp body_with_validation(args, block, caller) do
-    exprs = case reset_hygienic_counter(block) do
-      {:__block__, _, exprs} -> exprs
-      nil                    -> []
-      expr                   -> [expr]
-    end
     validation_exprs = Enum.map(args, &Arg.validation_expr(&1, caller)) |> Enum.reject(&is_nil/1)
-    case validation_exprs ++ exprs do
+    reassignment_exprs = Enum.map(args, &Arg.reassignment_expr/1) |> Enum.reject(&is_nil/1)
+    exprs =
+      case reset_hygienic_counter(block) do
+        {:__block__, _, exprs} -> exprs
+        nil                    -> []
+        expr                   -> [expr]
+      end
+    case validation_exprs ++ reassignment_exprs ++ exprs do
       []     -> nil
       [expr] -> expr
       exprs  -> {:__block__, [], exprs}

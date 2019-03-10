@@ -164,7 +164,7 @@ defmodule Croma.DefunTest do
     defun b3(b :: g[<<>>]) :: <<>>, do: b
     defun b4(b :: g[<<_ :: _*8>>]) :: <<>>, do: b
 
-    defun f(d :: g[map], p :: g[pos_integer], n :: g[number] \\ 0.5) :: :ok, do: :ok
+    defun f(_d :: g[map], _p :: g[pos_integer], _n :: g[number] \\ 0.5) :: :ok, do: :ok
   end
 
   test "should define function with guard" do
