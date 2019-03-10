@@ -75,9 +75,10 @@ defmodule Croma.TypeUtil do
   #
   # Absorb differences due to Elixir versions
   #
-  elixir_version    = Version.parse!(System.version())
-  threshold_version = Version.parse!("1.7.0")
-  @use_module_attr_to_store_typespec? Version.compare(elixir_version, threshold_version) == :lt
+  @min_version_not_using_module_attr  Version.parse!("1.7.0")
+  @min_version_ets_key_changed        Version.parse!("1.7.4")
+  @elixir_version                     Version.parse!(System.version())
+  @use_module_attr_to_store_typespec? Version.compare(@elixir_version, @min_version_not_using_module_attr) == :lt
 
   if @use_module_attr_to_store_typespec? do
     defp fetch_types(module) do
@@ -110,8 +111,14 @@ defmodule Croma.TypeUtil do
   else
     def fetch_spec_info_at_compile_time(module) do
       {_set, bag} = :elixir_module.data_tables(module)
-      :ets.lookup(bag, :spec)
-      |> Enum.map(fn {:spec, {x, _}} -> x end)
+      if Version.compare(@elixir_version, @min_version_ets_key_changed) == :lt do
+        :ets.lookup(bag, :spec)
+        |> Enum.map(fn {:spec, {x, _}} -> x end)
+      else
+        ets_key = {:accumulate, :spec}
+        :ets.lookup(bag, ets_key)
+        |> Enum.map(fn {^ets_key, {:spec, x, _}} -> x end)
+      end
     end
   end
 
@@ -122,8 +129,14 @@ defmodule Croma.TypeUtil do
   else
     def fetch_type_info_at_compile_time(module, kind) do
       {_set, bag} = :elixir_module.data_tables(module)
-      :ets.lookup(bag, :type)
-      |> Enum.map(fn {:type, x} -> x end)
+      ets_key =
+        if Version.compare(@elixir_version, @min_version_ets_key_changed) == :lt do
+          :type
+        else
+          {:accumulate, kind}
+        end
+      :ets.lookup(bag, ets_key)
+      |> Enum.map(fn {^ets_key, x} -> x end)
       |> Enum.filter(&match?({^kind, _, _}, &1))
     end
   end
