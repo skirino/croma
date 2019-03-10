@@ -190,7 +190,8 @@ defmodule Croma.Defun do
         expr when is_atom(expr)                     -> expr
         expr when is_integer(expr)                  -> quote do: integer
         expr when is_float(expr)                    -> quote do: float
-        expr when is_binary(expr)                   -> quote do: String.t
+        expr when is_binary(expr)                   -> if String.valid?(expr), do: (quote do: String.t), else: (quote do: binary)
+        _                                           -> quote do: any
       end
     end
 
@@ -202,7 +203,7 @@ defmodule Croma.Defun do
         _ -> nil
       end
     end
-    def as_var!(%Arg{arg_expr: arg_expr} = arg) do
+    defp as_var!(%Arg{arg_expr: arg_expr} = arg) do
       as_var(arg) || raise "parameter `#{Macro.to_string(arg_expr)}` is not a var"
     end
 
@@ -329,7 +330,7 @@ defmodule Croma.Defun do
   end
 
   defp call_expr_with_guard(fname, env, args, caller) do
-    arg_exprs = Enum.map(args, &(&1.arg_expr)) |> reset_hygienic_counter
+    arg_exprs = Enum.map(args, &(&1.arg_expr)) |> reset_hygienic_counter()
     guard_exprs = Enum.map(args, &Arg.guard_expr(&1, caller)) |> Enum.reject(&is_nil/1)
     if Enum.empty?(guard_exprs) do
       {fname, env, arg_exprs}
