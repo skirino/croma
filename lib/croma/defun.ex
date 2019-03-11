@@ -5,6 +5,7 @@ defmodule Croma.Defun do
 
   @doc """
   Defines a function together with its typespec.
+
   This provides a lighter-weight syntax for functions with type specifications and functions with multiple clauses.
 
   ## Example
@@ -135,6 +136,7 @@ defmodule Croma.Defun do
 
   @doc """
   Defines a private function together with its typespec.
+
   See `defun/2` for usage of this macro.
   """
   defmacro defunp({:::, _, [fun, ret]}, [do: block]) do
@@ -146,6 +148,7 @@ defmodule Croma.Defun do
 
   @doc """
   Defines a unit-testable private function together with its typespec.
+
   See `defun/2` for usage of this macro.
   See also `Croma.Defpt.defpt/2`.
   """
@@ -215,6 +218,9 @@ defmodule Croma.Defun do
     end
 
     def make_arg_expr(%__MODULE__{arg_expr: arg_expr, guard?: g?, validate?: v?, index: index}) do
+      # For an underscored function parameter with guard/validation,
+      # we have to bind it to another variable and use that variable in guard/validation
+      # expression in order not to touch the underscored parameter.
       case var_name(arg_expr) |> Atom.to_string() do
         "_" <> _ when g? or v? ->
           var2 = Macro.var(:"croma_arg#{index}", nil)

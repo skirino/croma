@@ -13,6 +13,4 @@ matrix:
       otp_release: 21.1.4
     - elixir: 1.8.1
       otp_release: 21.1.4
-after_script:
-  - MIX_ENV=docs mix deps.get
 script: "MIX_ENV=test mix do deps.get, deps.compile, test --cover"
