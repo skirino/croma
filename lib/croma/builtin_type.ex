@@ -44,9 +44,8 @@ Croma.BuiltinType.type_infos() |> Enum.each(fn {mod, type_name, type_expr, guard
     @doc """
     Simply checks the argument's type using `#{Macro.to_string(guard_expr)}`.
     """
-    defun valid?(value :: term) :: boolean do
-      x when unquote(guard_expr) -> true
-      _                          -> false
+    defun valid?(x :: term) :: boolean do
+      unquote(guard_expr)
     end
   end
 end)
