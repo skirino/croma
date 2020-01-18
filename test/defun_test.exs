@@ -73,7 +73,7 @@ defmodule Croma.DefunTest do
 
     # functions without explicit parameter type
     defun g1(%{a: a} = m, [b], {:ok, {"s"} = t}) :: integer do
-      a + Map.size(m) + b + tuple_size(t)
+      a + map_size(m) + b + tuple_size(t)
     end
     defun g2(%Regex{} = r, s :: g[String.t]) :: boolean do
       s =~ r
