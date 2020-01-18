@@ -173,18 +173,20 @@ defmodule Croma.Struct do
 
   @doc false
   def fields_with_accept_case(field_mod_pairs, accept_case) do
-    f = case accept_case do
-      nil          -> fn a -> a end
-      :snake       -> &Macro.underscore/1
-      :lower_camel -> &lower_camelize/1
-      :upper_camel -> &Macro.camelize/1
-      :capital     -> &String.upcase/1
-      _            -> raise ":accept_case option must be :lower_camel, :upper_camel, :snake or :capital"
-    end
-    fields2 = Enum.map(field_mod_pairs, fn {key, mod} ->
-      key2 = Atom.to_string(key) |> f.() |> String.to_atom()
-      {key, Enum.uniq([key, key2]), mod}
-    end)
+    f =
+      case accept_case do
+        nil          -> fn a -> a end
+        :snake       -> &Macro.underscore/1
+        :lower_camel -> &lower_camelize/1
+        :upper_camel -> &Macro.camelize/1
+        :capital     -> &String.upcase/1
+        _            -> raise ":accept_case option must be :lower_camel, :upper_camel, :snake or :capital"
+      end
+    fields2 =
+      Enum.map(field_mod_pairs, fn {key, mod} ->
+        key2 = Atom.to_string(key) |> f.() |> String.to_atom()
+        {key, Enum.uniq([key, key2]), mod}
+      end)
     accepted_keys = Enum.flat_map(fields2, fn {_, keys, _} -> keys end)
     if length(accepted_keys) != length(Enum.uniq(accepted_keys)) do
       raise "field names are not unique"
