@@ -32,7 +32,7 @@ defmodule Croma.BuiltinType do
   end
 end
 
-Croma.BuiltinType.type_infos |> Enum.each(fn {mod, type_name, type_expr, guard_expr} ->
+Croma.BuiltinType.type_infos() |> Enum.each(fn {mod, type_name, type_expr, guard_expr} ->
   defmodule mod do
     @moduledoc """
     Module that represents the Elixir's built-in #{type_name} type.
