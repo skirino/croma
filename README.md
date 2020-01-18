@@ -118,7 +118,7 @@ Elixir macro utilities to make type-based programming easier.
         - Tries to convert a given value to a value that belongs to this type.
           Useful e.g. when converting a JSON-parsed value into an Elixir value.
     - `default() :: t`
-        - Default value of the type. Used as default values of struct fields.
+        - Default value of the type. Must be a constant value. Used as default values of struct fields.
 
   `@type t` and `valid?/1` are mandatory as they are the raison d'etre of a type module,
   but the others can be omitted.
