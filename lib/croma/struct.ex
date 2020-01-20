@@ -203,7 +203,9 @@ defmodule Croma.Struct do
     end
   end
 
-  # This is named as `new_impl2/4` just for historical reason (there had been `new_impl/4`).
+  #
+  # Kept for ABI backward compatibility; will be removed in a future version.
+  #
   @doc false
   def new_impl2(struct_mod, struct_fields_with_defaults, dict, recursive?) when is_list(dict) or is_map(dict) do
     Enum.map(struct_fields_with_defaults, fn {field, fields_to_fetch, field_mod, default} ->
@@ -235,18 +237,52 @@ defmodule Croma.Struct do
   defp evaluate_existing_field(mod, value, field, false), do: wrap_if_valid(value, mod, field)
   defp evaluate_existing_field(mod, value, field, true ), do: wrap_if_valid(value, mod, field) |> R.or_else(try_new1_with_given_value(value, mod, field))
 
-  defp wrap_if_valid(value, mod, field) do
-    case mod.valid?(value) do
-      true  -> {:ok, value}
-      false -> {:error, {:invalid_value, [{mod, field}]}}
-    end
-  end
-
   defp try_new1_with_given_value(value, mod, field) do
     try do
       mod.new(value)
     rescue
       _ -> {:error, {:invalid_value, [{mod, field}]}}
+    end
+  end
+  #
+  # End of functions kept for ABI backward compatibility.
+  #
+
+  @doc false
+  def new_impl(struct_mod, struct_fields_with_attrs, dict) when is_list(dict) or is_map(dict) do
+    Enum.map(struct_fields_with_attrs, fn {field, fields_to_fetch, field_mod, default, has_new1?} ->
+      case dict_fetch2(dict, fields_to_fetch) do
+        {:ok, v1} ->
+          case has_new1? do
+            true  -> field_mod.new(v1)
+            false -> wrap_if_valid(v1, field_mod, field)
+          end
+          |> case do
+            {:ok, v2}                               -> {:ok, {field, v2}}
+            {:error, {reason, [^field_mod | mods]}} -> {:error, {reason, [{field_mod, field} | mods]}}
+            {:error, reason}                        -> {:error, reason}
+          end
+        :error ->
+          case default do
+            {:ok, d} -> {:ok, {field, d}}
+            :error   -> {:error, {:value_missing, [{field_mod, field}]}}
+          end
+      end
+    end)
+    |> R.sequence()
+    |> case do
+      {:ok, kvs}       -> {:ok, struct_mod.__struct__(kvs)}
+      {:error, reason} -> {:error, R.ErrorReason.add_context(reason, struct_mod)}
+    end
+  end
+  def new_impl(mod, _struct_fields_with_attrs, _not_a_dict) do
+    {:error, {:invalid_value, [mod]}}
+  end
+
+  defp wrap_if_valid(value, mod, field) do
+    case mod.valid?(value) do
+      true  -> {:ok, value}
+      false -> {:error, {:invalid_value, [{mod, field}]}}
     end
   end
 
@@ -300,9 +336,15 @@ defmodule Croma.Struct do
         end)
       field_default_pairs = Croma.Struct.field_default_value_pairs(fields)
 
-      @croma_struct_field_mod_pairs      Enum.map(fields, fn {f, {m, _}} -> {f, m} end)
-      @croma_struct_fields               Croma.Struct.fields_with_accept_case(@croma_struct_field_mod_pairs, opts[:accept_case])
-      @croma_struct_fields_with_defaults Enum.zip(@croma_struct_fields, field_default_pairs) |> Enum.map(fn {{f, fs, m}, {f, d}} -> {f, fs, m, d} end)
+      @croma_struct_field_mod_pairs   Enum.map(fields, fn {f, {m, _}} -> {f, m} end)
+      @croma_struct_fields            Croma.Struct.fields_with_accept_case(@croma_struct_field_mod_pairs, opts[:accept_case])
+      @croma_struct_fields_with_attrs (
+        Enum.zip(@croma_struct_fields, field_default_pairs)
+        |> Enum.map(fn {{f, fs, m}, {f, d}} ->
+          has_new1? = {:new, 1} in m.module_info(:exports)
+          {f, fs, m, d, has_new1?}
+        end)
+      )
 
       @enforce_keys Enum.filter(field_default_pairs, &match?({_, :error}, &1)) |> Enum.map(fn {f, _} -> f end)
       defstruct (
@@ -313,34 +355,20 @@ defmodule Croma.Struct do
       )
       @type t :: %__MODULE__{unquote_splicing(Croma.Struct.field_type_pairs(@croma_struct_field_mod_pairs))}
 
-      if opts[:recursive_new?] do
-        @doc """
-        Creates a new instance of #{inspect(__MODULE__)} by using the given `dict`.
+      @doc """
+      Creates a new instance of #{inspect(__MODULE__)} by using the given `dict`.
 
-        Returns `{:ok, valid_struct}` or `{:error, reason}`.
+      Returns `{:ok, valid_struct}` or `{:error, reason}`.
 
-        The values in the `dict` are validated by each field's `valid?/1` function.
-        If the value was invalid, it will be passed to `new/1` of the field
+      The values in the `dict` are validated by each field's `valid?/1` function.
+      If the value was invalid, it will be passed to `new/1` of the field
 
-        For missing fields, followings will be tried:
-        - `default/0` of each field type
-        - `new/1` of each field type, with empty map as input
-        """
-        defun new(dict :: term) :: R.t(t) do
-          Croma.Struct.new_impl2(__MODULE__, @croma_struct_fields_with_defaults, dict, true)
-        end
-      else
-        @doc """
-        Creates a new instance of #{inspect(__MODULE__)} by using the given `dict`.
-
-        For missing fields, `default/0` of each field type will be used.
-
-        Returns `{:ok, valid_struct}` or `{:error, reason}`.
-        The values in the `dict` are validated by each field's `valid?/1` function.
-        """
-        defun new(dict :: term) :: R.t(t) do
-          Croma.Struct.new_impl2(__MODULE__, @croma_struct_fields_with_defaults, dict, false)
-        end
+      For missing fields, followings will be tried:
+      - `default/0` of each field type
+      - `new/1` of each field type, with empty map as input
+      """
+      defun new(dict :: term) :: R.t(t) do
+        Croma.Struct.new_impl(__MODULE__, @croma_struct_fields_with_attrs, dict)
       end
 
       @doc """
