@@ -160,14 +160,14 @@ defmodule Croma.StructTest do
   end
 
   defmodule S7 do
-    use Croma.Struct, fields: [struct_field: S6], recursive_new?: true
+    use Croma.Struct, fields: [struct_field: S6]
   end
 
   defmodule S8 do
-    use Croma.Struct, fields: [bool_field: Croma.Boolean, struct_field: S6], recursive_new?: true
+    use Croma.Struct, fields: [bool_field: Croma.Boolean, struct_field: S6]
   end
 
-  test "Croma.Struct with recursive_new?" do
+  test "Croma.Struct with fields' new/1 defined" do
     assert S7.new( [ struct_field:     [ int_field:    1]]) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
     assert S7.new(%{"struct_field" => %{"int_field" => 1}}) == {:ok, %S7{struct_field: %S6{int_field: 1}}}
     assert S7.new(%{"struct_field" => %{}}                ) == {:ok, %S7{struct_field: %S6{int_field: 0}}}
@@ -185,10 +185,10 @@ defmodule Croma.StructTest do
     defmodule A do
       use Croma.SubtypeOfAtom, values: [:a, :b]
     end
-    use Croma.Struct, recursive_new?: true, fields: [f: A]
+    use Croma.Struct, fields: [f: A]
   end
 
-  test "Croma.Struct with `recursive_new?: true` and `field module with new/1` and value_missing" do
+  test "Croma.Struct having field with `new/1` and value_missing" do
     assert S9.new([]) == {:error, {:value_missing, [S9, {S9.A, :f}]}}
   end
 
@@ -231,5 +231,19 @@ defmodule Croma.StructTest do
         use Croma.Struct, fields: [i: {Croma.Integer, [default: 0, no_default?: true]}]
       end
     )
+  end
+
+  defmodule S13 do
+    import Croma.TypeGen
+    use Croma.Struct, fields: [
+      f1: {union([fixed(:unset), fixed(nil), Croma.Integer]), [default: :unset]},
+      f2: {union([fixed(:unset), nilable(Croma.Integer)]), [default: :unset]},
+    ]
+  end
+
+  test "Croma.Struct with default :unset and nilable field" do
+    assert S13.new(%{                }) == {:ok, %S13{f1: :unset, f2: :unset}}
+    assert S13.new(%{f1: nil, f2: nil}) == {:ok, %S13{f1: nil   , f2: nil   }}
+    assert S13.new(%{f1: 1  , f2: 2  }) == {:ok, %S13{f1: 1     , f2: 2     }}
   end
 end
