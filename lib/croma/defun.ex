@@ -133,6 +133,9 @@ defmodule Croma.Defun do
   defmacro defun({:when, _, [{:::, _, [fun, ret]}, type_params]}, [do: block]) do
     defun_impl(:def, fun, ret, type_params, block, __CALLER__)
   end
+  defmacro defun(_, _) do
+    raise %SyntaxError{description: "syntax error in usage of defun", file: __CALLER__.file, line: __CALLER__.line}
+  end
 
   @doc """
   Defines a private function together with its typespec.
@@ -144,6 +147,9 @@ defmodule Croma.Defun do
   end
   defmacro defunp({:when, _, [{:::, _, [fun, ret]}, type_params]}, [do: block]) do
     defun_impl(:defp, fun, ret, type_params, block, __CALLER__)
+  end
+  defmacro defunp(_, _) do
+    raise %SyntaxError{description: "syntax error in usage of defunp", file: __CALLER__.file, line: __CALLER__.line}
   end
 
   @doc """
@@ -157,6 +163,9 @@ defmodule Croma.Defun do
   end
   defmacro defunpt({:when, _, [{:::, _, [fun, ret]}, type_params]}, [do: block]) do
     defun_impl(:defpt, fun, ret, type_params, block, __CALLER__)
+  end
+  defmacro defunpt(_, _) do
+    raise %SyntaxError{description: "syntax error in usage of defunpt", file: __CALLER__.file, line: __CALLER__.line}
   end
 
   defmodule Arg do
