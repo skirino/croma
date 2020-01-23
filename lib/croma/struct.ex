@@ -107,11 +107,11 @@ defmodule Croma.Struct do
   value where `valid?/1` evaluates to `false`; it tries to convert that value into a
   valid form.
   Most notable example of this behaviour is that `new/1` accepts not only atom-keyed
-  maps but also string-keyed maps.
+  maps but also string-keyed maps, although structs are atom-keyed maps.
 
   ### How it works
 
-  `new/1` tries to get valid values for all struct field from the given map or keyword list.
+  `new/1` tries to get valid values for all struct fields from the given map or keyword list.
   For each field of the struct, a value is computed as follows:
 
   - If a value is not found for a field,
@@ -121,7 +121,7 @@ defmodule Croma.Struct do
       - If the module for the field does not export `new/1`, the found value is instead
         validated with `valid?/1`.
 
-  If a valid value cannot be computed for any of the struct fields, `new/1` returns an error.
+  When no valid value can be obtained for any of the struct fields, `new/1` returns an error.
   Note that the usage of field modules' `new/1` enables to construct arbitrarily nested
   data structure in a recursive manner.
 
@@ -389,14 +389,14 @@ defmodule Croma.Struct do
       @doc """
       Creates a new instance of #{inspect(__MODULE__)} by using the given `dict`.
 
-      Returns `{:ok, valid_struct}` or `{:error, reason}`.
+      Values associated with the struct field names are fetched from the given `dict`
+      and then validated/converted with `valid?/1`/`new/1`.
+      For missing fields default values (if any) are used.
 
-      The values in the `dict` are validated by each field's `valid?/1` function.
-      If the value was invalid, it will be passed to `new/1` of the field
+      Returns `{:ok, valid_struct}` when all fields are filled with valid values.
+      Returns `{:error, reason}` if any error occurs (invalid value or no value is available).
 
-      For missing fields, followings will be tried:
-      - `default/0` of each field type
-      - `new/1` of each field type, with empty map as input
+      See also moduledoc of `Croma.Struct`.
       """
       defun new(dict :: term) :: R.t(t) do
         Croma.Struct.new_impl(__MODULE__, @croma_struct_fields_with_attrs, dict)
