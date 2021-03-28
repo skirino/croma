@@ -7,7 +7,7 @@ Elixir macro utilities to make type-based programming easier.
 
 [![Hex.pm](http://img.shields.io/hexpm/v/croma.svg)](https://hex.pm/packages/croma)
 [![Hex.pm](http://img.shields.io/hexpm/dt/croma.svg)](https://hex.pm/packages/croma)
-[![Build Status](https://travis-ci.org/skirino/croma.svg)](https://travis-ci.org/skirino/croma)
+[![Build Status](https://travis-ci.com/skirino/croma.svg)](https://travis-ci.com/skirino/croma)
 [![Coverage Status](https://coveralls.io/repos/github/skirino/croma/badge.svg?branch=master)](https://coveralls.io/github/skirino/croma?branch=master)
 
 ## Usage
