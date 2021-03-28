@@ -74,6 +74,7 @@ defmodule Croma.SubtypeTest do
     refute F3.valid?( 1.6)
 
     refute F1.valid?(nil)
+    refute F1.valid?(0  )
     refute F1.valid?([] )
   end
 
@@ -88,6 +89,49 @@ defmodule Croma.SubtypeTest do
     assert      F2.max() == 10.0
     assert      F3.min() == 0.0
     assert      F3.max() == 1.5
+  end
+
+  defmodule N1 do
+    use Croma.SubtypeOfNumber, min: -5.0
+  end
+  defmodule N2 do
+    use Croma.SubtypeOfNumber, max: 10.0, default: 1
+  end
+  defmodule N3 do
+    use Croma.SubtypeOfNumber, min: 0.0, max: 1.5, default: 0.5
+  end
+
+  test "Croma.SubtypeOfNumber: valid?/1" do
+    refute N1.valid?(-5.1)
+    assert N1.valid?(-5.0)
+    assert N1.valid?(-5  )
+
+    assert N2.valid?(10  )
+    assert N2.valid?(10.0)
+    refute N2.valid?(10.1)
+
+    refute N3.valid?(-0.1)
+    assert N3.valid?( 0  )
+    assert N3.valid?( 0.0)
+    assert N3.valid?( 1.5)
+    refute N3.valid?( 1.6)
+
+    assert N1.valid?( 0  )
+    refute N1.valid?(nil)
+    refute N1.valid?([] )
+  end
+
+  test "Croma.SubtypeOfNumber: default/0" do
+    catch_error N1.default()
+    assert      N2.default() == 1
+    assert      N3.default() == 0.5
+
+    assert      N1.min() == -5.0
+    catch_error N1.max()
+    catch_error N2.min()
+    assert      N2.max() == 10.0
+    assert      N3.min() == 0.0
+    assert      N3.max() == 1.5
   end
 
   defmodule S1 do
