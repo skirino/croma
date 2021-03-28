@@ -119,7 +119,13 @@ defmodule Croma.DefunTest do
   end
 
   test "should add typespec" do
-    typespec_codes = M.typespecs() |> Enum.map(&Macro.to_string/1)
+    typespec_codes =
+      M.typespecs()
+      |> Macro.prewalk(fn
+        {name, meta, args} -> {name, Keyword.put(meta, :no_parens, false), args} # `:no_parens` depends on Elixir version; here we always use parens for string comparison
+        other_expr         -> other_expr
+      end)
+      |> Enum.map(&Macro.to_string/1)
 
     assert "a1() :: String.t()"                                        in typespec_codes
     assert "a2() :: String.t()"                                        in typespec_codes
