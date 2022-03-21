@@ -91,6 +91,23 @@ defmodule Croma.SubtypeTest do
     assert      F3.max() == 1.5
   end
 
+  defmodule F4 do
+    use Croma.SubtypeOfFloatWithConversionFromInt, min: 0.0, max: 3.0, default: 0.0
+  end
+
+  test "Croma.SubtypeOfFloatWithConversionFromInt" do
+    assert F4.min() == 0.0
+    assert F4.max() == 3.0
+    assert F4.default() == 0.0
+
+    assert F4.new(0.0) == {:ok, 0.0}
+    assert F4.new(3.0) == {:ok, 3.0}
+    assert F4.new(-1.0) == {:error, {:invalid_value, [F4]}}
+    assert F4.new(0) == {:ok, 0.0}
+    assert F4.new(3) == {:ok, 3.0}
+    assert F4.new(-1) == {:error, {:invalid_value, [F4]}}
+  end
+
   defmodule N1 do
     use Croma.SubtypeOfNumber, min: -5.0
   end
