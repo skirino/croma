@@ -1,5 +1,6 @@
 import Croma.Defun
 alias Croma.Result, as: R
+alias Croma.New1Existence
 
 defmodule Croma.SubtypeOfInt do
   @moduledoc """
@@ -398,8 +399,9 @@ defmodule Croma.SubtypeOfList do
         _                                              -> false
       end
 
-      # Invoking `module_info/1` on `mod` automatically compiles and loads the module if necessary.
-      if {:new, 1} in @mod.module_info(:exports) do
+      New1Existence.store_mod_fun_args_to_evaluate(__MODULE__, {New1Existence, :has_new1?, [@mod]})
+
+      if New1Existence.has_new1?(@mod, __MODULE__) do
         defun new(term :: any) :: R.t(t) do
           l when is_list(l) and valid_length?(length(l)) ->
             result = Enum.map(l, &@mod.new/1) |> R.sequence()
@@ -458,6 +460,24 @@ defmodule Croma.SubtypeOfMap do
       end
   """
 
+  @doc false
+  @spec check_if_children_have_new1(module, module, module | nil) :: {[{module, boolean}], boolean}
+  def check_if_children_have_new1(key_mod, value_mod, mod_being_compiled \\ nil) do
+    module_flag_pairs =
+      [key_mod, value_mod]
+      |> Enum.uniq()
+      |> Enum.map(fn m -> {m, New1Existence.has_new1?(m, mod_being_compiled)} end)
+    defines_new1? = Enum.any?(module_flag_pairs, fn {_, has_new1?} -> has_new1? end)
+    {module_flag_pairs, defines_new1?}
+  end
+
+  @doc false
+  @spec defines_new1?(module, module) :: boolean
+  def defines_new1?(key_mod, value_mod) do
+    {_, defines_new1?} = check_if_children_have_new1(key_mod, value_mod)
+    defines_new1?
+  end
+
   defmacro __using__(opts) do
     quote bind_quoted: [key_module: opts[:key_module], value_module: opts[:value_module], min_size: opts[:min_size], max_size: opts[:max_size], default: opts[:default]] do
       @key_module   key_module
@@ -491,9 +511,10 @@ defmodule Croma.SubtypeOfMap do
         _                                             -> false
       end
 
-      # Invoking `module_info/1` automatically compiles and loads the module if necessary.
-      module_flag_pairs = Enum.uniq([@key_module, @value_module]) |> Enum.map(fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
-      if Enum.any?(module_flag_pairs, fn {_, has_new1} -> has_new1 end) do
+      New1Existence.store_mod_fun_args_to_evaluate(__MODULE__, {Croma.SubtypeOfMap, :defines_new1?, [@key_module, @value_module]})
+      {module_flag_pairs, defines_new1?} = Croma.SubtypeOfMap.check_if_children_have_new1(@key_module, @value_module, __MODULE__)
+
+      if defines_new1? do
         Enum.each(module_flag_pairs, fn {mod, has_new1} ->
           if has_new1 do
             defp __call_new_or_validate(unquote(mod), v) do
@@ -573,6 +594,24 @@ defmodule Croma.SubtypeOfTuple do
       end
   """
 
+  @doc false
+  @spec check_if_children_have_new1([module], module | nil) :: {[{module, boolean}], boolean}
+  def check_if_children_have_new1(mods, mod_being_compiled \\ nil) do
+    module_flag_pairs =
+      mods
+      |> Enum.uniq()
+      |> Enum.map(fn m -> {m, New1Existence.has_new1?(m, mod_being_compiled)} end)
+    defines_new1? = Enum.any?(module_flag_pairs, fn {_, has_new1?} -> has_new1? end)
+    {module_flag_pairs, defines_new1?}
+  end
+
+  @doc false
+  @spec defines_new1?([module]) :: boolean
+  def defines_new1?(mods) do
+    {_, defines_new1?} = check_if_children_have_new1(mods)
+    defines_new1?
+  end
+
   defmacro __using__(opts) do
     quote bind_quoted: [elem_modules: opts[:elem_modules], default: opts[:default]] do
       @elem_modules elem_modules
@@ -586,9 +625,10 @@ defmodule Croma.SubtypeOfTuple do
         _                                             -> false
       end
 
-      # Invoking `module_info/1` automatically compiles and loads the module if necessary.
-      module_flag_pairs = Enum.uniq(@elem_modules) |> Enum.map(fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
-      if Enum.any?(module_flag_pairs, fn {_, has_new1} -> has_new1 end) do
+      New1Existence.store_mod_fun_args_to_evaluate(__MODULE__, {Croma.SubtypeOfTuple, :defines_new1?, [@elem_modules]})
+      {module_flag_pairs, defines_new1?} = Croma.SubtypeOfTuple.check_if_children_have_new1(@elem_modules, __MODULE__)
+
+      if defines_new1? do
         Enum.each(module_flag_pairs, fn {mod, has_new1} ->
           if has_new1 do
             defp __call_new_or_validate(unquote(mod), v) do
