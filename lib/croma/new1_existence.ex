@@ -4,14 +4,18 @@ defmodule Croma.New1Existence do
   defmodule AssumedModuleStore do
     @moduledoc false
 
+    @spec start() :: :ok
     def start() do
-      Agent.start_link(fn -> [] end, [name: __MODULE__])
+      {:ok, _pid} = Agent.start_link(fn -> [] end, [name: __MODULE__])
+      :ok
     end
 
+    @spec stop() :: :ok
     def stop() do
       Agent.stop(__MODULE__)
     end
 
+    @spec available?() :: boolean
     def available?() do
       Process.whereis(__MODULE__) != nil
     end
@@ -30,11 +34,11 @@ defmodule Croma.New1Existence do
   end
 
   def prepare() do
-    AssumedModuleStore.start()
+    :ok = AssumedModuleStore.start()
   end
 
   def cleanup() do
-    AssumedModuleStore.stop()
+    :ok = AssumedModuleStore.stop()
   end
 
   @doc """
@@ -52,7 +56,7 @@ defmodule Croma.New1Existence do
       ensure_compiled_and_loaded?(mod) ->
         function_exported?(mod, :new, 1)
       AssumedModuleStore.available?() ->
-        AssumedModuleStore.inserted_new(mod)
+        :ok = AssumedModuleStore.inserted_new(mod)
         # Assume that `mod` has `new/1`; by this assumption, modules whose
         # existence of `new/1` depends on existence of `mod.new/1` (e.g.,
         # modules `use`ing `Croma.SubtypeOfList`) will also have `new/1`.
