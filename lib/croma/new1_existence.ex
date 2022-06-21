@@ -45,8 +45,10 @@ defmodule Croma.New1Existence do
   Note that `mod` is compiled and loaded if needed.
 
   When `prepare/0` has been called, this function assumes that `mod` has `new/1`
-  even if `mod` is currently unable to be loaded (`mod` is defined later in the same file,
-  or `mod` is involved in cyclic dependency).
+  even if `mod` is currently unable to be loaded as following cases:
+
+  - `mod` has not been defined yet because `mod` is open or defined later in the same file.
+  - `mod` is involved in cyclic dependency causing compiler deadlock.
   """
   @spec has_new1?(module) :: boolean
   def has_new1?(mod) do
