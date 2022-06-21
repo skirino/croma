@@ -32,11 +32,12 @@ defmodule Mix.Tasks.Compile.Croma do
       end)
     if inconsistent_mods != [] do
       Mix.raise("""
-      Croma couldn't consistently define functions due to missing new/1 in:
+      Croma couldn't consistently define new/1 functions.
+      There is missing new/1 in the following modules (or missing module itself):
 
       #{Enum.map_join(inconsistent_mods, "\n", &("* " <> inspect(&1)))}
 
-      Consider defining new/1 just wrapping a valid value, like:
+      Consider defining new/1 just wrapping a valid value as follows:
 
           def new(v), do: Croma.Result.wrap_if_valid(v, __MODULE__)
       """)

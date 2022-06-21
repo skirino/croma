@@ -294,11 +294,12 @@ defmodule Mix.Tasks.Compile.CromaTest do
       """)
 
       assert_raise Mix.Error, """
-      Croma couldn't consistently define functions due to missing new/1 in:
+      Croma couldn't consistently define new/1 functions.
+      There is missing new/1 in the following modules (or missing module itself):
 
       * I
 
-      Consider defining new/1 just wrapping a valid value, like:
+      Consider defining new/1 just wrapping a valid value as follows:
 
           def new(v), do: Croma.Result.wrap_if_valid(v, __MODULE__)
       """, fn ->
