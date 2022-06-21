@@ -6,7 +6,7 @@ defmodule Croma.New1Existence do
 
     @spec start() :: :ok
     def start() do
-      {:ok, _pid} = Agent.start_link(fn -> [] end, [name: __MODULE__])
+      {:ok, _pid} = Agent.start_link(fn -> MapSet.new() end, [name: __MODULE__])
       :ok
     end
 
@@ -22,14 +22,12 @@ defmodule Croma.New1Existence do
 
     @spec inserted_new(module) :: :ok
     def inserted_new(mod) do
-      Agent.update(__MODULE__, fn current ->
-        if mod in current, do: current, else: [mod | current]
-      end)
+      Agent.update(__MODULE__, &MapSet.put(&1, mod))
     end
 
     @spec get() :: [module]
     def get() do
-      Agent.get(__MODULE__, &(&1))
+      Agent.get(__MODULE__, &MapSet.to_list/1)
     end
   end
 
