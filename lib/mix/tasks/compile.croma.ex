@@ -14,7 +14,7 @@ defmodule Mix.Tasks.Compile.Croma do
     New1Existence.cleanup()
     case Enum.reject(mods, &has_new1?/1) do
       [] ->
-        :ok
+        {:ok, []}
       inconsistent_mods ->
         Mix.raise("""
         Croma couldn't consistently define new/1 functions.
