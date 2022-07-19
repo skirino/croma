@@ -4,58 +4,66 @@ defmodule Croma.New1Existence do
   defmodule AssumedModuleStore do
     @moduledoc false
 
-    @spec start() :: :ok
-    def start() do
-      {:ok, _pid} = Agent.start_link(fn -> MapSet.new() end, [name: __MODULE__])
-      :ok
-    end
-
-    @spec stop() :: :ok
-    def stop() do
-      Agent.stop(__MODULE__)
-    end
-
-    @spec available?() :: boolean
-    def available?() do
-      Process.whereis(__MODULE__) != nil
-    end
-
     @spec inserted_new(module) :: :ok
     def inserted_new(mod) do
+      ensure_started()
       Agent.update(__MODULE__, &MapSet.put(&1, mod))
+    end
+
+    defp ensure_started() do
+      unless exists?() do
+        case Agent.start(fn -> MapSet.new() end, [name: __MODULE__]) do
+          {:ok, _pid}                        -> nil
+          {:error, {:already_started, _pid}} -> nil
+        end
+      end
+    end
+
+    defp exists?() do
+      Process.whereis(__MODULE__) != nil
     end
 
     @spec get() :: [module]
     def get() do
-      Agent.get(__MODULE__, &MapSet.to_list/1)
+      if exists?() do
+        Agent.get(__MODULE__, &MapSet.to_list/1)
+      else
+        []
+      end
     end
-  end
 
-  def prepare() do
-    :ok = AssumedModuleStore.start()
+    @spec stop() :: :ok
+    def stop() do
+      if exists?() do
+        Agent.stop(__MODULE__)
+      else
+        :ok
+      end
+    end
   end
 
   def cleanup() do
     :ok = AssumedModuleStore.stop()
   end
 
+  # The second argument `compilers` is for testing purpose only.
   @doc """
   Returns true if `mod` exports `new/1`, otherwise false.
 
   Note that `mod` is compiled and loaded if needed.
 
-  When `prepare/0` has been called, this function assumes that `mod` has `new/1`
-  even if `mod` is currently unable to be loaded as following cases:
+  When the `:croma` compiler runs after `:elixir` compiler, this function assumes that
+  `mod` has `new/1` even if `mod` is currently unable to be loaded as following cases:
 
   - `mod` has not been defined yet because `mod` is open or defined later in the same file.
   - `mod` is involved in cyclic dependency causing compiler deadlock.
   """
-  @spec has_new1?(module) :: boolean
-  def has_new1?(mod) do
+  @spec has_new1?(module, list(atom)) :: boolean
+  def has_new1?(mod, compilers \\ Mix.Tasks.Compile.compilers()) do
     cond do
       ensure_compiled_and_loaded?(mod) ->
         function_exported?(mod, :new, 1)
-      AssumedModuleStore.available?() ->
+      uses_custom_compiler_after_elixir_compiler?(compilers) ->
         :ok = AssumedModuleStore.inserted_new(mod)
         # Assume that `mod` has `new/1`; by this assumption, modules whose
         # existence of `new/1` depends on existence of `mod.new/1` (e.g.,
@@ -68,7 +76,7 @@ defmodule Croma.New1Existence do
         Cannot determine whether #{mod_str} has new/1 or not. \
         This might be because #{mod_str} is mutually referred from another module \
         or #{mod_str} is referred from its child module. \
-        For these cases, try :croma compiler instead of :elixir compiler.\
+        For these cases, try using :croma compiler (you need to put it after :elixir compiler).\
         """
     end
   end
@@ -89,14 +97,19 @@ defmodule Croma.New1Existence do
     end
   end
 
+  defp uses_custom_compiler_after_elixir_compiler?(compilers) do
+    with [:elixir | compilers_after_elixir] <- Enum.drop_while(compilers, &(&1 != :elixir)) do
+      :croma in compilers_after_elixir
+    else
+      _ -> false
+    end
+  end
+
   @doc """
   Returns modules which are assumed to have `new/1` in `has_new1?/1`.
-
-  Note that `prepare/0` must be called beforehand.
   """
   @spec get_modules_need_confirmation() :: [module]
   def get_modules_need_confirmation() do
-    true = AssumedModuleStore.available?()
     AssumedModuleStore.get()
   end
 end

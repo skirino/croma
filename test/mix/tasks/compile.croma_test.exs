@@ -28,7 +28,11 @@ defmodule Mix.Tasks.Compile.CromaTest do
     File.write!(mix_path, """
     defmodule #{Macro.camelize(str_name)}.MixProject do
       use Mix.Project
-      def project, do: [app: #{inspect(app_name)}, version: "0.1.0"]
+      def project, do: [
+        app: #{inspect(app_name)},
+        version: "0.1.0",
+        compilers: [:elixir, :croma]
+      ]
       def application, do: [extra_applications: [:croma]]
     end
     """)
@@ -77,7 +81,7 @@ defmodule Mix.Tasks.Compile.CromaTest do
       end
       """)
 
-      assert Mix.Tasks.Compile.Croma.run([]) == {:ok, []}
+      assert Mix.Tasks.Compile.run([]) == {:ok, []}
 
       assert_received {:mix_shell, :info, ["Compiling 1 file (.ex)"]}
 
@@ -97,7 +101,7 @@ defmodule Mix.Tasks.Compile.CromaTest do
       end
       """)
 
-      assert Mix.Tasks.Compile.Croma.run([]) == {:ok, []}
+      assert Mix.Tasks.Compile.run([]) == {:ok, []}
 
       assert_received {:mix_shell, :info, ["Compiling 1 file (.ex)"]}
 
@@ -118,7 +122,7 @@ defmodule Mix.Tasks.Compile.CromaTest do
       end
       """)
 
-      assert Mix.Tasks.Compile.Croma.run([]) == {:ok, []}
+      assert Mix.Tasks.Compile.run([]) == {:ok, []}
 
       assert_received {:mix_shell, :info, ["Compiling 1 file (.ex)"]}
 
@@ -139,7 +143,7 @@ defmodule Mix.Tasks.Compile.CromaTest do
       end
       """)
 
-      assert Mix.Tasks.Compile.Croma.run([]) == {:ok, []}
+      assert Mix.Tasks.Compile.run([]) == {:ok, []}
 
       assert_received {:mix_shell, :info, ["Compiling 1 file (.ex)"]}
 
@@ -162,7 +166,7 @@ defmodule Mix.Tasks.Compile.CromaTest do
       end
       """)
 
-      assert Mix.Tasks.Compile.Croma.run([]) == {:ok, []}
+      assert Mix.Tasks.Compile.run([]) == {:ok, []}
 
       assert_received {:mix_shell, :info, ["Compiling 1 file (.ex)"]}
 
@@ -186,7 +190,7 @@ defmodule Mix.Tasks.Compile.CromaTest do
       end
       """)
 
-      assert Mix.Tasks.Compile.Croma.run([]) == {:ok, []}
+      assert Mix.Tasks.Compile.run([]) == {:ok, []}
 
       assert_received {:mix_shell, :info, ["Compiling 1 file (.ex)"]}
 
@@ -209,7 +213,7 @@ defmodule Mix.Tasks.Compile.CromaTest do
       end
       """)
 
-      assert Mix.Tasks.Compile.Croma.run([]) == {:ok, []}
+      assert Mix.Tasks.Compile.run([]) == {:ok, []}
 
       assert_received {:mix_shell, :info, ["Compiling 1 file (.ex)"]}
 
@@ -243,7 +247,7 @@ defmodule Mix.Tasks.Compile.CromaTest do
       end
       """)
 
-      assert Mix.Tasks.Compile.Croma.run([]) == {:ok, []}
+      assert Mix.Tasks.Compile.run([]) == {:ok, []}
 
       assert_received {:mix_shell, :info, ["Compiling 2 files (.ex)"]}
 
@@ -260,25 +264,6 @@ defmodule Mix.Tasks.Compile.CromaTest do
       assert M.new(%{a: %{f: %{}}})       == {:ok, %{a: struct(S, f: %{})}}
       assert M.new(%{a: "not_map"})       == {:error, {:invalid_value, [M, S]}}
       assert M.new(%{a: %{f: "not_map"}}) == {:error, {:invalid_value, [M, S, {M, :f}]}}
-    end)
-  end
-
-  test "should return error when the compilation failed" do
-    in_project(fn ->
-      File.write!("lib/a.ex", "raise CompileError")
-
-      captured =
-        ExUnit.CaptureIO.capture_io(fn ->
-          assert {:error, [diag]} = Mix.Tasks.Compile.Croma.run([])
-          assert %Mix.Task.Compiler.Diagnostic{
-            compiler_name: "Elixir",
-            message: "** (CompileError)" <> _,
-            position: 1,
-            severity: :error
-          } = diag
-        end)
-
-      assert String.contains?(captured, "== Compilation error in file lib/a.ex ==")
     end)
   end
 
@@ -303,7 +288,7 @@ defmodule Mix.Tasks.Compile.CromaTest do
 
           def new(v), do: Croma.Result.wrap_if_valid(v, __MODULE__)
       """, fn ->
-        Mix.Tasks.Compile.Croma.run([])
+        assert Mix.Tasks.Compile.run([])
       end
     end)
   end

@@ -1,6 +1,8 @@
 defmodule Croma.New1ExistenceTest do
   use Croma.TestCase
 
+  @compilers_with_croma Mix.compilers() ++ [:croma]
+
   defmodule WithNew1 do
     def new(_), do: :ok
   end
@@ -8,7 +10,13 @@ defmodule Croma.New1ExistenceTest do
   defmodule WithoutNew1 do
   end
 
-  describe "Without AssumedModuleStore, has_new1?/1" do
+  setup do
+    on_exit(fn ->
+      New1Existence.cleanup()
+    end)
+  end
+
+  describe "has_new1?/1 without :croma compiler" do
     test "should return true when the given module exports new/1" do
       assert New1Existence.has_new1?(WithNew1)
     end
@@ -22,32 +30,28 @@ defmodule Croma.New1ExistenceTest do
       Cannot determine whether NonExisting has new/1 or not. \
       This might be because NonExisting is mutually referred from another module \
       or NonExisting is referred from its child module. \
-      For these cases, try :croma compiler instead of :elixir compiler.\
+      For these cases, try using :croma compiler (you need to put it after :elixir compiler).\
       """, fn ->
         New1Existence.has_new1?(NonExisting)
       end
+      assert New1Existence.get_modules_need_confirmation() == []
     end
   end
 
-  describe "With AssumedModuleStore, has_new1?/1" do
-    setup do
-      New1Existence.prepare()
-      # `New1Existence.cleanup/0` is not required
-      # because `AssumedModuleStore` will be stopped along with the test process.
-      :ok
-    end
-
+  describe "has_new2?/1 with :croma compiler" do
     test "should return true when the given module exports new/1" do
-      assert New1Existence.has_new1?(WithNew1)
+      assert New1Existence.has_new1?(WithNew1, @compilers_with_croma)
     end
 
     test "should return false when the given module doesn't export new/1" do
-      refute New1Existence.has_new1?(WithoutNew1)
+      refute New1Existence.has_new1?(WithoutNew1, @compilers_with_croma)
     end
 
     test "should store the given module and return true when it doesn't exist" do
-      assert New1Existence.has_new1?(NonExisting)
-      assert New1Existence.get_modules_need_confirmation() == [NonExisting]
+      assert New1Existence.has_new1?(NonExisting, @compilers_with_croma)
+      assert New1Existence.has_new1?(NonExisting2, @compilers_with_croma)
+      stored_mods = New1Existence.get_modules_need_confirmation()
+      assert Enum.sort(stored_mods) == [NonExisting, NonExisting2]
     end
   end
 end
