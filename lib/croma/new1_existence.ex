@@ -101,7 +101,9 @@ defmodule Croma.New1Existence do
     with [:elixir | compilers_after_elixir] <- Enum.drop_while(compilers, &(&1 != :elixir)) do
       :croma in compilers_after_elixir
     else
-      _ -> false
+      # Elixir source files might be compiled by custom compilers other than `:elixir` compiler.
+      # For such cases, we check only whether the `:croma` compiler is used.
+      _ -> :croma in compilers
     end
   end
 
