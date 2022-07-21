@@ -1,7 +1,7 @@
 defmodule Croma.New1Existence do
   @moduledoc false
 
-  defmodule AssumedModuleStore do
+  defmodule AssumedModulesStore do
     @moduledoc false
 
     @spec put(module) :: :ok
@@ -43,7 +43,7 @@ defmodule Croma.New1Existence do
   end
 
   def cleanup() do
-    :ok = AssumedModuleStore.stop()
+    :ok = AssumedModulesStore.stop()
   end
 
   # The second argument `compilers` is for testing purpose only.
@@ -64,7 +64,7 @@ defmodule Croma.New1Existence do
       ensure_compiled_and_loaded?(mod) ->
         function_exported?(mod, :new, 1)
       uses_custom_compiler_after_elixir_compiler?(compilers) ->
-        :ok = AssumedModuleStore.put(mod)
+        :ok = AssumedModulesStore.put(mod)
         # Assume that `mod` has `new/1`; by this assumption, modules whose
         # existence of `new/1` depends on existence of `mod.new/1` (e.g.,
         # modules `use`ing `Croma.SubtypeOfList`) will also have `new/1`.
@@ -112,6 +112,6 @@ defmodule Croma.New1Existence do
   """
   @spec get_modules_need_confirmation() :: [module]
   def get_modules_need_confirmation() do
-    AssumedModuleStore.get()
+    AssumedModulesStore.get()
   end
 end
