@@ -110,8 +110,8 @@ defmodule Croma.New1Existence do
   @doc """
   Returns modules which are assumed to have `new/1` in `has_new1?/1`.
   """
-  @spec get_modules_need_confirmation() :: [module]
-  def get_modules_need_confirmation() do
+  @spec modules_to_confirm() :: [module]
+  def modules_to_confirm() do
     AssumedModulesStore.get()
   end
 end

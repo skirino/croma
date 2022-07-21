@@ -35,7 +35,7 @@ defmodule Croma.New1ExistenceTest do
       """, fn ->
         New1Existence.has_new1?(NonExisting)
       end
-      assert New1Existence.get_modules_need_confirmation() == []
+      assert New1Existence.modules_to_confirm() == []
     end
   end
 
@@ -51,7 +51,7 @@ defmodule Croma.New1ExistenceTest do
     test "should store the given module and return true when it doesn't exist" do
       assert New1Existence.has_new1?(NonExisting, @compilers_with_croma)
       assert New1Existence.has_new1?(NonExisting2, @compilers_with_croma)
-      stored_mods = New1Existence.get_modules_need_confirmation()
+      stored_mods = New1Existence.modules_to_confirm()
       assert Enum.sort(stored_mods) == [NonExisting, NonExisting2]
     end
   end
@@ -68,7 +68,7 @@ defmodule Croma.New1ExistenceTest do
     test "should store the given module and return true when it doesn't exist" do
       assert New1Existence.has_new1?(NonExisting, @custom_compilers_with_croma)
       assert New1Existence.has_new1?(NonExisting2, @custom_compilers_with_croma)
-      stored_mods = New1Existence.get_modules_need_confirmation()
+      stored_mods = New1Existence.modules_to_confirm()
       assert Enum.sort(stored_mods) == [NonExisting, NonExisting2]
     end
   end

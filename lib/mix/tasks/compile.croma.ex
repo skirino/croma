@@ -10,7 +10,7 @@ defmodule Mix.Tasks.Compile.Croma do
 
   @impl Mix.Task.Compiler
   def run(_args) do
-    mods = New1Existence.get_modules_need_confirmation()
+    mods = New1Existence.modules_to_confirm()
     New1Existence.cleanup()
     case Enum.reject(mods, &has_new1?/1) do
       [] ->
