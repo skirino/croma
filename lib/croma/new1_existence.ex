@@ -4,8 +4,8 @@ defmodule Croma.New1Existence do
   defmodule AssumedModuleStore do
     @moduledoc false
 
-    @spec inserted_new(module) :: :ok
-    def inserted_new(mod) do
+    @spec put(module) :: :ok
+    def put(mod) do
       ensure_started()
       Agent.update(__MODULE__, &MapSet.put(&1, mod))
     end
@@ -64,7 +64,7 @@ defmodule Croma.New1Existence do
       ensure_compiled_and_loaded?(mod) ->
         function_exported?(mod, :new, 1)
       uses_custom_compiler_after_elixir_compiler?(compilers) ->
-        :ok = AssumedModuleStore.inserted_new(mod)
+        :ok = AssumedModuleStore.put(mod)
         # Assume that `mod` has `new/1`; by this assumption, modules whose
         # existence of `new/1` depends on existence of `mod.new/1` (e.g.,
         # modules `use`ing `Croma.SubtypeOfList`) will also have `new/1`.
