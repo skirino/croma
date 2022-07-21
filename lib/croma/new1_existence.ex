@@ -102,7 +102,7 @@ defmodule Croma.New1Existence do
       :croma in compilers_after_elixir
     else
       # Elixir source files might be compiled by custom compilers other than `:elixir` compiler.
-      # For such cases, we check only whether the `:croma` compiler is used.
+      # To allow such cases, we check only whether the `:croma` compiler is used.
       _ -> :croma in compilers
     end
   end
