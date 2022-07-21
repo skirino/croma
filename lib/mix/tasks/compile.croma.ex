@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Compile.Croma do
   @moduledoc """
-  Compiles Elixir source files and checks if Croma consistently defines functions.
+  Custom compiler that checks if Croma consistently defines `new/1` functions.
 
   You need to put `:croma` compiler after `:elixir` compiler.
   """
