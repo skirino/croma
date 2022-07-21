@@ -1,5 +1,6 @@
 import Croma.Defun
 alias Croma.Result, as: R
+alias Croma.New1Existence
 
 defmodule Croma.TypeGen do
   @moduledoc """
@@ -56,8 +57,7 @@ defmodule Croma.TypeGen do
         v   -> @mod.valid?(v)
       end
 
-      # Invoking `module_info/1` on `mod` automatically compiles and loads the module if necessary.
-      if {:new, 1} in @mod.module_info(:exports) do
+      if New1Existence.has_new1?(@mod) do
         defun new(value :: term) :: R.t(t) do
           nil -> {:ok, nil}
           v   -> @mod.new(v) |> R.map_error(fn reason -> R.ErrorReason.add_context(reason, __MODULE__) end)
@@ -104,8 +104,7 @@ defmodule Croma.TypeGen do
         _                 -> false
       end
 
-      # Invoking `module_info/1` on `mod` automatically compiles and loads the module if necessary.
-      if {:new, 1} in @mod.module_info(:exports) do
+      if New1Existence.has_new1?(@mod) do
         defun new(list :: term) :: R.t(t) do
           l when is_list(l) -> Enum.map(l, &@mod.new/1) |> R.sequence()
           _                 -> {:error, {:invalid_value, [__MODULE__]}}
@@ -156,7 +155,7 @@ defmodule Croma.TypeGen do
         Enum.any?(@modules, fn mod -> mod.valid?(value) end)
       end
 
-      module_flag_pairs = Enum.map(@modules, fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
+      module_flag_pairs = Enum.map(@modules, fn m -> {m, New1Existence.has_new1?(m)} end)
       Enum.each(module_flag_pairs, fn {mod, has_new1} ->
         if has_new1 do
           defp call_new_or_validate(unquote(mod), v) do

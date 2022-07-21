@@ -1,5 +1,6 @@
 import Croma.Defun
 alias Croma.Result, as: R
+alias Croma.New1Existence
 
 defmodule Croma.SubtypeOfInt do
   @moduledoc """
@@ -398,8 +399,7 @@ defmodule Croma.SubtypeOfList do
         _                                              -> false
       end
 
-      # Invoking `module_info/1` on `mod` automatically compiles and loads the module if necessary.
-      if {:new, 1} in @mod.module_info(:exports) do
+      if New1Existence.has_new1?(@mod) do
         defun new(term :: any) :: R.t(t) do
           l when is_list(l) and valid_length?(length(l)) ->
             result = Enum.map(l, &@mod.new/1) |> R.sequence()
@@ -491,8 +491,7 @@ defmodule Croma.SubtypeOfMap do
         _                                             -> false
       end
 
-      # Invoking `module_info/1` automatically compiles and loads the module if necessary.
-      module_flag_pairs = Enum.uniq([@key_module, @value_module]) |> Enum.map(fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
+      module_flag_pairs = Enum.uniq([@key_module, @value_module]) |> Enum.map(fn m -> {m, New1Existence.has_new1?(m)} end)
       if Enum.any?(module_flag_pairs, fn {_, has_new1} -> has_new1 end) do
         Enum.each(module_flag_pairs, fn {mod, has_new1} ->
           if has_new1 do
@@ -586,8 +585,7 @@ defmodule Croma.SubtypeOfTuple do
         _                                             -> false
       end
 
-      # Invoking `module_info/1` automatically compiles and loads the module if necessary.
-      module_flag_pairs = Enum.uniq(@elem_modules) |> Enum.map(fn m -> {m, {:new, 1} in m.module_info(:exports)} end)
+      module_flag_pairs = Enum.uniq(@elem_modules) |> Enum.map(fn m -> {m, New1Existence.has_new1?(m)} end)
       if Enum.any?(module_flag_pairs, fn {_, has_new1} -> has_new1 end) do
         Enum.each(module_flag_pairs, fn {mod, has_new1} ->
           if has_new1 do

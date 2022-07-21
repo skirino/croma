@@ -372,8 +372,7 @@ defmodule Croma.Struct do
       @croma_struct_fields_with_attrs (
         Enum.zip(@croma_struct_fields, field_default_pairs)
         |> Enum.map(fn {{f, fs, m}, {f, d}} ->
-          has_new1? = {:new, 1} in m.module_info(:exports)
-          {f, fs, m, d, has_new1?}
+          {f, fs, m, d, Croma.New1Existence.has_new1?(m)}
         end)
       )
 
