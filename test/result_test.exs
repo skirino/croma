@@ -176,7 +176,7 @@ defmodule Croma.ResultTest do
     catch_error Bang.j!(1)
     catch_error Bang.k!()
 
-    specs = Bang.typespecs() |> Enum.map(fn {:::, _, [call, ret]} -> {call, ret} end)
+    specs = Bang.typespecs() |> Enum.map(fn {:"::", _, [call, ret]} -> {call, ret} end)
     refute Enum.any?(specs, &match?({{:f!, _, _                 }, {_       , _, _}}, &1))
     assert Enum.any?(specs, &match?({{:g!, _, _                 }, {:integer, _, _}}, &1))
     assert Enum.any?(specs, &match?({{:h!, _, [{:integer, _, _}]}, {:integer, _, _}}, &1))

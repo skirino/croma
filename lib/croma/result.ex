@@ -245,7 +245,7 @@ defmodule Croma.Result do
 
     def match_and_convert_spec(name, arity, spec, caller_env) do
       case spec do
-        {:::, meta1, [{^name, meta2, args}, ret_type]} when length(args) == arity ->
+        {:"::", meta1, [{^name, meta2, args}, ret_type]} when length(args) == arity ->
           convert(name, meta1, meta2, args, ret_type, caller_env)
         _ ->
           nil
@@ -253,7 +253,7 @@ defmodule Croma.Result do
     end
 
     defp convert(name, meta1, meta2, args, ret_type, caller_env) do
-      make_spec_fun = fn r -> {:::, meta1, [{:"#{name}!", meta2, args}, r]} end
+      make_spec_fun = fn r -> {:"::", meta1, [{:"#{name}!", meta2, args}, r]} end
       case ret_type do
         {:ok, r} -> make_spec_fun.(r)
         {:|, _, types} ->

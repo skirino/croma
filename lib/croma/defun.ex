@@ -127,10 +127,10 @@ defmodule Croma.Defun do
   - Using unquote fragment in parameter list is not fully supported.
   - `try` block is not implicitly started in body of `defun`, in contrast to `def`.
   """
-  defmacro defun({:::, _, [fun, ret]}, [do: block]) do
+  defmacro defun({:"::", _, [fun, ret]}, [do: block]) do
     defun_impl(:def, fun, ret, [], block, __CALLER__)
   end
-  defmacro defun({:when, _, [{:::, _, [fun, ret]}, type_params]}, [do: block]) do
+  defmacro defun({:when, _, [{:"::", _, [fun, ret]}, type_params]}, [do: block]) do
     defun_impl(:def, fun, ret, type_params, block, __CALLER__)
   end
   defmacro defun(_, _) do
@@ -142,10 +142,10 @@ defmodule Croma.Defun do
 
   See `defun/2` for usage of this macro.
   """
-  defmacro defunp({:::, _, [fun, ret]}, [do: block]) do
+  defmacro defunp({:"::", _, [fun, ret]}, [do: block]) do
     defun_impl(:defp, fun, ret, [], block, __CALLER__)
   end
-  defmacro defunp({:when, _, [{:::, _, [fun, ret]}, type_params]}, [do: block]) do
+  defmacro defunp({:when, _, [{:"::", _, [fun, ret]}, type_params]}, [do: block]) do
     defun_impl(:defp, fun, ret, type_params, block, __CALLER__)
   end
   defmacro defunp(_, _) do
@@ -158,10 +158,10 @@ defmodule Croma.Defun do
   See `defun/2` for usage of this macro.
   See also `Croma.Defpt.defpt/2`.
   """
-  defmacro defunpt({:::, _, [fun, ret]}, [do: block]) do
+  defmacro defunpt({:"::", _, [fun, ret]}, [do: block]) do
     defun_impl(:defpt, fun, ret, [], block, __CALLER__)
   end
-  defmacro defunpt({:when, _, [{:::, _, [fun, ret]}, type_params]}, [do: block]) do
+  defmacro defunpt({:when, _, [{:"::", _, [fun, ret]}, type_params]}, [do: block]) do
     defun_impl(:defpt, fun, ret, type_params, block, __CALLER__)
   end
   defmacro defunpt(_, _) do
@@ -175,7 +175,7 @@ defmodule Croma.Defun do
     def new({:\\, _, [inner_expr, default]}, index) do
       %__MODULE__{new(inner_expr, index) | default: {:some, default}}
     end
-    def new({:::, _, [arg_expr, type_expr]}, index) do
+    def new({:"::", _, [arg_expr, type_expr]}, index) do
       {type_expr2, g_used?, v_used?} = extract_guard_and_validate(type_expr)
       guard?    = g_used? and Application.get_env(:croma, :defun_generate_guard     , true)
       validate? = v_used? and Application.get_env(:croma, :defun_generate_validation, true)
@@ -337,7 +337,7 @@ defmodule Croma.Defun do
 
   defp typespec(fname, env, args, ret, type_params) do
     arg_types = Enum.map(args, &(&1.type))
-    func_with_return_type = {:::, [], [{fname, [], arg_types}, ret.type]}
+    func_with_return_type = {:"::", [], [{fname, [], arg_types}, ret.type]}
     spec_expr = case type_params do
       [] -> func_with_return_type
       _  -> {:when, [], [func_with_return_type, type_params]}

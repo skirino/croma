@@ -32,7 +32,7 @@ defmodule Croma.TypeUtil do
         try do
           [:type, :typep, :opaque]
           |> Enum.flat_map(&fetch_type_info_at_compile_time(module, &1))
-          |> Enum.find(&match?({_, {:::, _, [{^name, _, _}, _ast]}, _}, &1))
+          |> Enum.find(&match?({_, {:"::", _, [{^name, _, _}, _ast]}, _}, &1))
           |> case do
             nil              -> :error
             {_, type_ast, _} -> destructure_type_expr(module, type_ast, env)
@@ -48,7 +48,7 @@ defmodule Croma.TypeUtil do
     end
   end
 
-  defp destructure_type_expr(module, {:::, _, [_lhs, type_ast]}, env) do
+  defp destructure_type_expr(module, {:"::", _, [_lhs, type_ast]}, env) do
     case type_ast do
       {_, _}            -> {:ok, :tuple} # 2-tuple is special in elixir AST
       {:{} , _, _}      -> {:ok, :tuple}
