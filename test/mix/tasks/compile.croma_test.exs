@@ -31,7 +31,8 @@ defmodule Mix.Tasks.Compile.CromaTest do
       def project, do: [
         app: #{inspect(app_name)},
         version: "0.1.0",
-        compilers: [:elixir, :croma]
+        compilers: [:elixir, :croma],
+        prune_code_paths: false
       ]
       def application, do: [extra_applications: [:croma]]
     end
