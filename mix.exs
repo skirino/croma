@@ -26,10 +26,10 @@ defmodule Croma.Mixfile do
 
   defp deps() do
     [
-      {:dialyxir   , "~> 1.3" , [only: :dev , runtime: false]},
-      {:ex_doc     , "~> 0.29", [only: :dev , runtime: false]},
-      {:stream_data, "~> 0.5" , [only: :test]},
-      {:excoveralls, "~> 0.17", [only: :test, runtime: false]},
+      {:dialyxir   , "~> 1.4" , [only: :dev , runtime: false]},
+      {:ex_doc     , "~> 0.37", [only: :dev , runtime: false]},
+      {:stream_data, "~> 1.1" , [only: :test]},
+      {:excoveralls, "~> 0.18", [only: :test, runtime: false]},
     ]
   end
 
