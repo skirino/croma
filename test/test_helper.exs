@@ -1,1 +1,30 @@
 ExUnit.start()
+
+# Suppress wanrings "SomeModule.some_fn/0 is undefined or private." during test.
+Code.put_compiler_option(:no_warn_undefined, [
+  {Croma.ResultTest.Bang, :k!, 0},
+  {Croma.SubtypeTest.F1, :default, 0},
+  {Croma.SubtypeTest.F1, :max, 0},
+  {Croma.SubtypeTest.F2, :min, 0},
+  {Croma.SubtypeTest.I1, :default, 0},
+  {Croma.SubtypeTest.I1, :max, 0},
+  {Croma.SubtypeTest.I2, :default, 0},
+  {Croma.SubtypeTest.I3, :min, 0},
+  {Croma.SubtypeTest.L1, :max_length, 0},
+  {Croma.SubtypeTest.L1, :min_length, 0},
+  {Croma.SubtypeTest.L2, :min_length, 0},
+  {Croma.SubtypeTest.L3, :default, 0},
+  {Croma.SubtypeTest.L3, :max_length, 0},
+  {Croma.SubtypeTest.L4, :default, 0},
+  {Croma.SubtypeTest.M1, :max_size, 0},
+  {Croma.SubtypeTest.M1, :min_size, 0},
+  {Croma.SubtypeTest.M2, :max_size, 0},
+  {Croma.SubtypeTest.M3, :default, 0},
+  {Croma.SubtypeTest.M3, :min_size, 0},
+  {Croma.SubtypeTest.M4, :default, 0},
+  {Croma.SubtypeTest.N1, :default, 0},
+  {Croma.SubtypeTest.N1, :max, 0},
+  {Croma.SubtypeTest.N2, :min, 0},
+  {Croma.SubtypeTest.T1, :default, 0},
+  {Croma.SubtypeTest.T3, :default, 0},
+])

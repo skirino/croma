@@ -1,6 +1,5 @@
 defmodule Mix.Tasks.Compile.CromaTest do
   use ExUnit.Case
-  import ExUnit.CaptureIO
   alias Croma.TypeGen.{Nilable, ListOf, Union}
 
   @tmpdir_root Path.expand("../../../tmp/#{__MODULE__}", __DIR__)
@@ -33,7 +32,9 @@ defmodule Mix.Tasks.Compile.CromaTest do
         app: #{inspect(app_name)},
         version: "0.1.0",
         compilers: [:elixir, :croma],
-        prune_code_paths: false
+        prune_code_paths: false,
+        # Suppress the warning `warning: I.new/1 is undefined or private` during test execution
+        elixirc_options: [no_warn_undefined: [{I, :new, 1}]],
       ]
       def application, do: [extra_applications: [:croma]]
     end
@@ -290,10 +291,7 @@ defmodule Mix.Tasks.Compile.CromaTest do
 
           def new(v), do: Croma.Result.wrap_if_valid(v, __MODULE__)
       """, fn ->
-        # Suppress the warning about `warning: I.new/1 is undefined or private`
-        capture_io(:stderr, fn ->
-          Mix.Tasks.Compile.run([])
-        end)
+        Mix.Tasks.Compile.run([])
       end
     end)
   end
