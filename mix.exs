@@ -21,7 +21,7 @@ defmodule Croma.Mixfile do
   end
 
   def application() do
-    []
+    if Mix.env() == :dev, do: [extra_applications: [:mix]], else: []
   end
 
   defp deps() do
