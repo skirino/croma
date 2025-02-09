@@ -230,7 +230,7 @@ defmodule Croma.Struct do
       ""
     else
       c = Macro.camelize(s)
-      String.downcase(String.first(c)) <> String.slice(c, 1..-1)
+      String.downcase(String.first(c)) <> String.slice(c, 1..-1//1)
     end
   end
 
