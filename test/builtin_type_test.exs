@@ -8,7 +8,7 @@ defmodule Croma.BuiltinTypeTest do
       {Croma.Float        , 0.0          , 0       },
       {Croma.Integer      , 0            , 0.0     },
       {Croma.Number       , 0            , nil     },
-      {Croma.String       , "a"          , 'a'     },
+      {Croma.String       , "a"          , ~c"a"   },
       {Croma.Binary       , <<1::8>>     , <<1::4>>},
       {Croma.BitString    , <<1::1>>     , nil     },
       {Croma.Function     , fn -> 1 end  , 0       },
