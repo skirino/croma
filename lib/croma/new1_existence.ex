@@ -46,11 +46,17 @@ defmodule Croma.New1Existence do
     :ok = AssumedModulesStore.stop()
   end
 
-  # The second argument `compilers` is for testing purpose only.
+  # The default argument of `has_new1?/2` needs to be version dependent
+  # to avoid deprecation warning.
+  elixir_version                                = Version.parse!(System.version())
+  min_version_supporting_new_compilers_function = Version.parse!("1.18.0")
+  use_old_compilers_function?                   = Version.compare(elixir_version, min_version_supporting_new_compilers_function) == :lt
+
   @doc """
   Returns true if `mod` exports `new/1`, otherwise false.
 
   Note that `mod` is compiled and loaded if needed.
+  The second argument `compilers` is for testing purpose only.
 
   When the `:croma` compiler runs after `:elixir` compiler, this function assumes that
   `mod` has `new/1` even if `mod` is currently unable to be loaded as following cases:
@@ -59,7 +65,17 @@ defmodule Croma.New1Existence do
   - `mod` is involved in cyclic dependency causing compiler deadlock.
   """
   @spec has_new1?(module, list(atom)) :: boolean
-  def has_new1?(mod, compilers \\ Mix.Task.Compiler.compilers()) do
+  if use_old_compilers_function? do
+    def has_new1?(mod, compilers \\ Mix.Tasks.Compile.compilers()) do
+      has_new1_impl(mod, compilers)
+    end
+  else
+    def has_new1?(mod, compilers \\ Mix.Task.Compiler.compilers()) do
+      has_new1_impl(mod, compilers)
+    end
+  end
+
+  def has_new1_impl(mod, compilers) do
     cond do
       ensure_compiled_and_loaded?(mod) ->
         function_exported?(mod, :new, 1)
