@@ -42,13 +42,14 @@ defmodule Croma.TestCase do
   defmacro __using__(opts) do
     %Macro.Env{module: current_module} = __CALLER__
     target_module = Atom.to_string(current_module) |> String.replace(~r/Test$/, "") |> List.wrap() |> Module.safe_concat()
+    exunit_opts = Keyword.delete(opts, :alias_as)
     alias_opts =
       case opts[:alias_as] do
         nil  -> []
         name -> [as: name]
       end
     quote do
-      use ExUnit.Case, unquote(opts)
+      use ExUnit.Case, unquote(exunit_opts)
       alias unquote(target_module), unquote(alias_opts)
     end
   end
