@@ -105,10 +105,13 @@ defmodule Croma.ResultTest do
   end
 
   test "or_else/2" do
-    o1 = {:ok, 1}
-    o2 = {:ok, 2}
-    e1 = {:error, :foo}
-    e2 = {:error, :bar}
+    # Note: Since `R.or_else/2` is a macro (for lazy evaluation of the 2nd argument),
+    # we need to construct `o1` etc. at runtime (instead of a literal) in order to
+    # avoid compiler warnings on `the following clause will never match`.
+    o1 = int2result(0)
+    o2 = int2result(2)
+    e1 = int2result(1)
+    e2 = int2result(3)
     assert R.or_else(o1, o2) == o1
     assert R.or_else(o1, e2) == o1
     assert R.or_else(e1, o2) == o2
