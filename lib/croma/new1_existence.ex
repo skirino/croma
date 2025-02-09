@@ -59,7 +59,7 @@ defmodule Croma.New1Existence do
   - `mod` is involved in cyclic dependency causing compiler deadlock.
   """
   @spec has_new1?(module, list(atom)) :: boolean
-  def has_new1?(mod, compilers \\ Mix.Tasks.Compile.compilers()) do
+  def has_new1?(mod, compilers \\ Mix.Task.Compiler.compilers()) do
     cond do
       ensure_compiled_and_loaded?(mod) ->
         function_exported?(mod, :new, 1)
