@@ -264,7 +264,7 @@ defmodule Croma.SubtypeOfString do
   defmacro __using__(opts) do
     quote bind_quoted: [pattern: opts[:pattern], default: opts[:default]] do
       @pattern pattern
-      if !Regex.regex?(@pattern), do: raise ":pattern must be a regex"
+      if !is_struct(@pattern, Regex), do: raise ":pattern must be a regex"
       def pattern(), do: @pattern
 
       @type t :: String.t

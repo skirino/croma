@@ -29,7 +29,7 @@ defmodule Croma.Mixfile do
       {:dialyxir   , "~> 1.3" , [only: :dev , runtime: false]},
       {:ex_doc     , "~> 0.29", [only: :dev , runtime: false]},
       {:stream_data, "~> 0.5" , [only: :test]},
-      {:excoveralls, "~> 0.16", [only: :test, runtime: false]},
+      {:excoveralls, "~> 0.17", [only: :test, runtime: false]},
     ]
   end
 
