@@ -5,17 +5,17 @@ defmodule Croma.Mixfile do
 
   def project() do
     [
-      app:               :croma,
-      version:           "0.12.0",
-      elixir:            "~> 1.7",
-      build_embedded:    Mix.env() == :prod,
-      start_permanent:   Mix.env() == :prod,
-      deps:              deps(),
-      description:       "Elixir macro utilities to make type-based programming easier",
-      package:           package(),
-      source_url:        @github_url,
-      homepage_url:      @github_url,
-      test_coverage:     [tool: ExCoveralls],
+      app:             :croma,
+      version:         "0.12.0",
+      elixir:          "~> 1.14",
+      build_embedded:  Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
+      deps:            deps(),
+      description:     "Elixir macro utilities to make type-based programming easier",
+      package:         package(),
+      source_url:      @github_url,
+      homepage_url:    @github_url,
+      test_coverage:   [tool: ExCoveralls],
     ]
   end
 
