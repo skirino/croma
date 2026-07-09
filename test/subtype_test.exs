@@ -165,7 +165,7 @@ defmodule Croma.SubtypeTest do
 
   test "Croma.SubtypeOfString: default/0" do
     assert S1.default() == "foo"
-    assert S1.pattern() == ~r/^foo|bar$/
+    assert S1.pattern().source == "^foo|bar$"
   end
 
   defmodule A1 do
