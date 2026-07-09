@@ -423,8 +423,8 @@ defmodule Croma.Struct do
         Type-aware setter for #{name}.
         """
         @spec unquote(name)(t, unquote(mod).t) :: t
-        def unquote(name)(s, field) do
-          %__MODULE__{s | unquote(name) => field}
+        def unquote(name)(%__MODULE__{} = s, field) do
+          %{s | unquote(name) => field}
         end
       end)
 

@@ -173,7 +173,8 @@ defmodule Croma.Defun do
     defstruct [:arg_expr, :type, :default, :guard?, :validate?, :index]
 
     def new({:\\, _, [inner_expr, default]}, index) do
-      %__MODULE__{new(inner_expr, index) | default: {:some, default}}
+      %__MODULE__{} = arg = new(inner_expr, index)
+      %{arg | default: {:some, default}}
     end
     def new({:"::", _, [arg_expr, type_expr]}, index) do
       {type_expr2, g_used?, v_used?} = extract_guard_and_validate(type_expr)
